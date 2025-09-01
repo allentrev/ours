@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build output
+client/build/
+dist/
+
+# Environment files
+.env
+.env.production
+**/.env*
+
+# Mongo Playgrounds
+playground*
+**/playground*
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDEs and OS
+.vscode/
+.DS_Store
+
+# Other
+backend/tmp
+node_modules
