@@ -10,6 +10,7 @@ const Navbar = () => {
 
   useEffect(() => {
     getToken().then((token) => {
+      console.log("Navebar UserToken");
       console.log(token);
     });
   }, []);

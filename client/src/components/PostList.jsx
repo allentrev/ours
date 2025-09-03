@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router-dom";
 
 const fetchPosts = async (pageParam, searchParams) => {
   const searchParamsObj = Object.fromEntries([...searchParams]);
-
+  console.log("PostList SearchPraramsObj");
   console.log(searchParamsObj);
 
   const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts`, {
@@ -19,18 +19,18 @@ const PostList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const {
-    data,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetching,
-    isFetchingNextPage,
-    status,
+      data,
+      error,
+      fetchNextPage,
+      hasNextPage,
+      isFetching,
+      isFetchingNextPage,
+      status,
   } = useInfiniteQuery({
-    queryKey: ["posts", searchParams.toString()],
-    queryFn: ({ pageParam = 1 }) => fetchPosts(pageParam, searchParams),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, pages) =>
+      queryKey: ["posts", searchParams.toString()],
+      queryFn: ({ pageParam = 1 }) => fetchPosts(pageParam, searchParams),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, pages) =>
       lastPage.hasMore ? pages.length + 1 : undefined,
   });
 
@@ -40,9 +40,10 @@ const PostList = () => {
 
   // if (status === "error") return "Something went wrong!";
   if (error) return "Something went wrong!";
-
+  // this takes each entry in a page and adds to a single array
   const allPosts = data?.pages?.flatMap((page) => page.posts) || [];
-
+  console.log("Client PageList, data");
+  console.log(data);
   return (
     <InfiniteScroll
       dataLength={allPosts.length}

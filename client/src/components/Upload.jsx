@@ -49,7 +49,7 @@ const Upload = ({children, type, setProgress, setData}) => {
             authenticator={authenticator}
         >
             <IKUpload
-                useUniqueFileName
+                useUniqueFileName={false}
                 onError={onError}
                 onSuccess={onSuccess}
                 onUploadProgress={onUploadProgress}

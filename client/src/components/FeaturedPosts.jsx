@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "timeago.js";
 
 const fetchPost = async () => {
+  console.log("FeaturedPosts fetchPost");
+  console.log("API URL:", import.meta.env.VITE_API_URL);
+
   const res = await axios.get(
     `${import.meta.env.VITE_API_URL}/posts?featured=true&limit=4&sort=newest`
   );
@@ -12,6 +15,7 @@ const fetchPost = async () => {
 };
 
 const FeaturedPosts = () => {
+  console.log("FeaturedPosts");
   const { isPending, error, data } = useQuery({
     queryKey: ["featuredPosts"],
     queryFn: () => fetchPost(),
@@ -21,6 +25,8 @@ const FeaturedPosts = () => {
   if (error) return "Something went wrong!" + error.message;
 
   const posts = data.posts;
+  console.log("Posts");
+  console.log(posts);
   if (!posts || posts.length === 0) {
     return;
   }

@@ -10,7 +10,7 @@ import commentRouter from "./routes/comment.route.js";
 import webhookRouter from "./routes/webhook.route.js";
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 const IK_PRIVATE_KEY = process.env.IK_PRIVATE_KEY;
 
 
@@ -36,12 +36,13 @@ app.use(
             }
         },
         methods: ["GET", "POST", "PUT", "DELETE"],
-        allowedHeaders: ["Content-Type"],
+        allowedHeaders: ["Content-Type", "Authorization"],
         credentials: true, // Optional: enable if using cookies/sessions
         optionsSuccessStatus: 204, //Important for legacy browser support
     })
 );
 
+app.get("/health", (req, res) => res.send("OK"));
 
 app.use(clerkMiddleware());
 app.use("/webhooks", webhookRouter);
@@ -53,7 +54,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get("/health", (req, res) => res.send("OK"));
+
 
 // app.get("/test",(req,res)=>{
 //   res.status(200).send("it works!")

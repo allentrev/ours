@@ -6,6 +6,7 @@ import Comments from "../components/Comments";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "timeago.js";
+import ReactQuill from 'react-quill-new';
 
 const fetchPost = async (slug) => {
   const res = await axios.get(`${import.meta.env.VITE_API_URL}/posts/${slug}`);
@@ -51,90 +52,12 @@ const SinglePostPage = () => {
       <div className="flex flex-col md:flex-row gap-12 justify-between">
         {/* text */}
         <div className="lg:text-lg flex flex-col gap-6 text-justify">
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias neque
-            fugiat itaque quas esse sunt cupiditate possimus cumque asperiores,
-            dolorem, dolores eligendi amet perferendis illum repellat nam quam
-            facilis veritatis. Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Sint ipsa fuga nihil numquam, quam dicta quas
-            exercitationem aliquam maxime quaerat, enim autem culpa sequi at!
-            Earum facere in ducimus culpa. Lorem ipsum dolor sit amet
-            consectetur, adipisicing elit. Libero fuga modi amet error aliquid
-            eos nobis vero soluta facilis, voluptatem, voluptates quod suscipit
-            obcaecati voluptate quaerat laborum, voluptatum dicta ipsum.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias neque
-            fugiat itaque quas esse sunt cupiditate possimus cumque asperiores,
-            dolorem, dolores eligendi amet perferendis illum repellat nam quam
-            facilis veritatis. Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Sint ipsa fuga nihil numquam, quam dicta quas
-            exercitationem aliquam maxime quaerat, enim autem culpa sequi at!
-            Earum facere in ducimus culpa. Lorem ipsum dolor sit amet
-            consectetur, adipisicing elit. Libero fuga modi amet error aliquid
-            eos nobis vero soluta facilis, voluptatem, voluptates quod suscipit
-            obcaecati voluptate quaerat laborum, voluptatum dicta ipsum.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias neque
-            fugiat itaque quas esse sunt cupiditate possimus cumque asperiores,
-            dolorem, dolores eligendi amet perferendis illum repellat nam quam
-            facilis veritatis. Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Sint ipsa fuga nihil numquam, quam dicta quas
-            exercitationem aliquam maxime quaerat, enim autem culpa sequi at!
-            Earum facere in ducimus culpa. Lorem ipsum dolor sit amet
-            consectetur, adipisicing elit. Libero fuga modi amet error aliquid
-            eos nobis vero soluta facilis, voluptatem, voluptates quod suscipit
-            obcaecati voluptate quaerat laborum, voluptatum dicta ipsum.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias neque
-            fugiat itaque quas esse sunt cupiditate possimus cumque asperiores,
-            dolorem, dolores eligendi amet perferendis illum repellat nam quam
-            facilis veritatis. Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Sint ipsa fuga nihil numquam, quam dicta quas
-            exercitationem aliquam maxime quaerat, enim autem culpa sequi at!
-            Earum facere in ducimus culpa. Lorem ipsum dolor sit amet
-            consectetur, adipisicing elit. Libero fuga modi amet error aliquid
-            eos nobis vero soluta facilis, voluptatem, voluptates quod suscipit
-            obcaecati voluptate quaerat laborum, voluptatum dicta ipsum.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias neque
-            fugiat itaque quas esse sunt cupiditate possimus cumque asperiores,
-            dolorem, dolores eligendi amet perferendis illum repellat nam quam
-            facilis veritatis. Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Sint ipsa fuga nihil numquam, quam dicta quas
-            exercitationem aliquam maxime quaerat, enim autem culpa sequi at!
-            Earum facere in ducimus culpa. Lorem ipsum dolor sit amet
-            consectetur, adipisicing elit. Libero fuga modi amet error aliquid
-            eos nobis vero soluta facilis, voluptatem, voluptates quod suscipit
-            obcaecati voluptate quaerat laborum, voluptatum dicta ipsum.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias neque
-            fugiat itaque quas esse sunt cupiditate possimus cumque asperiores,
-            dolorem, dolores eligendi amet perferendis illum repellat nam quam
-            facilis veritatis. Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Sint ipsa fuga nihil numquam, quam dicta quas
-            exercitationem aliquam maxime quaerat, enim autem culpa sequi at!
-            Earum facere in ducimus culpa. Lorem ipsum dolor sit amet
-            consectetur, adipisicing elit. Libero fuga modi amet error aliquid
-            eos nobis vero soluta facilis, voluptatem, voluptates quod suscipit
-            obcaecati voluptate quaerat laborum, voluptatum dicta ipsum.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias neque
-            fugiat itaque quas esse sunt cupiditate possimus cumque asperiores,
-            dolorem, dolores eligendi amet perferendis illum repellat nam quam
-            facilis veritatis. Lorem ipsum dolor sit amet consectetur
-            adipisicing elit. Sint ipsa fuga nihil numquam, quam dicta quas
-            exercitationem aliquam maxime quaerat, enim autem culpa sequi at!
-            Earum facere in ducimus culpa. Lorem ipsum dolor sit amet
-            consectetur, adipisicing elit. Libero fuga modi amet error aliquid
-            eos nobis vero soluta facilis, voluptatem, voluptates quod suscipit
-            obcaecati voluptate quaerat laborum, voluptatum dicta ipsum.
-          </p>
+          <ReactQuill
+            theme="snow"
+            className="flex-1 rounded-xl bg-white shadow"
+            value={data.content}
+            readOnly={true}
+          />
         </div>
         {/* menu */}
         <div className="px-4 h-max sticky top-8">

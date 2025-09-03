@@ -9,23 +9,6 @@ import { toast } from 'react-toastify';
 import Upload from '../components/Upload';
 import { IKContext, IKUpload } from 'imagekitio-react';
 
-const authenticator = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/posts/upload-auth`);
-
-    if (!response.ok){
-      const errorText = await response.text;
-      throw new Error(`Request failed with status ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    const {signature, expire, token } = data;
-    return {signature, expire, token };
-  }
-  catch (error){
-    throw new Error(`Authentication request failed: ${error.message}`);
-  }
-};
 
 const Write = () => {
   const {isLoaded, isSignedIn} = useUser();
@@ -49,6 +32,7 @@ const Write = () => {
 
   const mutation = useMutation({
     mutationFn: async (newPost) => {
+      console.log("Write, useMatation");
       const token = await getToken(); 
       return axios.post(`${import.meta.env.VITE_API_URL}/posts/`, newPost, {
         headers: {
@@ -76,7 +60,7 @@ const Write = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = {
-      img: cover.path || "",
+      img: cover.filePath || "",
       title: formData.get('title'),
       desc: formData.get('desc'),
       category: formData.get('category'),
@@ -95,27 +79,19 @@ const Write = () => {
   return (
     <div className='h-[calc(100vh-64px)] md:h-[calc(100vh-80px)] flex flex-col gap-6'>
       <h1 className= "text-cl font-light">Create a New Post</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6 flex-1 mb-6">
-        <IKContext
-          publicKey={import.meta.env.VITE_IK_PUBLIC_KEY}
-          urlEndpoint={import.meta.env.VITE_URL_ENDPOINT}
-          authenticator={authenticator}
-        >
-          <IKUpload
-            fileName="test-upload.png"
-            //onError={onError}
-            //onSuccess={onSuccess}
-          />
-        </IKContext>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6 flex-1 mb-6 border">
         <Upload type="image" setProgress={setProgress} setData={setCover}>
-          <button className="w-max p-2 shadow-md rounded-xl text-sm text-gray-500
+          <div className='flex flex-row items-center gap-2'>
+          <button type="button" className="w-max p-2 shadow-md rounded-xl text-sm text-gray-500
             bg-white">Add a cover image
           </button>
+          { cover ? cover.name : "No file chosen"}
+          </div>
         </Upload>
         <input
          className="text-4xl font-semibold bg-transparent outline-none"
          type="text" 
-         placeholder='My great story'
+         placeholder='Enter title'
          name='title'
         />
         <div className="flex items-center gap-2">
@@ -133,12 +109,12 @@ const Write = () => {
         <div className="flex flex-1">
           <div className="flex flex-col gap-2 mr-2">
             <Upload type="image" setProgress={setProgress} setData={setImg}>
-              <button className="w-max p-2 shadow-md rounded-xl text-sm text-gray-500
+              <button type="button" className="w-max p-2 shadow-md rounded-xl text-sm text-gray-500
                 bg-white">📷️
               </button>
             </Upload>
             <Upload type="video" setProgress={setProgress} setData={setVideo}>
-              <button className="w-max p-2 shadow-md rounded-xl text-sm text-gray-500
+              <button type="button" className="w-max p-2 shadow-md rounded-xl text-sm text-gray-500
                 bg-white">🎥️
               </button>
             </Upload>

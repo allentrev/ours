@@ -81,7 +81,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json({ posts, hasMore });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch posts" });
+    res.status(500).json({ error: "PostController getPosts Failed to fetch posts" });
   }
 };
 
