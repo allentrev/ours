@@ -1,8 +1,8 @@
 # Exported from Render on 2025-09-03T10:14:48Z
 services:
-- type: webA
+- type: web
   name: ours-backend
-  runtime: nodeA
+  runtime: node
   repo: https://github.com/allentrev/ours
   plan: free
   envVars:
@@ -46,13 +46,12 @@ services:
     sync: false
   - key: SMTP_TO
     sync: false  
-  region: oregon
+  region: singapore
   buildCommand: npm install && npm run render-build
   startCommand: npm start
   healthCheckPath: /health
   autoDeployTrigger: commit
   rootDir: ./backend
-
 - type: web
   name: ours-frontend
   runtime: static
