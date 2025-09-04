@@ -1,7 +1,7 @@
-import { Document } from "mongoose";
+import { Document, Schema } from "mongoose";
 
 export interface PostDocument extends Document {
-    user: string;
+    user: Schema.Types.ObjectId;
     img: string;
     title: string;
     slug: string;

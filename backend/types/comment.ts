@@ -1,8 +1,8 @@
-import { Document } from "mongoose";
+import { Document , Schema} from "mongoose";
 
 export interface CommentDocument extends Document {
-    user: string;
-    post: string;
+    user: Schema.Types.ObjectId;
+    post: Schema.Types.ObjectId;
     desc: string;
     // add other fields here as needed
 }

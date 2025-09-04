@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         /* Output */
+        "baseUrl": "./",
         "outDir": "./dist",
         "rootDir": "/",
 

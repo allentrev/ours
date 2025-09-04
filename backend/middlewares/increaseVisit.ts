@@ -1,6 +1,8 @@
+import { Request, Response, NextFunction} from "express";
+
 import Post from "../models/post.model.js";
 
-const increaseVisit = async (req, res, next) => {
+const increaseVisit = async (req: Request, res: Response, next: NextFunction) => {
   const slug = req.params.slug;
 
   await Post.findOneAndUpdate({ slug }, { $inc: { visit: 1 } });
