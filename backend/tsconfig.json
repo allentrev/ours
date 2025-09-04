@@ -3,7 +3,7 @@
         /* Output */
         "baseUrl": "./",
         "outDir": "./dist",
-        "rootDir": "/",
+        "rootDir": "./",
 
         /* Module Settings for ESM */
         "module": "NodeNext",
