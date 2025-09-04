@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction }  from "express";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 
 import { clerkMiddleware, requireAuth } from "@clerk/express";
 
@@ -21,34 +21,31 @@ const allowedOrigins =
 
 console.log("Allowed origins:", allowedOrigins);
 
-app.use(
-    cors({
-        origin: function (origin, callback) {
-            // Allow requests with no origin (like mobile apps, curl, Postman)
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            } else {
-                return callback(
-                    new Error(`CORS not allowed from this origin [${origin}]`),
-                    false
-                );
-            }
-        },
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-        credentials: true, // Optional: enable if using cookies/sessions
-        optionsSuccessStatus: 204, //Important for legacy browser support
-    })
-);
+const corsOptions: CorsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error(`CORS not allowed from this origin [${origin}]`), false);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
 
-app.get("/health", (req, res) => res.send("OK"));
+app.use(cors(corsOptions));
+
+app.get("/health", (req: Request, res: Response) => res.send("OK"));
 
 app.use(clerkMiddleware());
 app.use("/webhooks", webhookRouter);
 app.use(express.json());
 
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next) => {
     console.log(`Incoming request: ${req.method} ${req.url} and body:`);
     console.log(req.body);
     next();
