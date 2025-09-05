@@ -65,6 +65,9 @@ services:
     sync: false
   - key: VITE_API_URL
     sync: false
+  domains:
+  - www.oursingapore.co.uk
+  - oursingapore.co.uk
   buildCommand: npm run build
   staticPublishPath: dist
   autoDeployTrigger: commit
