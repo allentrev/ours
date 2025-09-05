@@ -18,11 +18,8 @@ const HomePage = () => {
       <div className="flex items-center justify-between">
         {/* titles */}
         <div className="text-grey-800 text-2xl md:text-5xl lg:text-6xl font-bold">
-          <h1> Lorem ipsum dolor sit amet consectetur adipisicing elit.</h1>
-          <p className="mt-8 text-md md:text-xl">Lorem ipsum dolor sit amet consectetur 
-            adipisicing elit. Necessitatibus, 
-            voluptatum. Quisquam, cumque. 
-            Quisquam, cumque. Quisquam, cumque.</p>
+          <h1> Heading text</h1>
+          <p className="mt-8 text-md md:text-xl">The quick brown fox jumped over the lazy dog.</p>
         </div>
         {/* animated button */}
         <Link to="write" className="hidden md:block relative">
