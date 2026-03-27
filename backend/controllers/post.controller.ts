@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import ImageKit from "imagekit";
 
 import Post from "../models/post.model.js";
 import { PostDocument } from "../types/post.js";
@@ -21,13 +20,9 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
     const sortQuery = req.query.sort as string | undefined;
     const featured = req.query.featured as string | undefined;
 
-    if (cat) {
-      query.category = cat;
-    }
+    if (cat) query.category = cat;
 
-    if (searchQuery) {
-      query.title = { $regex: searchQuery, $options: "i" };
-    }
+    if (searchQuery) query.title = { $regex: searchQuery, $options: "i" };
 
     if (author) {
       const user = (await User.findOne({ username: author }).select("_id")) as
@@ -35,7 +30,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
         | null;
 
       if (!user) {
-        res.status(404).json("No post found!");
+        res.status(404).json({ message: "No post found!" });
         return;
       }
 
@@ -66,9 +61,7 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    if (featured) {
-      query.isFeatured = true;
-    }
+    if (featured) query.isFeatured = true;
 
     const posts: PostDocument[] = await Post.find(query)
       .populate("user", "username")
@@ -76,24 +69,33 @@ export const getPosts = async (req: Request, res: Response): Promise<void> => {
       .limit(limit)
       .skip((page - 1) * limit);
 
-    const totalPosts = await Post.countDocuments();
+    const totalPosts = await Post.countDocuments(query);
     const hasMore = page * limit < totalPosts;
 
     res.status(200).json({ posts, hasMore });
   } catch (err) {
-    res.status(500).json({ error: "PostController getPosts Failed to fetch posts" });
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch posts" });
   }
 };
 
-// ---------------------- GET POST ----------------------
+// ---------------------- GET SINGLE POST ----------------------
 export const getPost = async (req: Request, res: Response): Promise<void> => {
   try {
-    const post = await Post.findOne({ slug: req.params.slug }).populate(
-      "user",
-      "username img"
-    );
+    const post = await Post.findOneAndUpdate(
+      { slug: req.params.slug },
+      { $inc: { visit: 1 } },
+      { new: true }
+    ).populate("user", "username img");
+
+    if (!post) {
+      res.status(404).json({ message: "Post not found" });
+      return;
+    }
+
     res.status(200).json(post);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to fetch post" });
   }
 };
@@ -101,62 +103,69 @@ export const getPost = async (req: Request, res: Response): Promise<void> => {
 // ---------------------- CREATE POST ----------------------
 export const createPost = async (req: Request, res: Response): Promise<void> => {
   try {
-    const clerkUserId = req.auth?.userId;
+    const user = req.currentUser!;
+    const role = req.auth?.sessionClaims?.metadata?.role || "user";
 
-    if (!clerkUserId) {
-      res.status(401).json("Not authenticated!");
-      return;
-    }
+    console.log("create Post, body,user,role");
+    console.log(req.body);
+    console.log(user);
+    console.log(role);  
 
-    const user = (await User.findOne({ clerkUserId })) as UserDocument | null;
+    const newPost = new Post({
+      user: user._id,
+      ...req.body, // title, content, img, category, tags
+    }) as PostDocument;
 
-    if (!user) {
-      res.status(404).json("User not found!");
-      return;
-    }
-
-    let slug = (req.body.title as string).replace(/ /g, "-").toLowerCase();
-    let existingPost = await Post.findOne({ slug });
-    let counter = 2;
-
-    while (existingPost) {
-      slug = `${slug}-${counter}`;
-      existingPost = await Post.findOne({ slug });
-      counter++;
-    }
-
-    const newPost = new Post({ user: user._id, slug, ...req.body }) as PostDocument;
     const post = await newPost.save();
-
-    res.status(200).json(post);
+    res.status(201).json(post);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to create post" });
+  }
+};
+
+// ---------------------- UPDATE POST ----------------------
+export const updatePost = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = req.currentUser!;
+    const role = req.auth?.sessionClaims?.metadata?.role || "user";
+
+    const { title, desc, content } = req.body;
+
+    if (role === "admin") {
+      const updatedPost = await Post.findByIdAndUpdate(
+        req.params.id,
+        { title, desc, content },
+        { new: true }
+      );
+      if (!updatedPost) return res.status(404).json("Post not found!");
+      return res.status(200).json(updatedPost);
+    }
+
+    const updatedPost = await Post.findOneAndUpdate(
+      { _id: req.params.id, user: user._id },
+      { title, desc, content },
+      { new: true }
+    );
+
+    if (!updatedPost) return res.status(403).json("You can only edit your own posts!");
+
+    res.status(200).json(updatedPost);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update post" });
   }
 };
 
 // ---------------------- DELETE POST ----------------------
 export const deletePost = async (req: Request, res: Response): Promise<void> => {
   try {
-    const clerkUserId = req.auth?.userId;
-
-    if (!clerkUserId) {
-      res.status(401).json("Not authenticated!");
-      return;
-    }
-
+    const user = req.currentUser!;
     const role = req.auth?.sessionClaims?.metadata?.role || "user";
 
     if (role === "admin") {
       await Post.findByIdAndDelete(req.params.id);
-      res.status(200).json("Post has been deleted");
-      return;
-    }
-
-    const user = (await User.findOne({ clerkUserId })) as UserDocument | null;
-
-    if (!user) {
-      res.status(404).json("User not found");
-      return;
+      return res.status(200).json("Post has been deleted");
     }
 
     const deletedPost = await Post.findOneAndDelete({
@@ -164,13 +173,11 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
       user: user._id,
     });
 
-    if (!deletedPost) {
-      res.status(403).json("You can delete only your posts!");
-      return;
-    }
+    if (!deletedPost) return res.status(403).json("You can delete only your posts!");
 
     res.status(200).json("Post has been deleted");
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to delete post" });
   }
 };
@@ -178,27 +185,14 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
 // ---------------------- FEATURE POST ----------------------
 export const featurePost = async (req: Request, res: Response): Promise<void> => {
   try {
-    const clerkUserId = req.auth?.userId;
+    const user = req.currentUser!;
+    const role = req.auth?.sessionClaims?.metadata?.role || "user";
     const postId = req.body.postId as string;
 
-    if (!clerkUserId) {
-      res.status(401).json("Not authenticated!");
-      return;
-    }
-
-    const role = req.auth?.sessionClaims?.metadata?.role || "user";
-
-    if (role !== "admin") {
-      res.status(403).json("You cannot feature posts!");
-      return;
-    }
+    if (role !== "admin") return res.status(403).json("You cannot feature posts!");
 
     const post = (await Post.findById(postId)) as PostDocument | null;
-
-    if (!post) {
-      res.status(404).json("Post not found!");
-      return;
-    }
+    if (!post) return res.status(404).json("Post not found!");
 
     const updatedPost = await Post.findByIdAndUpdate(
       postId,
@@ -208,18 +202,7 @@ export const featurePost = async (req: Request, res: Response): Promise<void> =>
 
     res.status(200).json(updatedPost);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to feature post" });
   }
-};
-
-// ---------------------- IMAGEKIT AUTH ----------------------
-const imagekit = new ImageKit({
-  urlEndpoint: process.env.IK_URL_ENDPOINT as string,
-  publicKey: process.env.IK_PUBLIC_KEY as string,
-  privateKey: process.env.IK_PRIVATE_KEY as string,
-});
-
-export const uploadAuth = async (req: Request, res: Response): Promise<void> => {
-  const result = imagekit.getAuthenticationParameters();
-  res.send(result);
 };

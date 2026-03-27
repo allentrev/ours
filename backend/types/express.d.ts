@@ -1,4 +1,5 @@
 import "express";
+import { UserDocument } from "./user.ts";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -10,5 +11,6 @@ declare module "express-serve-static-core" {
         };
       };
     };
+    currentUser?: UserDocument;
   }
 }

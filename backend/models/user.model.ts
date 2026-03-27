@@ -27,6 +27,9 @@ const userSchema = new Schema<UserDocument>(
         ref: "PostId",                  
       },
     ],
+    bio: { type: String },
+    facebook: { type: String },
+    instagram: { type: String },
   },
   { timestamps: true }
 );

@@ -1,24 +1,67 @@
+/* 1. External Fonts */
+@import url("https://fonts.googleapis.com");
+@import url("https://fonts.googleapis.com");
+
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* 3. Global Styles */
 
 body {
-  background-color: #e6e6ff;
-  width: 100vw;
-  overflow-x: hidden;
-  font-family: "Montserrat", sans-serif;
+    background-color: #e6e6ff;
+    width: 100vw;
+    overflow-x: hidden;
+    font-family: "Montserrat", sans-serif;
+}
+
+/* 3. Tiptap UI Fixes */
+.tiptap p.is-editor-empty:first-child::before {
+    color: #adb5bd;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+}
+.ProseMirror img {
+    max-width: 100%; /* keeps image inside editor width */
+    line-height: 1%;
+    width: 100%;
+    height: auto; /* maintain aspect ratio */
+    display: block; /* avoids inline overflow */
+    margin: 0 auto; /* optional: center image */
+    border-radius: 0.5rem; /* optional: rounded corners */
+}
+
+.ProseMirror p {
+    margin-top: 0.5rem; /* paragraph spacing */
+    margin-bottom: 0.5rem;
+    line-height: 1.25; /* line spacing */
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #9ca3af; /* Tailwind gray-400 */
+    pointer-events: none;
+    height: 0;
+}
+
+class: readOnly
+  ? 'prose prose-tight max-w-full'
+  : 'prose prose-tight max-w-full focus:outline-none',
+
+/* Resize handle styles */
+.tiptap-image-resizer-handle {
+    background: white;
+    border: 1px solid #888;
+    width: 8px;
+    height: 8px;
 }
 
 .animatedButton {
-    animation-duration: 10000ms;
+    animation-duration: 8s; /* slower spin */
 }
 
-.ql-container {
-  border: none !important;
-}
-
-.ql-toolbar {
-  border: none !important;
-}
-
-.ql-editors {
-  border: none !important;
+.animatedButton:hover {
+    animation-play-state: paused;
 }

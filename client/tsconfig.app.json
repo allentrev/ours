@@ -6,6 +6,19 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "baseUrl": "src",
+    "paths": {
+        "components": ["components/index"],
+        "components/*": ["components/*"],
+        "layouts": ["layouts/index"],
+        "layouts/*": ["layouts/*"],
+        "pages": ["pages/index"],
+        "pages/*": ["pages/*"],
+        "utilities": ["utilities/index"],
+        "utilities/*": ["utilities/*"],
+        "assets": ["assets/index"],
+        "assets/*": ["assets/*"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -23,5 +36,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src", "vite-env.d.ts"]
 }

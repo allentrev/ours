@@ -6,4 +6,7 @@ export interface UserDocument extends Document {
   email: string;
   img: string;
   savedPosts: string[];
+  bio?: string;
+  facebook?: string;
+  instagram?: string;
 }

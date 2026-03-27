@@ -69,3 +69,33 @@ export const savePost = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: "Failed to update saved posts" });
   }
 };
+
+// ---------------------- UPDATE PROFILE ----------------------
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = req.currentUser!;
+    const { bio, facebook, instagram } = req.body;
+
+    const updated = await User.findByIdAndUpdate(
+      user._id,
+      { bio, facebook, instagram },
+      { new: true }
+    );
+
+    res.status(200).json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+};
+
+// ---------------------- GET PROFILE ----------------------
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = req.currentUser!;
+    res.status(200).json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+};

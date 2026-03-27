@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import User from "../models/user.model.js";
 import Post from "../models/post.model.js";
+import Image from "../models/image.model.js";
 import Comment from "../models/comment.model.js";
 import { createTypedWebhook, isUnknownEvent, isUserCreatedEvent, isUserDeletedEvent } from "../lib/typedWebhook.js";
 
@@ -56,3 +57,16 @@ export const clerkWebHook = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const uploadWebhook = async (req: Request, res: Response) => {
+
+  const { fileName, url, size } = req.body
+
+  await Image.create({
+    fileName,
+    url,
+    size
+  })
+
+  res.json({ success: true })
+}
