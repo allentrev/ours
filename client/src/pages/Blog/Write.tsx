@@ -184,7 +184,7 @@ const Write = () => {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col gap-6">
-      <h1 className="text-xl font-light">Create a New Post TEST</h1>
+      <h1 className="text-xl font-light">Create a New Post TEST 2</h1>
 
       <form
         onSubmit={handleSubmit}
