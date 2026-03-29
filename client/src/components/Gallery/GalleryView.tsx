@@ -92,7 +92,7 @@ export default function GalleryView({ gallery, onBack }: GalleryViewProps) {
         <h2 className="text-2xl font-bold text-center flex-1 mx-4">
           {gallery.title}
         </h2>
-        <div className="w-[80px]"></div>
+        <div className="w-20"></div>
       </div>
 
       {/* Carousel */}

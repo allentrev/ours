@@ -171,7 +171,8 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
 
     if (role === "admin") {
       await Post.findByIdAndDelete(req.params.id);
-      return res.status(200).json("Post has been deleted");
+      res.status(200).json("Post has been deleted");
+      return
     }
 
     const deletedPost = await Post.findOneAndDelete({
