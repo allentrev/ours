@@ -1,3 +1,4 @@
+/* -------------------- Post Types -------------------- */
 export type PostType = "recipe" | "review" | "todo" | "note"
 
 export const POST_TYPES: PostType[] = [
@@ -7,8 +8,17 @@ export const POST_TYPES: PostType[] = [
   "note"
 ]
 
+/* -------------------- Shared Types -------------------- */
+export type VenueType =
+  | "Hawker"
+  | "Coffee_Shop"
+  | "Food_Court"
+  | "Mall"
+  | "Restaurant"
+
 /* -------------------- Recipe -------------------- */
 export interface RecipeData {
+  dish: string              // ✅ REQUIRED for recipe
   cuisines: string[]
   ingredients: string
   instructions: string
@@ -35,7 +45,8 @@ export interface ReviewLocation {
 }
 
 export interface ReviewData {
-  venues: string[]
+  dish?: string            // ✅ OPTIONAL
+  venue: VenueType
   cuisines: string[]
   location: ReviewLocation
   transport: ReviewTransport
@@ -51,22 +62,52 @@ export interface TodoLocation {
 }
 
 export interface TodoData {
-  venues: string[]
+  dish?: string            // ✅ OPTIONAL
+  venue: VenueType
   location: TodoLocation
 }
 
-/* -------------------- Main -------------------- */
-export interface PostRecord {
-  type: PostType
-  title: string
-  desc: string
+/* -------------------- Note -------------------- */
+export interface NoteData {
+  dish?: string            // ✅ OPTIONAL
   content: string
-  cover?: string
-
-  tags: string[]
-  dishes: string[]
-
-  recipe?: RecipeData
-  review?: ReviewData
-  todo?: TodoData
 }
+
+/* -------------------- Main Post (DISCRIMINATED UNION) -------------------- */
+export type PostRecord =
+  | {
+      type: "recipe"
+      title: string
+      desc: string
+      content: string
+      cover?: string
+      tags: string[]
+      recipe: RecipeData
+    }
+  | {
+      type: "review"
+      title: string
+      desc: string
+      content: string
+      cover?: string
+      tags: string[]
+      review: ReviewData
+    }
+  | {
+      type: "todo"
+      title: string
+      desc: string
+      content: string
+      cover?: string
+      tags: string[]
+      todo: TodoData
+    }
+  | {
+      type: "note"
+      title: string
+      desc: string
+      content: string
+      cover?: string
+      tags: string[]
+      note: NoteData
+    }

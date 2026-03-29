@@ -21,6 +21,7 @@ import connectDB from "./lib/connectDB.js";
 
 import userRouter from "./routes/user.route.js";
 import postRouter from "./routes/post.route.js";
+import dishesRouter from "./routes/dish.route.js";
 import commentRouter from "./routes/comment.route.js";
 import webhookRouter from "./routes/webhook.route.js";
 
@@ -80,6 +81,7 @@ app.use("/webhooks", webhookRouter);
 app.use("/refData", refDataRouter);
 app.use("/image", imageRouter);
 app.use("/gallery", galleryRouter);
+app.use("/dishes", dishesRouter)
 
 app.use("/users", userRouter);
 app.use("/posts", postRouter);

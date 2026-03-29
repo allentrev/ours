@@ -34,7 +34,7 @@ const Write = () => {
     desc: "",
     content: "",
     tags: [],
-    dishes: [],
+    dish: "",
   });
 
   const updateField = <K extends keyof PostRecord>(

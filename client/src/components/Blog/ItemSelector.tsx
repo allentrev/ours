@@ -1,139 +1,106 @@
-import { useState } from "react";
+import { useState, useMemo } from "react"
 
-type Props<T extends string> = {
-  label?: string;
-  items: T[];
-  setItems: (items: T[]) => void;
-  suggestions?: T[];
-  placeholder?: string;
-  normalise?: (value: string) => T;
-};
+interface Props {
+  label: string
+  items: string[]
+  setItems: (items: string[]) => void
+  mode?: "single" | "multi"
+  options?: string[]
+}
 
-
-export default function ItemSelector<T extends string>({
-  label = "Items",
-  items = [],
+const ItemSelector = ({
+  label,
+  items,
   setItems,
-  suggestions = [],
-  placeholder = "Search or add...",
-  normalise = (v) => v.trim().toLowerCase().replace(/\s+/g, "-") as T,
-}: Props<T>) {
-  const [input, setInput] = useState("");
-  const [activeIndex, setActiveIndex] = useState<number>(-1);
+  mode = "multi",
+  options = []
+}: Props) => {
+  const [input, setInput] = useState("")
+
+  // 🔍 filter suggestions based on input
+  const filteredOptions = useMemo(() => {
+    if (!input.trim()) return []
+    return options
+      .filter((o) =>
+        o.toLowerCase().includes(input.toLowerCase())
+      )
+      .slice(0, 5)
+  }, [input, options])
 
   const addItem = (value: string) => {
-    const normalised = normalise(value);
+    const trimmed = value.trim()
+    if (!trimmed) return
 
-    if (!items.includes(normalised)) {
-      setItems([...items, normalised]);
-    }
-
-    setInput("");
-    setActiveIndex(-1);
-  };
-
-  const removeItem = (value: T) => {
-    setItems(items.filter((i) => i !== value));
-  };
-
-  const filtered = suggestions.filter(
-    (s) =>
-      s.toLowerCase().includes(input.toLowerCase()) &&
-      !items.includes(normalise(s))
-  );
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-
-      if (filtered.length > 0 && activeIndex >= 0) {
-        addItem(filtered[activeIndex]);
-      } else if (input.trim()) {
-        addItem(input);
+    if (mode === "single") {
+      setItems([trimmed])
+    } else {
+      if (!items.includes(trimmed)) {
+        setItems([...items, trimmed])
       }
     }
 
-    if (e.key === "ArrowDown") {
-      setActiveIndex((prev) =>
-        prev < filtered.length - 1 ? prev + 1 : prev
-      );
-    }
+    setInput("")
+  }
 
-    if (e.key === "ArrowUp") {
-      setActiveIndex((prev) => (prev > 0 ? prev - 1 : -1));
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      addItem(input)
     }
+  }
 
-    if (e.key === "Backspace" && !input && items.length > 0) {
-      removeItem(items[items.length - 1]);
+  const removeItem = (item: string) => {
+    if (mode === "single") {
+      setItems([])
+    } else {
+      setItems(items.filter((i) => i !== item))
     }
-  };
+  }
 
   return (
-    <div>
-      {label && (
-        <label className="block text-sm font-medium mb-1">
-          {label}
-        </label>
+    <div className="grid gap-2 relative">
+      <label className="text-sm font-medium text-gray-700">
+        {label}
+      </label>
+
+      {/* INPUT */}
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={`Type ${label}...`}
+        className="p-2 border rounded-lg"
+      />
+
+      {/* SUGGESTIONS */}
+      {filteredOptions.length > 0 && (
+        <div className="border rounded-lg bg-white shadow-sm">
+          {filteredOptions.map((opt) => (
+            <div
+              key={opt}
+              onClick={() => addItem(opt)}
+              className="p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              {opt}
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* Selected items */}
-      <div className="flex flex-wrap gap-2 mb-2">
+      {/* SELECTED ITEMS */}
+      <div className="flex flex-wrap gap-2">
         {items.map((item) => (
           <span
             key={item}
-            className="bg-blue-600 text-white px-3 py-1 rounded-full flex items-center gap-2"
+            className="px-3 py-1 bg-gray-200 rounded-full flex items-center gap-2"
           >
             {item}
-            <button
-              type="button"
-              onClick={() => removeItem(item)}
-              className="hover:text-gray-200"
-            >
-              ×
-            </button>
+            <button onClick={() => removeItem(item)}>×</button>
           </span>
         ))}
       </div>
-
-      {/* Input */}
-      <input
-        value={input}
-        onChange={(e) => {
-          setInput(e.target.value);
-          setActiveIndex(-1);
-        }}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className="w-full border rounded-lg px-3 py-2"
-      />
-
-      {/* Suggestions */}
-      {input && (
-        <div className="border rounded shadow bg-white mt-1 max-h-48 overflow-y-auto">
-          {filtered.length > 0 ? (
-            filtered.map((item, index) => (
-              <div
-                key={item}
-                onClick={() => addItem(item)}
-                className={`px-3 py-2 cursor-pointer ${
-                  index === activeIndex
-                    ? "bg-blue-100"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {item}
-              </div>
-            ))
-          ) : (
-            <div
-              onClick={() => addItem(input)}
-              className="px-3 py-2 cursor-pointer text-blue-600 hover:bg-gray-100"
-            >
-              Add "{input}"
-            </div>
-          )}
-        </div>
-      )}
     </div>
-  );
+  )
 }
+
+export default ItemSelector

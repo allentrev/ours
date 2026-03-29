@@ -1,19 +1,38 @@
+import { useEffect, useState } from "react"
+
 import TypePagedCard from "./TypedPagedCard"
 import ItemSelector from "./ItemSelector"
 import type { RecipeData } from "../../types/blogTypes"
 
 interface Props {
   data: RecipeData
-  dishes: string[]
+  dish: string
   updateRecipe: <K extends keyof RecipeData>(
     key: K,
     value: RecipeData[K]
   ) => void
-  updateDishes: (d: string[]) => void
+  updateDish: (d: string[]) => void
 }
 
-const Recipe = ({ data, dishes, updateRecipe, updateDishes }: Props) => {
-  console.log("Recipe component", { data, dishes });
+const Recipe = ({ data, updateRecipe }: Props) => {
+  const [dishOptions, setDishOptions] = useState<string[]>([])
+  console.log("Recipe component", { data });
+
+    useEffect(() => {
+    const fetchDishes = async () => {
+      try {
+        const res = await fetch("/api/dishes")
+        const json = await res.json()
+
+        setDishOptions(json.map((d: any) => d.name))
+      } catch (err) {
+        console.error("Failed to load dishes", err)
+      }
+    }
+
+    fetchDishes()
+  }, [])
+
   return (
     <TypePagedCard
       pages={[
@@ -23,8 +42,10 @@ const Recipe = ({ data, dishes, updateRecipe, updateDishes }: Props) => {
             <div className="grid gap-4">
               <ItemSelector
                 label="Dish"
-                items={dishes}
-                setItems={updateDishes}
+                items={data.dish ? [data.dish] : []}
+                setItems={(v) => updateRecipe("dish", v[0] || "")}
+                mode="single"
+                options={dishOptions}
               />
 
               <ItemSelector

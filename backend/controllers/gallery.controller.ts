@@ -1,7 +1,6 @@
 import * as BunnyStorageSDK from "@bunny.net/storage-sdk";
 
 import { Request, Response } from "express";
-import { imagekit } from "../lib/imagekit.js";
 import { storageZone } from "../lib/bunny.js";
 import { Readable } from "stream";
 
@@ -42,21 +41,6 @@ export const getGalleryImagesByFolder = async (req: Request, res: Response) => {
     const cdn = "Bunny"
     let result = [];
     let images = [];
-    if (cdn !== "Bunny") {
-        // List files in ImageKit folder
-        result = await imagekit.listFiles({
-        path: cdnFolder,
-        limit: 200, // adjust as needed
-        });
-        // Map to your frontend format
-        images = result.map((file: any) => ({
-            fileType: file.fileType,
-            url: file.url,
-            name: file.name,
-            fileId: file.fileId,
-            thumbnail: file.thumbnail,
-        }));
-    } else {
         // List files in Bunnu folder        
         result = await BunnyStorageSDK.file.list(
             storageZone,
@@ -71,7 +55,6 @@ export const getGalleryImagesByFolder = async (req: Request, res: Response) => {
             fileId: file.guid,
             filename: file.objectName,
         }));
-    }
     console.log("getAllImages Images");
     console.log(images);
 
@@ -153,12 +136,6 @@ export const deleteGallery = async (
 //------------------------------- Import file -----------------------------------------------------------------------
 //
 
-
-export const uploadAuth = async (req: Request, res: Response): Promise<void> => {
-  const result = imagekit.getAuthenticationParameters();
-  res.send(result);
-};
-
 export const importFile = async (req: Request, res: Response): Promise<void> => {
     console.log("gallery.controller, importFile");
 
@@ -189,23 +166,6 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
             .toBuffer();
         
         console.log(`Upload to ${cdn}`)
-        if (cdn !== "Bunny") {
-            // Upload to ImageKit
-            result = await imagekit.upload({
-                file: processedBuffer,
-                fileName: uniqueFileName,
-                folder: cdnFolder,
-                customMetadata: {
-                    originalFilename: originalName
-                }
-            });
-            // Respond with ImageKit info
-            res.status(200).json({
-                message: "File uploaded successfully",
-                url: result.url,
-                fileId: result.fileId,
-            });
-        } else {
             // Upload to Bunny
             const stream = Readable.from(processedBuffer);
             result = await BunnyStorageSDK.file.upload(
@@ -224,7 +184,6 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
             url: fileUrl,
             fileId: uniqueFileName,
             });
-        }
         // Remove temp file
         fs.unlink(file.path, (err) => {
         if (err) console.error("Failed to remove temp file:", err);

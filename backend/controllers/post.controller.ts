@@ -103,7 +103,6 @@ export const getPost = async (req: Request, res: Response): Promise<void> => {
 // ---------------------- CREATE POST ----------------------
 export const createPost = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("create Post, TEST 2");
     const user = req.currentUser!;
     const role = req.auth?.sessionClaims?.metadata?.role || "user";
 

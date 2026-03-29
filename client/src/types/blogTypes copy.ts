@@ -10,7 +10,7 @@ export type PostBase = {
   cover?: string;
 
   tags: string[];
-  dishes: string[];
+  dish: string;
 
   placeName?: string;
   location?: string;

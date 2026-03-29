@@ -1,19 +1,38 @@
+import { useEffect, useState } from "react"
+
 import TypePagedCard from "./TypedPagedCard"
 import ItemSelector from "./ItemSelector"
 import type { TodoData } from "../../types/blogTypes"
 
 interface Props {
   data: TodoData
-  dishes: string[]
+  dish: string
   updateTodo: <K extends keyof TodoData>(
     key: K,
     value: TodoData[K]
   ) => void
-  updateDishes: (d: string[]) => void
+  updateDish: (d: string) => void
 }
 
-const Todo = ({ data, dishes, updateTodo, updateDishes }: Props) => {
-  console.log("Todo component", { data, dishes });
+const Todo = ({ data, updateTodo  }: Props) => {
+  const [dishOptions, setDishOptions] = useState<string[]>([])
+  
+  console.log("Todo component", { data });
+    useEffect(() => {
+      const fetchDishes = async () => {
+        try {
+          const res = await fetch("/api/dishes")
+          const json = await res.json()
+  
+          setDishOptions(json.map((d: any) => d.name))
+        } catch (err) {
+          console.error("Failed to load dishes", err)
+        }
+      }
+  
+      fetchDishes()
+    }, [])
+
   return (
     <TypePagedCard
       pages={[
@@ -48,11 +67,13 @@ const Todo = ({ data, dishes, updateTodo, updateDishes }: Props) => {
         {
           title: "Food",
           content: (
-            <ItemSelector
-              label="Dish"
-              items={dishes}
-              setItems={updateDishes}
-            />
+              <ItemSelector
+                label="Dish"
+                items={data.dish ? [data.dish] : []}
+                setItems={(v) => updateTodo("dish", v[0] || "")}
+                mode="single"
+                options={dishOptions}
+              />
           )
         }
       ]}

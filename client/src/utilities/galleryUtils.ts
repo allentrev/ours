@@ -203,7 +203,7 @@ export const getGalleryImages = async (base: string, folder: string): Promise<Im
 };
 
 /**
- * Requests backend to delete a image from ImageKit.
+ * Requests backend to delete a image from CDN.
  * Expects the backend to handle deletion via the CDN API.
  */
 
@@ -212,16 +212,12 @@ export const deleteImageFromCDN = async (image: Image): Promise<void> => {
     //console.log(`deleteImageFromCDN using ${cdn}`);
     //console.log(image);
 
-  // We expect `image.name` to contain the ImageKit fileId
+  // We expect `image.name` to contain the CDN fileId
   if (!image.fileId) throw new Error("Image fileId (name) is required to delete a image.");
 
   let url = "";
-  if (cdn !== "Bunny") {
-    url = `${import.meta.env.VITE_BACKEND_URL}/image/${encodeURIComponent(image.fileId)}`;
-  } else {
     url = `${import.meta.env.VITE_BACKEND_URL}/image/${encodeURIComponent(image.year)}/${encodeURIComponent(image.folder)}/${encodeURIComponent(image.filename)}`;
-  }
-
+  
   try {
     const res = await fetch(url, {
       method: "DELETE",

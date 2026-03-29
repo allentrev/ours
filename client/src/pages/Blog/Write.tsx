@@ -33,7 +33,7 @@ const Write = () => {
     desc: "",
     content: "",
     tags: [],
-    dishes: [],
+    dish: "",
 
     recipe: {
       cuisines: [],
@@ -184,7 +184,7 @@ const Write = () => {
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col gap-6">
-      <h1 className="text-xl font-light">Create a New Post TEST 2</h1>
+      <h1 className="text-xl font-light">Create a New Post</h1>
 
       <form
         onSubmit={handleSubmit}
@@ -271,27 +271,27 @@ const Write = () => {
           {formData.type === "recipe" && formData.recipe && (
             <Recipe
               data={formData.recipe}
-              dishes={formData.dishes}
+              dish={formData.dish}
               updateRecipe={updateRecipe}
-              updateDishes={(d) => updateField("dishes", d)}
+              updateDish={(d) => updateField("dish", d)}
             />
           )}
 
           {formData.type === "review" && formData.review && (
             <Review
               data={formData.review}
-              dishes={formData.dishes}
+              dish={formData.dish}
               updateReview={updateReview}
-              updateDishes={(d) => updateField("dishes", d)}
+              updateDish={(d) => updateField("dish", d)}
             />
           )}
 
           {formData.type === "todo" && formData.todo && (
             <Todo
               data={formData.todo}
-              dishes={formData.dishes}
+              dish={formData.dish}
               updateTodo={updateTodo}
-              updateDishes={(d) => updateField("dishes", d)}
+              updateDish={(d) => updateField("dish", d)}
             />
           )}
 
