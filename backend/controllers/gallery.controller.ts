@@ -1,8 +1,8 @@
 import * as BunnyStorageSDK from "@bunny.net/storage-sdk";
+import { Readable } from "stream";
 
 import { Request, Response } from "express";
 import { storageZone } from "../lib/bunny.js";
-import { Readable } from "stream";
 
 import sharp from "sharp";
 
@@ -167,7 +167,8 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
         
         console.log(`Upload to ${cdn}`)
             // Upload to Bunny
-            const stream = Readable.from(processedBuffer);
+            const nodeStream = Readable.from(processedBuffer);
+            const stream = Readable.toWeb(nodeStream);
             result = await BunnyStorageSDK.file.upload(
                 storageZone,
                 `${cdnFolder}/${uniqueFileName}`,

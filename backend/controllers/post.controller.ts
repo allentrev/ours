@@ -138,8 +138,12 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
         { title, desc, content },
         { new: true }
       );
-      if (!updatedPost) return res.status(404).json("Post not found!");
-      return res.status(200).json(updatedPost);
+      if (!updatedPost) {
+        res.status(404).json("Post not found!");
+        return;
+      } 
+      res.status(200).json(updatedPost);
+      return
     }
 
     const updatedPost = await Post.findOneAndUpdate(
@@ -148,8 +152,10 @@ export const updatePost = async (req: Request, res: Response): Promise<void> => 
       { new: true }
     );
 
-    if (!updatedPost) return res.status(403).json("You can only edit your own posts!");
-
+    if (!updatedPost) {
+      res.status(403).json("You can only edit your own posts!");
+      return;
+    }
     res.status(200).json(updatedPost);
   } catch (err) {
     console.error(err);
@@ -173,8 +179,10 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
       user: user._id,
     });
 
-    if (!deletedPost) return res.status(403).json("You can delete only your posts!");
-
+    if (!deletedPost) {
+      res.status(403).json("You can delete only your posts!");
+      return;
+    };
     res.status(200).json("Post has been deleted");
   } catch (err) {
     console.error(err);
@@ -189,10 +197,16 @@ export const featurePost = async (req: Request, res: Response): Promise<void> =>
     const role = req.auth?.sessionClaims?.metadata?.role || "user";
     const postId = req.body.postId as string;
 
-    if (role !== "admin") return res.status(403).json("You cannot feature posts!");
+    if (role !== "admin") {
+      res.status(403).json("You cannot feature posts!");
+      return
+    }
 
     const post = (await Post.findById(postId)) as PostDocument | null;
-    if (!post) return res.status(404).json("Post not found!");
+    if (!post) {
+      res.status(404).json("Post not found!");
+      return;
+    }
 
     const updatedPost = await Post.findByIdAndUpdate(
       postId,
@@ -205,4 +219,4 @@ export const featurePost = async (req: Request, res: Response): Promise<void> =>
     console.error(err);
     res.status(500).json({ error: "Failed to feature post" });
   }
-};
+}
