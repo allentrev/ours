@@ -15,10 +15,12 @@ function formatMs(ms: number) {
 
 async function checkBackendReady(): Promise<{ status: string }> {
   const wURL = `${import.meta.env.VITE_BACKEND_URL}/test`;
+  console.log("Checking backend readiness at:", wURL);
   const res = await fetch(wURL, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
   });
+  console.log("Backend readiness check response:", res);
   if (!res.ok) throw new Error("Backend not ready");
   return res.json();
 }
