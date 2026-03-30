@@ -1,8 +1,14 @@
 import { Link } from "react-router-dom";
 import { format } from "timeago.js";
+import type { PostRecord } from "../../types/blogTypes";  
+
+interface Props {
+  post: PostRecord;
+}
+
 
 //TODO get rid of hard coded username
-const PostListItem = ({ post}) => {
+const PostListItem = ({ post }: Props) => {
   const user = post.user;
   let userName = "";
   if (!user) {
@@ -28,7 +34,6 @@ const PostListItem = ({ post}) => {
           <span>Written by</span>
           <Link className="text-blue-800" to={`/posts?author=${userName}`}>{userName}</Link>
           <span>on</span>
-          <Link className="text-blue-800" to={`/posts?category=${post.category}`}>{post.category}</Link>
           <span>{format(post.createdAt)}</span>
         </div>
         <p>{post.desc}</p>

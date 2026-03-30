@@ -22,6 +22,7 @@ type PostMeta = {
   _id: string;
   userId: string;
   slug: string;
+  createdAt: string;
   user?: {
     _id: string;
     username: string;
