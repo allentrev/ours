@@ -11,7 +11,7 @@ const slugify = slugifyPkg.default || slugifyPkg;
 const postSchema = new Schema<PostDocument>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    img: { type: String, default: "" },
+    cover: { type: String, default: "" },
     title: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, index: true },
     desc: { type: String, default: "" },
