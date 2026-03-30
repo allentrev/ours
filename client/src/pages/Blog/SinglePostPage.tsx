@@ -82,12 +82,12 @@ const SinglePostPage = () => {
             <p className="text-gray-500 font-medium">{data.desc}</p>
           )}
         </div>
-        {data.img && (
+        {data.cover && (
           <div className="w-full h-[50vh] max-h-125 overflow-hidden rounded-xl">
-            <img src={data.img} alt="Cover" className="w-full h-full object-contain" />
+            <img src={data.cover} alt="Cover" className="w-full h-full object-contain" />
           </div>
         )}
-        {!data.img && (
+        {!data.cover && (
           <div className="hidden lg:block w-2/5">
             <p>"No cover image"</p>
           </div>

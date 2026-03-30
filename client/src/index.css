@@ -1,65 +1,81 @@
-/* 1. External Fonts */
-@import url("https://fonts.googleapis.com");
-@import url("https://fonts.googleapis.com");
+/* =========================
+   1. Fonts
+   ========================= */
+
+/* Replace with real font import */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap");
+
+/* =========================
+   2. Tailwind
+   ========================= */
 
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* 3. Global Styles */
+/* =========================
+   3. Global Styles
+   ========================= */
 
 body {
     background-color: #e6e6ff;
-    width: 100vw;
     overflow-x: hidden;
     font-family: "Montserrat", sans-serif;
 }
 
-/* 3. Tiptap UI Fixes */
+/* =========================
+   4. Tiptap / Editor Styles
+   ========================= */
+
+/* Placeholder text */
 .tiptap p.is-editor-empty:first-child::before {
-    color: #adb5bd;
     content: attr(data-placeholder);
     float: left;
-    height: 0;
+    color: #9ca3af;
     pointer-events: none;
-}
-.ProseMirror img {
-    max-width: 100%; /* keeps image inside editor width */
-    line-height: 1%;
-    width: 100%;
-    height: auto; /* maintain aspect ratio */
-    display: block; /* avoids inline overflow */
-    margin: 0 auto; /* optional: center image */
-    border-radius: 0.5rem; /* optional: rounded corners */
+    height: 0;
 }
 
+/* Paragraph spacing */
 .ProseMirror p {
-    margin-top: 0.5rem; /* paragraph spacing */
-    margin-bottom: 0.5rem;
-    line-height: 1.25; /* line spacing */
+    margin: 0.5rem 0;
+    line-height: 1.5;
 }
 
-.ProseMirror p.is-editor-empty:first-child::before {
-    content: attr(data-placeholder);
-    float: left;
-    color: #9ca3af; /* Tailwind gray-400 */
-    pointer-events: none;
-    height: 0;
+/* Images inside editor */
+.prose img {
+    @apply max-w-full h-auto rounded;
+    display: block;
+    margin: 0 auto;
 }
 
-class: readOnly
-  ? 'prose prose-tight max-w-full'
-  : 'prose prose-tight max-w-full focus:outline-none',
+/* =========================
+   5. Image Alignment (Custom Image Extension)
+   ========================= */
 
-/* Resize handle styles */
-.tiptap-image-resizer-handle {
-    background: white;
-    border: 1px solid #888;
-    width: 8px;
-    height: 8px;
+.img-align-left {
+    display: block;
+    margin-left: 0;
+    margin-right: auto;
 }
+
+.img-align-center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.img-align-right {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+/* =========================
+   6. Animations
+   ========================= */
 
 .animatedButton {
-    animation-duration: 8s; /* slower spin */
+    animation-duration: 8s;
 }
 
 .animatedButton:hover {

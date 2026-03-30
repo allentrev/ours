@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 interface CommandsProps {
   editMode: boolean;
-  imageMode: boolean;
+  imageMode?: boolean;
   canEdit: boolean;
   canDelete: boolean;
   canSetCover?: boolean;

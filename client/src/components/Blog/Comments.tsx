@@ -102,20 +102,24 @@ const Comments = ({ postId }: CommentsProps) => {
                 desc: `${mutation.variables.desc} (Sending...)`,
                 createdAt: new Date(),
                 user: {
-                  img: user.imageUrl,
-                  username: user.username,
+                  img: user?.imageUrl ?? "",
+                  username: user?.username ?? "",
                 },
               }}
             />
           )}
 
-          {data.map((comment) => (
-            <Comment
-              key={comment._id} 
-              comment={comment} 
-              onDelete={() => deleteMutation.mutate(comment._id)}
-            />
-          ))}
+          {Array.isArray(data) && data.length > 0 ? (
+            data.map((comment) => (
+              <Comment
+                key={comment._id}
+                comment={comment}
+                onDelete={() => deleteMutation.mutate(comment._id)}
+              />
+            ))
+          ) : (
+            <p className="text-gray-400">No comments yet.</p>
+          )}
         </>
       )}
     </div>

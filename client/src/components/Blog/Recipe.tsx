@@ -6,13 +6,11 @@ import type { RecipeData } from "../../types/blogTypes"
 
 interface Props {
   data: RecipeData
-  dish: string
   updateRecipe: <K extends keyof RecipeData>(
     key: K,
     value: RecipeData[K]
   ) => void
-  updateDish: (d: string[]) => void
-}
+  }
 
 const Recipe = ({ data, updateRecipe }: Props) => {
   const [dishOptions, setDishOptions] = useState<string[]>([])

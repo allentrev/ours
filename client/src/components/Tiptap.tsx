@@ -1,33 +1,30 @@
 // components/TiptapEditorWithToolbar.tsx
 import { useEditor, EditorContent } from '@tiptap/react'
-import Placeholder from '@tiptap/extension-placeholder'
 import StarterKit from '@tiptap/starter-kit'
-import Image from '@tiptap/extension-image'
-import ImageResize from 'tiptap-extension-resize-image'
+import Placeholder from '@tiptap/extension-placeholder'
+import { CustomImage } from '../editor/extensions/CustomImage'
 import { useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { importFile } from '../utilities/galleryUtils'
 
 interface TiptapEditorProps {
-  content: string,
-  readOnly?: boolean,
-  onChange?: (html: string) => void,
+  content: string
+  readOnly?: boolean
+  onChange?: (html: string) => void
 }
 
-const TiptapEditorWithToolbar = ({ content, readOnly, onChange }: TiptapEditorProps) => {
+const TiptapEditorWithToolbar = ({
+  content,
+  readOnly,
+  onChange,
+}: TiptapEditorProps) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const editor = useEditor({
+
     extensions: [
       StarterKit,
-      Image,
-      ImageResize.configure({
-        inline: false,
-        preserveAspectRatio: true,
-        handleSize: 8,
-        minWidth: 50,
-        minHeight: 50,
-      }),
+      CustomImage,
       Placeholder.configure({
         placeholder: 'Start typing here...',
       }),
@@ -36,12 +33,12 @@ const TiptapEditorWithToolbar = ({ content, readOnly, onChange }: TiptapEditorPr
     editable: !readOnly,
     editorProps: {
       attributes: {
-        class: 'prose prose-tight max-w-full focus:outline-none',
-        
+        class:
+          'prose prose-tight max-w-full focus:outline-none min-h-[300px]',
       },
     },
     onUpdate({ editor }) {
-      if( !readOnly && onChange ) {
+      if (!readOnly && onChange) {
         onChange(editor.getHTML())
       }
     },
@@ -59,25 +56,23 @@ const TiptapEditorWithToolbar = ({ content, readOnly, onChange }: TiptapEditorPr
     editor.setEditable(!readOnly)
   }, [readOnly, editor])
 
-
   const uploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target;
-    const file = input.files?.[0];
-    console.log("TipTapEditor uploadImage", file);
-    if (!file) return
+    const file = e.target.files?.[0]
+    if (!file || !editor) return
 
     try {
       const result = await importFile(file, '/content/images')
+
       if (!result?.url) {
         toast.error('Upload failed')
         return
       }
 
       editor
-        ?.chain()
+        .chain()
         .focus()
         .setImage({ src: result.url })
-        .createParagraphNear()
+        .insertContent('<p></p>') // safer than createParagraphNear
         .run()
 
       toast.success('Image uploaded')
@@ -86,15 +81,14 @@ const TiptapEditorWithToolbar = ({ content, readOnly, onChange }: TiptapEditorPr
       toast.error('Image upload failed')
     }
 
-    if (input) input.value = "";
+    e.target.value = ''
   }
 
   if (!editor) return null
 
   return (
     <div className="w-full border rounded-xl overflow-hidden">
-      
-      {/* Toolbar (only in edit mode) */}
+      {/* Toolbar */}
       {!readOnly && (
         <div className="flex items-center gap-2 p-2 border-b bg-gray-50">
           <button
@@ -141,11 +135,10 @@ const TiptapEditorWithToolbar = ({ content, readOnly, onChange }: TiptapEditorPr
         </div>
       )}
 
-      {/* Editor content */}
-      <div className="p-4 min-h-[300px]">
+      {/* Editor */}
+      <div className="p-4">
         <EditorContent editor={editor} />
       </div>
-
     </div>
   )
 }

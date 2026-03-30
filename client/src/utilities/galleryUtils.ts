@@ -192,6 +192,7 @@ export const getGalleryImages = async (base: string, folder: string): Promise<Im
             base: f.base,
             folder: f.folder,
             filename: f.filename,
+            access: f.access ?? "public", 
         }));
         //console.log("client getGalleryimages images");
         //console.log(images);
@@ -208,7 +209,6 @@ export const getGalleryImages = async (base: string, folder: string): Promise<Im
  */
 
 export const deleteImageFromCDN = async (image: Image): Promise<void> => {
-    const cdn = "Bunny";
     //console.log(`deleteImageFromCDN using ${cdn}`);
     //console.log(image);
 
@@ -216,7 +216,7 @@ export const deleteImageFromCDN = async (image: Image): Promise<void> => {
   if (!image.fileId) throw new Error("Image fileId (name) is required to delete a image.");
 
   let url = "";
-    url = `${import.meta.env.VITE_BACKEND_URL}/image/${encodeURIComponent(image.year)}/${encodeURIComponent(image.folder)}/${encodeURIComponent(image.filename)}`;
+    url = `${import.meta.env.VITE_BACKEND_URL}/image/${encodeURIComponent(image.base)}/${encodeURIComponent(image.folder)}/${encodeURIComponent(image.filename)}`;
   
   try {
     const res = await fetch(url, {
@@ -230,24 +230,6 @@ export const deleteImageFromCDN = async (image: Image): Promise<void> => {
   } catch (err) {
     throw new Error(`deleteImageFromCDN error: ${err}`);
   }
-};
-
-// utilities/galleryUtils.ts
-export const mapGalleryImageToImage = (image: Image, folder?: string): Image => {
-    const fileId = image.fileId || image.url; // fallback if no fileId
-    const url = image.url;
-    const thumbnail = image.url.includes("ik.imagekit.io")
-        ? `${image.url}?tr=w-300,h-300,fo-center` // auto square thumbnail
-        : image.url;
-    //console.log("mapGalleryImageToImage", image, folder, fileId, url,  thumbnail);
-    return {
-        fileId,
-        year: image.year,
-        url,
-        filename: image.filename,
-        folder,
-        thumbnail,
-    };
 };
 
 

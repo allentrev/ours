@@ -7,7 +7,6 @@ import backgroundImage from "../assets/green1.jpg";
 import { useAuth } from "../auth/AuthContext";
 import { toast } from "react-toastify";
 
-import { mapGalleryImageToImage } from "../utilities/galleryUtils";
 import type { GalleryRecord } from "../types/galleryTypes";
 import { getGalleryColumns } from "../components/Gallery/GalleryColumns";
 import EditFormArea from "../components/Gallery/GalleryEditFormArea";
@@ -109,7 +108,7 @@ const MaintainGalleryPage: React.FC = () => {
     //console.log(base,folder);
     try {
       const images: Image[] = await getGalleryImages(base, folder);
-      setImages(images.map(img => mapGalleryImageToImage(img, folder)));
+      setImages( images );
       setSelectedThumbnails([]);
     } catch (err) { console.error("Failed to load images:", err); toast.error("Failed to load images"); }
   };
@@ -137,7 +136,7 @@ const MaintainGalleryPage: React.FC = () => {
 
     if (imagesMode) {
       const images = await getGalleryImages(base, folder);
-      setImages(images.map(img => mapGalleryImageToImage(img, folder)));
+      setImages( images );
     }
 
     toast.success("Upload complete!");

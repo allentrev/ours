@@ -1,10 +1,14 @@
 import { useRef } from "react"
 
-const CoverUploader = ({ onUpload }) => {
+interface CoverUploaderProps {
+  onUpload: (file: File) => void | Promise<void>;
+}
+
+const CoverUploader = ({ onUpload }: CoverUploaderProps) => {
 
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = async (e) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
     const file = e.target.files?.[0]
 
@@ -26,6 +30,7 @@ const CoverUploader = ({ onUpload }) => {
       <input
         ref={inputRef}
         type="file"
+        accept="image/*"
         hidden
         onChange={handleFile}
       />

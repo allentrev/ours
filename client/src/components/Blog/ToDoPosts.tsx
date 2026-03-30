@@ -31,16 +31,17 @@ const ToDoPosts = () => {
       {/* First */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4">
         {/* image */}
-        {posts[0].img && <img
-          src={posts[0].img}
+        {posts[0].cover && <img
+          src={posts[0].cover}
           className="rounded-3xl object-cover"
           width="895"
         />}
         {/* details */}
         <div className="flex items-center gap-4">
           <h1 className="font-semibold lg:text-lg">01.</h1>
-          <Link className="text-blue-800 lg:text-lg">{posts[0].category}</Link>
-          <span className="text-gray-500">{format(posts[0].createdAt)}</span>
+          <Link className="text-blue-800 lg:text-lg" to={posts[0].category}>
+            <span className="text-gray-500">{format(posts[0].createdAt)}</span>
+          </Link>
         </div>
         {/* title */}
         <Link
@@ -54,9 +55,9 @@ const ToDoPosts = () => {
       <div className="w-full lg:w-1/2 flex flex-col gap-4">
         {/* second */}
         {posts[1] && <div className="lg:h-1/3 flex justify-between gap-4">
-          {posts[1].img && <div className="w-1/3 aspect-video">
+          {posts[1].cover && <div className="w-1/3 aspect-video">
             <img
-              src={posts[1].img}
+              src={posts[1].cover}
               className="rounded-3xl object-cover w-full h-full"
               width="298"
             />
@@ -66,7 +67,7 @@ const ToDoPosts = () => {
             {/* details */}
             <div className="flex items-center gap-4 text-sm lg:text-base mb-4">
               <h1 className="font-semibold">02.</h1>
-              <Link className="text-blue-800">{posts[1].category}</Link>
+              <Link className="text-blue-800" to={posts[1].category}>{posts[1].category}</Link>
               <span className="text-gray-500 text-sm">{format(posts[1].createdAt)}</span>
             </div>
             {/* title */}
@@ -92,7 +93,7 @@ const ToDoPosts = () => {
             {/* details */}
             <div className="flex items-center gap-4 text-sm lg:text-base mb-4">
               <h1 className="font-semibold">02.</h1>
-              <Link className="text-blue-800">{posts[2].category}</Link>
+              <Link className="text-blue-800" to={posts[2].category}>{posts[2].category}</Link>
               <span className="text-gray-500 text-sm">{format(posts[2].createdAt)}</span>
             </div>
             {/* title */}
@@ -106,9 +107,9 @@ const ToDoPosts = () => {
         </div>}
         {/* fourth */}
         {posts[3] && <div className="lg:h-1/3 flex justify-between gap-4">
-          {posts[3].img && <div className="w-1/3 aspect-video">
+          {posts[3].cover && <div className="w-1/3 aspect-video">
             <img
-              src={posts[3].img}
+              src={posts[3].cover}
               className="rounded-3xl object-cover w-full h-full"
               width="298"
             />
@@ -118,7 +119,9 @@ const ToDoPosts = () => {
             {/* details */}
             <div className="flex items-center gap-4 text-sm lg:text-base mb-4">
               <h1 className="font-semibold">02.</h1>
-              <Link className="text-blue-800">{posts[3].category}</Link>
+              <Link className="text-blue-800" to={posts[3].category}>
+                {posts[3].category}
+              </Link>
               <span className="text-gray-500 text-sm">{format(posts[3].createdAt)}</span>
             </div>
             {/* title */}

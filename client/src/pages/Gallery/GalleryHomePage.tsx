@@ -8,15 +8,8 @@ import GalleryView from "../../components/Gallery/GalleryView";
 import type { GalleryRecord } from "../../types/galleryTypes";
 import { getAllGallery } from "utilities"; // adjust path as needed
 
-interface ImageData {
-  id: string;
-  url: string;
-  name: string;
-}
-//TODO check setImages
 export default function GalleryHome() {
   const [selectedGallery, setSelectedGallery] = useState<GalleryRecord | null>(null);
-  const [images, setImages] = useState<ImageData[]>([]);
   const [loading, setLoading] = useState(true);
   const [galleries, setGalleries] = useState<GalleryRecord[]>([]);
   const navigate = useNavigate();

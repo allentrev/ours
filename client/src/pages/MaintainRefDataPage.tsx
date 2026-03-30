@@ -20,8 +20,7 @@ const MaintainRefDataPage: React.FC = () => {
 
   const [refData, setRefData] = useState<RefDataRecord[]>([]);
   const [websiteOptions, setWebsiteOptions] = useState<string[]>([]);
-  const [selectedPage, setSelectedPage] = useState<string>("");
-
+  
   const [selectedItems, setSelectedItems] = useState<RefDataRecord[]>([]);
   const [isNewEdit, setIsNewEdit] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -45,7 +44,6 @@ const MaintainRefDataPage: React.FC = () => {
           .sort((a, b) => a.localeCompare(b));
         
         setWebsiteOptions(uniquePages);
-        setSelectedPage(uniquePages[0] || "");
       } catch (error) {
         console.error("Failed to load reference data:", error);
         toast.error("Failed to load reference data");
@@ -248,6 +246,7 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
         commands={
           <Commands
             editMode={editMode}
+            imageMode={false}
             canEdit={selectedItems.length === 1 && isAuthenticated}
             canDelete={selectedItems.length > 0 && isAuthenticated}
             onCreate={handleCreate}

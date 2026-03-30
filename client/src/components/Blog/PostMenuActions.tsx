@@ -3,8 +3,20 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import type { PostRecord } from "../../types/blogTypes";
 
-const PostMenuActions = ({ post, isEditMode, onEditToggle, editData }) => {
+type Props = {
+  post: PostRecord;
+  isEditMode: boolean;
+  onEditToggle: () => void;
+  editData: {
+    title: string;
+    desc: string;
+    content: string;
+  };
+};
+
+const PostMenuActions = ({ post, isEditMode, onEditToggle, editData }: Props) => {
   const { user } = useUser();
   const { getToken } = useAuth();
   const navigate = useNavigate();
@@ -23,7 +35,13 @@ const PostMenuActions = ({ post, isEditMode, onEditToggle, editData }) => {
       toast.success("Post deleted successfully!");
       navigate("/blog");
     },
-    onError: (error) => toast.error(error.response.data),
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data || "Request failed");
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
   });
 
   const updateMutation = useMutation({
@@ -40,7 +58,13 @@ const PostMenuActions = ({ post, isEditMode, onEditToggle, editData }) => {
       queryClient.invalidateQueries({ queryKey: ["post", post.slug] });
       onEditToggle();
     },
-    onError: (error) => toast.error(error.response.data),
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data || "Request failed");
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
   });
 
   const featureMutation = useMutation({
@@ -53,7 +77,13 @@ const PostMenuActions = ({ post, isEditMode, onEditToggle, editData }) => {
       );
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["post", post.slug] }),
-    onError: (error) => toast.error(error.response.data),
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data || "Request failed");
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
   });
 
   return (
@@ -99,7 +129,7 @@ const PostMenuActions = ({ post, isEditMode, onEditToggle, editData }) => {
               d="M24 2L29.39 16.26L44 18.18L33 29.24L35.82 44L24 37L12.18 44L15 29.24L4 18.18L18.61 16.26L24 2Z"
               stroke="black"
               strokeWidth="2"
-              fill={featureMutation.isPending ? (post.isFeatured ? "none" : "black") : post.isFeatured ? "black" : "none"}
+              fill={featureMutation.isPending ? "black" : "none"}
             />
           </svg>
           <span>Feature</span>

@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import waitImage from "../assets/wait_2.jpg";
 import bgImage from "../assets/green1.jpg";
@@ -31,8 +32,7 @@ interface AppLoaderProps {
 export default function AppLoader({ children }: AppLoaderProps) {
   const maxWaitMs = 12_000; // 90 seconds
   const retryDelay = 2000; // 2 seconds
-  const skip = true;
-
+  
   const [remainingMs, setRemainingMs] = useState(maxWaitMs);
 
   /* Countdown timer */

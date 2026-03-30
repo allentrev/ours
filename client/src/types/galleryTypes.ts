@@ -21,11 +21,11 @@ export interface GalleryRecord {
 // Image as used in GalleryView
 export interface Image {
   fileId: string;       // CND fileId (optional, for deletion)
-  base: string;        // the base folder name in the Gallery
+  base: string;        // the base folder name in the Gallery, was year
   folder: string;      // folder name
   filename: string;     // filename
   url: string;          // URL for display
-  access: string;      // optional access level (e.g., "public", "private")
+  access?: string;      // optional access level (e.g., "public", "private")
   width?: number;
   height?: number;
   size?: number;

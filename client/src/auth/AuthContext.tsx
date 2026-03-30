@@ -11,12 +11,11 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-//TODO look at websiteoptions
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminName, setAdminName] = useState('');
   const [refData, setRefData] = useState<RefDataRecord[]>([]);
-  const [websiteOptions, setWebsiteOptions] = useState<string[]>([]);
 
   // Load refData and auth state on mount
   useEffect(() => {
@@ -28,11 +27,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const data = await getAllRefData();
         localStorage.setItem('refData', JSON.stringify(data));
         setRefData(data);
-        const options = Array.from(new Set(data.map(item => item.webPage))).sort();
-        setWebsiteOptions(options);
-        localStorage.setItem('websiteOptions', JSON.stringify(options))    };
       }
-
+    };
     loadRefData();
 
     // Load auth state
@@ -42,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAdminName(name);
       setIsAuthenticated(authenticated);
     }
-  }, []);
+}, []);
 
   const login = (name: string, password: string): boolean => {
     // Make sure refData is loaded before checking

@@ -45,7 +45,13 @@ const ProfilePage = () => {
       toast.success("Profile updated!");
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
-    onError: (error) => toast.error(error.response.data),
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data || "Request failed");
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    }
   });
 
   if (isPending) return "Loading...";

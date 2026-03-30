@@ -6,12 +6,10 @@ import type { TodoData } from "../../types/blogTypes"
 
 interface Props {
   data: TodoData
-  dish: string
   updateTodo: <K extends keyof TodoData>(
     key: K,
     value: TodoData[K]
   ) => void
-  updateDish: (d: string) => void
 }
 
 const Todo = ({ data, updateTodo  }: Props) => {

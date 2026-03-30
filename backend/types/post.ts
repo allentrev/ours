@@ -1,8 +1,9 @@
 import { Document, Types } from "mongoose";
 
 export interface PostDocument extends Document {
+  _id: Types.ObjectId;
   user: Types.ObjectId;       // reference to the user who created the post
-  img: string;                // cover image URL
+  cover: string;                // cover image URL
   title: string;              
   slug: string;               // unique URL-friendly slug
   desc?: string;              

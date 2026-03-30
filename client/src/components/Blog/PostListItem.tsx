@@ -13,10 +13,10 @@ const PostListItem = ({ post}) => {
 
   return (
     <div className="flex flex-col xl:flex-row gap-8 mb-12">
-      {/* image */}
-      {post.img && (
+      {/* Cover image */}
+      {post.cover && (
         <div className="md:hidden xl:block xl:w-1/3">
-          <img src={post.img} className="rounded-2xl object-cover w-full max-h-68" width="735" />
+          <img src={post.cover} className="rounded-2xl object-cover w-full max-h-68" width="735" />
         </div>
       )}
       {/* details */}

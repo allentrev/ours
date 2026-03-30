@@ -1,4 +1,5 @@
-import React, { Component, ReactNode, ErrorInfo } from "react";
+import { Component } from "react";
+import type { ReactNode, ErrorInfo } from "react";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -14,10 +15,10 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(_: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(_error: Error): ErrorBoundaryState {
+    console.error("ErrorBoundary caught an error:", _error);
     return { hasError: true };
   }
-
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
   }

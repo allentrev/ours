@@ -5,16 +5,20 @@ const Search = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      const query = e.target.value;
-      if (location.pathname === "/blog/posts") {
-        setSearchParams({ ...Object.fromEntries(searchParams), search: query });
-      } else {
-        navigate(`/blog/posts?search=${query}`);
-      }
+const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "Enter") {
+    const query = (e.target as HTMLInputElement).value;
+
+    if (location.pathname === "/blog/posts") {
+      setSearchParams({
+        ...Object.fromEntries(searchParams),
+        search: query,
+      });
+    } else {
+      navigate(`/blog/posts?search=${query}`);
     }
-  };
+  }
+};
 
   return (
     <div className="bg-gray-100 p-2 rounded-full flex items-center gap-2">

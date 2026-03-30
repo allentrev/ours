@@ -1,5 +1,6 @@
 // utilities/blogUtils.ts
 import axios from "axios";
+import type { PostRecord,CreatePost } from "../types/blogTypes";
 
 // API URL helper
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -84,9 +85,9 @@ export const createPost = async (
 */
 
 export const createPost = async (
-  post,
-  token
-) => {
+  post: CreatePost,
+  token: string | null
+): Promise<PostRecord> => {
 
   const res = await axios.post(
     `${API_URL}/posts`,
