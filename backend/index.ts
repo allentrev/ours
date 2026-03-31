@@ -37,7 +37,7 @@ const PORT = Number(process.env.PORT) || 3000;
 
 const allowedOrigins =
   process.env.NODE_ENV === "production" && process.env.CLIENT_URL
-    ? process.env.CLIENT_URL.split(",").map(o => o.trim())
+    ? process.env.CLIENT_URL.split(",").map(o => o.trim().toLowerCase())
     : ["http://localhost:5173"];
 
 const corsOptions: CorsOptions = {
@@ -45,7 +45,9 @@ const corsOptions: CorsOptions = {
     // Allow server-to-server / curl / mobile apps
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    const normalizedOrigin = origin.toLowerCase();
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
 
@@ -107,17 +109,14 @@ app.use("/comments", commentRouter);
 /* Health / readiness check */
 console.log("Registering /test route");
 app.get("/", (_req, res) => {
-  console.log("Hit /");
   res.status(200).send("Backend running");
 });
 
 app.get("/health", (_req, res) => {
-  console.log("Hit /health");
   res.status(200).json({ status: "healthy" });
 });
 
 app.get("/test", (_req, res) => {
-  console.log("Hit /test");
   res.status(200).json({
     status: "ok",
     marker: "build-2026-03-31-a"
