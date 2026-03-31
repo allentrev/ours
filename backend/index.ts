@@ -107,10 +107,10 @@ app.use("/comments", commentRouter);
 /* Health / readiness check */
 console.log("Registering /test route");
 app.get("/test", (req: Request, res: Response) => {
-  res
-    .set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-    .status(200)
-    .json({ status: "ok" });
+  res.status(200).json({
+    status: "ok",
+    marker: "build-2026-03-31-a"
+  });
 });
 
 /* -------------------- Error handler -------------------- */
