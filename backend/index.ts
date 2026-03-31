@@ -106,7 +106,18 @@ app.use("/comments", commentRouter);
 /* -------------------- Routes -------------------- */
 /* Health / readiness check */
 console.log("Registering /test route");
-app.get("/test", (req: Request, res: Response) => {
+app.get("/", (_req, res) => {
+  console.log("Hit /");
+  res.status(200).send("Backend running");
+});
+
+app.get("/health", (_req, res) => {
+  console.log("Hit /health");
+  res.status(200).json({ status: "healthy" });
+});
+
+app.get("/test", (_req, res) => {
+  console.log("Hit /test");
   res.status(200).json({
     status: "ok",
     marker: "build-2026-03-31-a"
