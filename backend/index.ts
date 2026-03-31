@@ -59,6 +59,20 @@ const corsOptions: CorsOptions = {
   credentials: true,
 };
 
+/* -------------------- Start Server -------------------- */
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log("Allowed origins:", allowedOrigins);
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+};
+
 /* -------------------- Middleware -------------------- */
 
 app.use(cors(corsOptions));
@@ -66,6 +80,8 @@ app.use(express.json());
 app.use(clerkMiddleware());
 
 console.log("Node Env = ", process.env.NODE_ENV);
+
+/* -------------------- Trace Route -------------------- */
 
 //if (process.env.NODE_ENV !== "testing, should be production") {
   app.use((req: Request, res: Response, next: NextFunction) => {
@@ -89,6 +105,7 @@ app.use("/comments", commentRouter);
 
 /* -------------------- Routes -------------------- */
 /* Health / readiness check */
+console.log("Registering /test route");
 app.get("/test", (req: Request, res: Response) => {
   res
     .set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
@@ -110,11 +127,7 @@ app.use(
 
 /* -------------------- Start server -------------------- */
 
-app.listen(PORT, async () => {
-  await connectDB();
-  console.log("Allowed origins:", allowedOrigins);
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+startServer();
 
 /* -------------------- Process safety -------------------- */
 
