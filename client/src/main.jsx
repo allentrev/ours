@@ -55,15 +55,14 @@ if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }
 
-
 const router = createBrowserRouter([
   { 
     errorElement: <RouteError />,
     children: [
       { path: "/", element: <HomePage /> },
       { path: "/about", element: <AboutPage/> },
-      { path: "/login", element: <LoginPage/> },
-      { path: "/register", element: <RegisterPage/> },
+      { path: "/login/*", element: <LoginPage/> },
+      { path: "/register/*", element: <RegisterPage/> },
 
       { path: "/admin", element: <AdminPage/> },
       { path: "/maintainRefData", element: <MaintainRefDataPage/> },
@@ -99,7 +98,7 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} signInUrl="/login" signUpUrl="/register">
       <QueryClientProvider client={queryClient}>
         <AppLoader>
           <HelmetProvider>
