@@ -76,6 +76,7 @@ const startServer = async () => {
 };
 
 /* -------------------- Middleware -------------------- */
+app.use("/webhooks", webhookRouter);
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -93,8 +94,6 @@ console.log("Node Env = ", process.env.NODE_ENV);
 //}
 
 /* -------------------- Routers -------------------- */
-
-app.use("/webhooks", webhookRouter);
 
 app.use("/refData", refDataRouter);
 app.use("/image", imageRouter);
