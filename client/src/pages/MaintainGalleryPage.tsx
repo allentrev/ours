@@ -4,7 +4,7 @@ import MaintainPageLayout from "../layouts/MaintainPageLayout";
 import { MaintainEntityManager } from "../components/MaintainEntityManager";
 import { Commands } from "../components/Commands";
 import backgroundImage from "../assets/green1.jpg";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import { toast } from "react-toastify";
 
 import type { GalleryRecord } from "../types/galleryTypes";

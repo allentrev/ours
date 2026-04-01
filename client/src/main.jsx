@@ -80,7 +80,7 @@ const router = createBrowserRouter([
           { path: "/blog", element: <BlogHomePage/> },
           { path: "/blog/posts", element: <PostListPage/> },
           { path: "/blog/:slug", element: <SinglePostPage/> },
-          { path: "blog/write", element: <Write/> },
+          { path: "/blog/write", element: <Write/> },
           { path: "/profile", element: <ProfilePage/> },
         ]
       },
