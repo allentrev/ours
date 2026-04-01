@@ -85,6 +85,7 @@ app.use(
     authorizedParties: [
       "https://oursingapore.co.uk",
       "https://www.oursingapore.co.uk",
+      "https://backend.oursingapore.co.uk",
       "http://localhost:5173",
     ],
   })
