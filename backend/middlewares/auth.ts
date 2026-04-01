@@ -2,11 +2,15 @@
 import { Request, Response, NextFunction } from "express";
 import User from "../models/user.model.js";
 import { UserDocument } from "../types/user.js";
+import { getAuth } from "@clerk/express";
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
-  console.log("req.auth:", req.auth);
-  const clerkUserId = req.auth?.userId;
-  console.log("Clerk User ID:", clerkUserId);
+  const auth = getAuth(req);
+
+  console.log("Authorization header:", req.headers.authorization);
+  console.log("Clerk auth:", auth);
+
+  const clerkUserId = auth.userId;
   if (!clerkUserId) {
     return res.status(401).json("Not authenticated!");
   }

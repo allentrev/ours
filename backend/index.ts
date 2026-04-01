@@ -88,7 +88,9 @@ console.log("Node Env = ", process.env.NODE_ENV);
 
 //if (process.env.NODE_ENV !== "testing, should be production") {
   app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`Incoming request: [${req.method}] ${req.url}`);
+    if (req.url !== "/health") {
+      console.log(`Incoming request: [${req.method}] ${req.url}`);
+    } 
     next();
   });
 //}
