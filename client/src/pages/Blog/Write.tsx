@@ -222,6 +222,7 @@ const Write = () => {
   const mutation = useMutation({
     mutationFn: async (newPost: CreatePost) => {
       const token = await getToken()
+      console.log("Clerk token:", token);
       return createPost(newPost, token)
     },
     onSuccess: (res) => {
