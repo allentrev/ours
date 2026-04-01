@@ -10,8 +10,15 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
   console.log("Authorization header:", req.headers.authorization);
   console.log("Clerk auth:", auth);
 
+  console.log("Origin:", req.headers.origin);
+  console.log("Referer:", req.headers.referer);
+  console.log("Host:", req.headers.host);
+  console.log("X-Forwarded-Host:", req.headers["x-forwarded-host"]);
+  console.log("X-Forwarded-Proto:", req.headers["x-forwarded-proto"]);
+
   const clerkUserId = auth.userId;
   if (!clerkUserId) {
+    console.log("No Clerk user ID found in request");
     return res.status(401).json("Not authenticated!");
   }
 

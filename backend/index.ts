@@ -80,7 +80,15 @@ app.use("/webhooks", webhookRouter);
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(clerkMiddleware());
+app.use(
+  clerkMiddleware({
+    authorizedParties: [
+      "https://oursingapore.co.uk",
+      "https://www.oursingapore.co.uk",
+      "http://localhost:5173",
+    ],
+  })
+);
 
 console.log("Node Env = ", process.env.NODE_ENV);
 
