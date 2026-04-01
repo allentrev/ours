@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import Post from "../models/post.model.js";
 import Image from "../models/image.model.js";
 import Comment from "../models/comment.model.js";
-import { createTypedWebhook, isUnknownEvent, isUserCreatedEvent, isUserDeletedEvent } from "../lib/typedWebhook.js";
+import { createTypedWebhook } from "../lib/typedWebhook.js";
 
 export const clerkWebHook = async (req: Request, res: Response) => {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -13,35 +13,72 @@ export const clerkWebHook = async (req: Request, res: Response) => {
     throw new Error("Webhook secret needed!");
   }
 
-  // use raw body for verification (set in body-parser middleware)
   const payload = req.body.toString("utf-8");
-  const headers = req.headers;
+  const headers = req.headers as Record<string, string>;
 
-console.log("content-type:", req.headers["content-type"]);
-console.log("isBuffer:", Buffer.isBuffer(req.body));
-console.log("body length:", req.body?.length);
-console.log("svix-id:", req.headers["svix-id"]);
-console.log("svix-signature:", req.headers["svix-signature"] ? "present" : "missing");
-console.log("svix-timestamp:", req.headers["svix-timestamp"]);
+  console.log("content-type:", req.headers["content-type"]);
+  console.log("isBuffer:", Buffer.isBuffer(req.body));
+  console.log("body length:", req.body?.length);
+  console.log("svix-id:", req.headers["svix-id"]);
+  console.log(
+    "svix-signature:",
+    req.headers["svix-signature"] ? "present" : "missing"
+  );
+  console.log("svix-timestamp:", req.headers["svix-timestamp"]);
 
   const { verify } = createTypedWebhook(WEBHOOK_SECRET);
 
   try {
-    const evt = verify(payload, headers as Record<string, string>);
+    const evt = verify(payload, headers);
 
-    console.log("Received event:", evt);
+    console.log("Received event type:", evt.type);
+    //
+    /******************** user created *******************************************88  */
+    if (evt.type === "user.created") {
+      const primaryEmail =
+        evt.data.email_addresses?.find(
+          (email) => email.id === evt.data.primary_email_address_id
+        )?.email_address ?? null;
 
-    if (isUserCreatedEvent(evt)) {
-      const newUser = new User({
+      if (!primaryEmail) {
+        console.warn("user.created received without an email address", {
+          clerkUserId: evt.data.id,
+          primaryEmailAddressId: evt.data.primary_email_address_id,
+        });
+
+        return res.status(200).json({
+          message: "Webhook received, but no email was available",
+        });
+      }
+
+      const username =
+        evt.data.username ||
+        [evt.data.first_name, evt.data.last_name].filter(Boolean).join(" ") ||
+        primaryEmail;
+
+      await User.updateOne(
+        { clerkUserId: evt.data.id },
+        {
+          $set: {
+            clerkUserId: evt.data.id,
+            username,
+            email: primaryEmail,
+            img: evt.data.profile_image_url ?? "",
+          },
+        },
+        { upsert: true }
+      );
+      console.log("User created/updated:", {
         clerkUserId: evt.data.id,
-        username:
-          evt.data.username || evt.data.email_addresses[0].email_address,
-        email: evt.data.email_addresses[0].email_address,
-        img: evt.data.profile_img_url,
+        username,
+        email: primaryEmail,
       });
-
-      await newUser.save();
-    } else if (isUserDeletedEvent(evt)){
+      return res.status(200).json({
+        message: "User created or updated",
+      });
+    //
+    /******************** user deleted *******************************************88  */
+    } else if (evt.type === "user.deleted") {
       const deletedUser = await User.findOneAndDelete({
         clerkUserId: evt.data.id,
       });
@@ -50,30 +87,38 @@ console.log("svix-timestamp:", req.headers["svix-timestamp"]);
         await Post.deleteMany({ user: deletedUser._id });
         await Comment.deleteMany({ user: deletedUser._id });
       }
-    } else if (isUnknownEvent(evt)) {
-      console.warn("Unhandled Clerk event:", evt.type, evt.data);
+      console.log("User deleted:", {
+        clerkUserId: evt.data.id,
+        deletedUserId: deletedUser?._id,
+      });
+      return res.status(200).json({
+        message: "User deleted",
+      });
+    //
+    /******************** user other events *******************************************88  */
+    } else {
+      console.warn("Unhandled Clerk event:", evt);
     }
 
     return res.status(200).json({
       message: "Webhook received",
     });
   } catch (err) {
-    console.error("Webhook verification failed:", err);
+    console.error("Webhook handling failed:", err);
     return res.status(400).json({
-      message: "Webhook verification failed!",
+      message: "Webhook handling failed!",
     });
   }
 };
 
 export const uploadWebhook = async (req: Request, res: Response) => {
-
-  const { fileName, url, size } = req.body
+  const { fileName, url, size } = req.body;
 
   await Image.create({
     fileName,
     url,
-    size
-  })
+    size,
+  });
 
-  res.json({ success: true })
-}
+  res.json({ success: true });
+};

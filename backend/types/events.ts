@@ -1,20 +1,28 @@
-export interface ClerkUserCreated {
+export type ClerkEmailAddress = {
   id: string;
-  username: string | null;
-  email_addresses: { id: string; email_address: string }[];
-  profile_img_url: string;
-}
+  email_address: string;
+};
 
-export interface ClerkUserDeleted {
-  id: string;
-}
+export type ClerkUserCreatedEvent = {
+  type: "user.created";
+  data: {
+    id: string;
+    username: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    primary_email_address_id?: string | null;
+    email_addresses: ClerkEmailAddress[];
+    profile_image_url?: string | null;
+  };
+};
 
-// fallback for unhandled events
-export interface ClerkUnknownEvent {
-  [key: string]: unknown;
-}
+export type ClerkUserDeletedEvent = {
+  type: "user.deleted";
+  data: {
+    id: string;
+  };
+};
 
-export interface EventMap {
-  "user.created": ClerkUserCreated;
-  "user.deleted": ClerkUserDeleted;
-}
+export type ClerkWebhookEvent =
+  | ClerkUserCreatedEvent
+  | ClerkUserDeletedEvent
