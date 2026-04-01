@@ -18,7 +18,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClerkProvider } from '@clerk/clerk-react';
-import { AuthProvider } from "./auth/AuthContext";
+import { AuthProvider } from "./auth/AuthProvider";
 
 import './index.css';
 import AppLoader from "./components/AppLoader";
