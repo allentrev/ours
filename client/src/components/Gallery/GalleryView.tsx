@@ -27,17 +27,18 @@ export default function GalleryView({ gallery }: GalleryViewProps) {
   const nextRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!swiperInstance) return;
+
+    const navigation = swiperInstance.params.navigation;
+
     if (
-      swiperInstance &&
-      swiperInstance.params &&
-      swiperInstance.navigation &&
+      navigation &&
+      typeof navigation !== "boolean" &&
       prevRef.current &&
       nextRef.current
     ) {
-      if (typeof swiperInstance.params.navigation !== "boolean") {
-        swiperInstance.params.navigation.prevEl = prevRef.current;
-        swiperInstance.params.navigation.nextEl = nextRef.current;
-      }
+      navigation.prevEl = prevRef.current;
+      navigation.nextEl = nextRef.current;
 
       swiperInstance.navigation.destroy();
       swiperInstance.navigation.init();
