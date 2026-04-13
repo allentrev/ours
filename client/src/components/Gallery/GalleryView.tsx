@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
@@ -22,29 +22,6 @@ export default function GalleryView({ gallery }: GalleryViewProps) {
   const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null);
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const prevRef = useRef<HTMLDivElement>(null);
-  const nextRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!swiperInstance) return;
-
-    const navigation = swiperInstance.params.navigation;
-
-    if (
-      navigation &&
-      typeof navigation !== "boolean" &&
-      prevRef.current &&
-      nextRef.current
-    ) {
-      navigation.prevEl = prevRef.current;
-      navigation.nextEl = nextRef.current;
-
-      swiperInstance.navigation.destroy();
-      swiperInstance.navigation.init();
-      swiperInstance.navigation.update();
-    }
-  }, [swiperInstance]);
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -76,6 +53,9 @@ export default function GalleryView({ gallery }: GalleryViewProps) {
     );
   }
 
+  const isFirst = lightboxIndex === 0;
+  const isLast = lightboxIndex === images.length - 1;
+
   return (
     <div className="flex flex-col items-center justify-center w-full">
       <div className="w-full flex justify-center relative">
@@ -106,33 +86,31 @@ export default function GalleryView({ gallery }: GalleryViewProps) {
             ))}
           </Swiper>
 
-          <div
-            ref={prevRef}
+          <button
+            type="button"
+            onClick={() => swiperInstance?.slidePrev()}
+            disabled={isFirst}
             className={`absolute top-1/2 -translate-y-1/2 z-10 text-3xl md:text-5xl
-              cursor-pointer text-white bg-black/40 hover:bg-black/60 p-2 md:p-3
-              rounded-full select-none left-2 md:left-[-50px]
-              ${
-                lightboxIndex === 0
-                  ? "opacity-30 cursor-not-allowed pointer-events-none"
-                  : ""
-              }`}
+              text-white bg-black/40 hover:bg-black/60 p-2 md:p-3 rounded-full
+              select-none left-2 md:left-[-50px]
+              ${isFirst ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
+            aria-label="Previous image"
           >
             ‹
-          </div>
+          </button>
 
-          <div
-            ref={nextRef}
+          <button
+            type="button"
+            onClick={() => swiperInstance?.slideNext()}
+            disabled={isLast}
             className={`absolute top-1/2 -translate-y-1/2 z-10 text-3xl md:text-5xl
-              cursor-pointer text-white bg-black/40 hover:bg-black/60 p-2 md:p-3
-              rounded-full select-none right-2 md:right-[-50px]
-              ${
-                lightboxIndex === images.length - 1
-                  ? "opacity-30 cursor-not-allowed pointer-events-none"
-                  : ""
-              }`}
+              text-white bg-black/40 hover:bg-black/60 p-2 md:p-3 rounded-full
+              select-none right-2 md:right-[-50px]
+              ${isLast ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
+            aria-label="Next image"
           >
             ›
-          </div>
+          </button>
         </div>
       </div>
 
