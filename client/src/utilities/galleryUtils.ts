@@ -133,6 +133,7 @@ export const deleteGallery = async (gallery: GalleryRecord): Promise<void> => {
             const errorText = await res.text();
             throw new Error(`Failed to delete gallery: ${errorText}`);
         }
+        console.log("Gallery deleted successfully");
     } catch (err) {
         throw new Error(`deleteGallery error: ${err}`);
     }

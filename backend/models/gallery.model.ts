@@ -1,5 +1,5 @@
 // models/member.model.ts
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { GalleryDocument } from "../types/gallery.js";
 
 const gallerySchema = new Schema<GalleryDocument>(

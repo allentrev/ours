@@ -1,12 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import SEO from "../../components/SEO";
-import galleryImg from "../../assets/wait_1.jpg";
 
 import { useEffect, useState } from "react";
 import GalleryList from "../../components/Gallery/GalleryList";
 import GalleryView from "../../components/Gallery/GalleryView";
 import type { GalleryRecord } from "../../types/galleryTypes";
-import { getAllGallery } from "utilities"; // adjust path as needed
+import { getAllGallery } from "utilities";
 
 export default function GalleryHome() {
   const [selectedGallery, setSelectedGallery] = useState<GalleryRecord | null>(null);
@@ -15,20 +14,20 @@ export default function GalleryHome() {
   const navigate = useNavigate();
 
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const data = await getAllGallery();
-      setGalleries(data);
-    } catch (error) {
-      console.error("Failed to load Gallery data:", error);
-    } finally {
-      setLoading(false); // ✅ stop the loading spinner
-    }
-  };
-  fetchData();
-}, []);
+    const fetchData = async () => {
+      try {
+        const data = await getAllGallery();
+        setGalleries(data);
+      } catch (error) {
+        console.error("Failed to load Gallery data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-if (loading) return <p>Loading…</p>;
+  if (loading) return <p>Loading…</p>;
 
   return (
     <>
@@ -38,70 +37,67 @@ if (loading) return <p>Loading…</p>;
         description="Family memories, stories, and moments collected in one place."
       />
 
-      <div className="min-h-screen bg-gray-50 px-6 py-12">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+      {/* ---------- Header ---------- */}
+      <div className="px-6 py-12">
+        <div className="max-w-5xl mx-auto rounded-2xl shadow-lg p-8">
 
-          {/* ---------- Header ---------- */}
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">
-              Gallery
-            </h1>
+          {/* Top Row */}
+          <div className="flex justify-between items-center mb-4">
 
+            {/* Title + Selected Gallery */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-3xl font-bold text-gray-800">Gallery</h1>
+
+              {selectedGallery && (
+                <>
+                  <span className="text-gray-400 text-2xl">/</span>
+                  <h2 className="text-2xl font-semibold text-gray-700">
+                    {selectedGallery.title}
+                  </h2>
+                </>
+              )}
+            </div>
+
+            {/* Home Button */}
             <button
               onClick={() => navigate("/")}
               className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
             >
-              ← Back to Home
+              Home
             </button>
           </div>
 
-          {/* ---------- Intro ---------- */}
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <img
-              src={galleryImg}
-              alt="Gallery"
-              className="w-48 h-48 object-cover rounded-xl shadow"
-            />
-
-            <p className="text-gray-600 text-center md:text-left">
-              This section is dedicated to family stories, milestones, and
-              shared memories. Over time, it will grow into a collection of
-              moments worth remembering.
-            </p>
-          </div>
-
-          {/* ---------- Placeholder content ---------- */}
-          <div className="mt-10 space-y-4 text-gray-700">
-            <p>
-              Content coming soon…
-            </p>
-
-            <p>
-              Future updates may include image galleries, family history,
-              timelines, and personal reflections.
-            </p>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col items-center py-10 min-h-[calc(100vh-80px-80px)]">
-      {!selectedGallery ? (
-        <div className="w-full max-w-5xl mx-auto">
-          {galleries.length > 0 ? (
-            <GalleryList galleries={galleries} onOpen={setSelectedGallery} />
-          ) : (
-            <p className="text-center text-black text-5xl">
-              No Galleries found.
-            </p>
+          {/* Back Button (only when viewing a gallery) */}
+          {selectedGallery && (
+            <div className="mb-2">
+              <button
+                onClick={() => setSelectedGallery(null)}
+                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+              >
+                ← Back
+              </button>
+            </div>
           )}
         </div>
-      ) : (
-        <div className="w-full max-w-4xl mx-auto">
-          <GalleryView
-            gallery={selectedGallery}
-            onBack={() => setSelectedGallery(null)}
-          />
-        </div>
-      )}
+      </div>
+
+      {/* ---------- Content ---------- */}
+      <div className="flex flex-col items-center py-10 min-h-[calc(100vh-80px-80px)]">
+        {!selectedGallery ? (
+          <div className="w-full max-w-5xl mx-auto">
+            {galleries.length > 0 ? (
+              <GalleryList galleries={galleries} onOpen={setSelectedGallery} />
+            ) : (
+              <p className="text-center text-black text-5xl">
+                No Galleries found.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="w-full max-w-4xl mx-auto">
+            <GalleryView gallery={selectedGallery} />
+          </div>
+        )}
       </div>
     </>
   );

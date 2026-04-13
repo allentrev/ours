@@ -22,7 +22,8 @@ export async function deleteImage(req: Request, res: Response) {
         success: true,
         message: `Image  '${cdnPath}' deleted successfully from Bunny.`,
       });
-  } catch (error: any) {
+  }
+  catch (error: any) {
     console.error("Image deletion failed:", error);
     return res.status(500).json({
       success: false,

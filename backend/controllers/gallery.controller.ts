@@ -12,6 +12,7 @@ import { GalleryDocument } from "../types/gallery.js";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import csvParser from "csv-parser";
+import Image from "models/image.model.js";
 
 interface ParamsId {
     id: string;
@@ -120,8 +121,8 @@ export const deleteGallery = async (
         const galleryId = req.params.id;
        console.log("gallery.controller, deleteGallery ", galleryId);
 
-        //const deletedGallery = await Gallery.findByIdAndDelete(req.params.id);
-        const deletedGallery = true;
+        const deletedGallery = await Gallery.findByIdAndDelete(req.params.id);
+        //const deletedGallery = true;
         if (!deletedGallery) {
             return res
                 .status(404)
@@ -152,12 +153,23 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
         return;
     }
 
+    // Extract base and folder from "base/folder"
+    const parts = cdnFolder.split("/").filter(Boolean);
+
+    if (parts.length < 2) {
+        res.status(400).json({ error: "Folder must be in format base/folder" });
+        return;
+    }
+
+    const base = parts[0];
+    const folder = parts.slice(1).join("/"); // supports nested folders like base/a/b
+
     const originalName = file.originalname;
-    const extension = file.originalname.split('.').pop(); // get file extension
-    const uniqueFileName = `${uuidv4()}.${extension}`;
+    const uniqueFileName = `${uuidv4()}.jpg`;
     console.log(`backend gallery.controller importFile folder = ${cdnFolder}`)
     const cdn = "Bunny"
     let result = {};
+
     try {
         //process image
         const processedBuffer = await sharp(file.path)
@@ -179,6 +191,17 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
             );
 
             const fileUrl = `https://ours-pull.b-cdn.net${cdnFolder}/${uniqueFileName}`;
+
+            // Save image record to MongoDB
+            const newImage = await Image.create({
+                originalName,
+                url: fileUrl,
+                size: processedBuffer.length,
+                base,
+                folder,
+                fileName: uniqueFileName,
+            });
+
 
             res.status(200).json({
             message: "File uploaded successfully",
