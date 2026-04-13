@@ -12,7 +12,7 @@ import { GalleryDocument } from "../types/gallery.js";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import csvParser from "csv-parser";
-import Image from "models/image.model.js";
+import Image from "../models/image.model.js";
 
 interface ParamsId {
     id: string;
