@@ -148,6 +148,7 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
         res.status(400).json({ error: "No file uploaded" });
         return;
     }
+
     if (!cdnFolder) {
         res.status(400).json({ error: "No folder specified" });
         return;
@@ -157,6 +158,10 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
     const parts = cdnFolder.split("/").filter(Boolean);
 
     if (parts.length < 2) {
+        fs.unlink(file.path, (err) => {
+            if (err) console.error("Failed to remove temp file:", err);
+        });
+
         res.status(400).json({ error: "Folder must be in format base/folder" });
         return;
     }
@@ -166,58 +171,91 @@ export const importFile = async (req: Request, res: Response): Promise<void> => 
 
     const originalName = file.originalname;
     const uniqueFileName = `${uuidv4()}.jpg`;
-    console.log(`backend gallery.controller importFile folder = ${cdnFolder}`)
-    const cdn = "Bunny"
+    console.log(`backend gallery.controller importFile folder = ${cdnFolder}`);
+    const cdn = "Bunny";
     let result = {};
 
     try {
-        //process image
+        // Check for duplicate before expensive work
+        const existingImage = await Image.findOne({
+            originalName,
+            base,
+            folder,
+        });
+
+        if (existingImage) {
+            console.warn(
+                `[IMPORT SKIPPED] Duplicate: ${originalName} -> ${base}/${folder}`
+            );
+
+            fs.unlink(file.path, (err) => {
+                if (err) console.error("Failed to remove temp file:", err);
+            });
+
+            res.status(409).json({
+                duplicate: true,
+                message: "File already exists",
+            });
+            return;
+        }
+
+        // Process image
         const processedBuffer = await sharp(file.path)
             .resize({ width: 1200 })      // aspect ratio maintained
             .jpeg({ quality: 80 })        // export quality 80%
             .toBuffer();
         
-        console.log(`Upload to ${cdn}`)
-            // Upload to Bunny
-            const nodeStream = Readable.from(processedBuffer);
-            const stream = Readable.toWeb(nodeStream);
-            result = await BunnyStorageSDK.file.upload(
-                storageZone,
-                `${cdnFolder}/${uniqueFileName}`,
-                stream,
-                {
-                    contentType: "image/jpeg",
-                }
-            );
+        console.log(`Upload to ${cdn}`);
 
-            const fileUrl = `https://ours-pull.b-cdn.net${cdnFolder}/${uniqueFileName}`;
+        // Upload to Bunny
+        const nodeStream = Readable.from(processedBuffer);
+        const stream = Readable.toWeb(nodeStream);
 
-            // Save image record to MongoDB
-            const newImage = await Image.create({
-                originalName,
-                url: fileUrl,
-                size: processedBuffer.length,
-                base,
-                folder,
-                fileName: uniqueFileName,
-            });
+        result = await BunnyStorageSDK.file.upload(
+            storageZone,
+            `${cdnFolder}/${uniqueFileName}`,
+            stream,
+            {
+                contentType: "image/jpeg",
+            }
+        );
 
+        const fileUrl = `https://ours-pull.b-cdn.net${cdnFolder}/${uniqueFileName}`;
 
-            res.status(200).json({
+        // Save image record to MongoDB
+        const newImage = await Image.create({
+            originalName,
+            url: fileUrl,
+            size: processedBuffer.length,
+            base,
+            folder,
+            fileName: uniqueFileName,
+        });
+
+        res.status(200).json({
             message: "File uploaded successfully",
             url: fileUrl,
             fileId: uniqueFileName,
-            });
+        });
+
         // Remove temp file
         fs.unlink(file.path, (err) => {
-        if (err) console.error("Failed to remove temp file:", err);
+            if (err) console.error("Failed to remove temp file:", err);
         });
         
         console.log("importFile Result");
         console.log(result);
+        console.log("Saved image record:", newImage);
 
     } catch (err: unknown) {
-        console.error(`${cdn} upload failed:`, err);
+        console.error(
+            `[UPLOAD FAILED] ${originalName} -> ${base}/${folder}`,
+            err
+        );
+
+        fs.unlink(file.path, (unlinkErr) => {
+            if (unlinkErr) console.error("Failed to remove temp file:", unlinkErr);
+        });
 
         // Safely get message
         const message = err instanceof Error ? err.message : String(err);

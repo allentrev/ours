@@ -138,7 +138,7 @@ export const deleteGallery = async (gallery: GalleryRecord): Promise<void> => {
         throw new Error(`deleteGallery error: ${err}`);
     }
 };
-// Need to add folder name
+
 export async function importFile(file: File, folder: string): Promise<UploadImageResult> {
 
     const url = `${import.meta.env.VITE_BACKEND_URL}/gallery/import`;
@@ -155,9 +155,20 @@ export async function importFile(file: File, folder: string): Promise<UploadImag
             body: formData,
         });
         data = await response.json();
-   } catch (err) {
+    } catch (err) {
         console.error("Network or JSON parsing error", err);
         throw new Error("Failed to communicate with server");
+    }
+
+    // ✅ HANDLE DUPLICATES HERE
+    if (response.status === 409) {
+        console.warn(`Skipped duplicate: ${file.name}`);
+        return {
+            success: false,
+            message: "Duplicate skipped",
+            url: "",
+            fileId: "",
+        };
     }
 
     if (!response.ok) {
