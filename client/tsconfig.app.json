@@ -6,21 +6,20 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "baseUrl": "src",
     "paths": {
-        "components": ["components/index"],
-        "components/*": ["components/*"],
-        "layouts": ["layouts/index"],
-        "layouts/*": ["layouts/*"],
-        "pages": ["pages/index"],
-        "pages/*": ["pages/*"],
-        "utilities": ["utilities/index"],
-        "utilities/*": ["utilities/*"],
-        "assets": ["assets/index"],
-        "assets/*": ["assets/*"]
+      "@/*": ["./src/*"],
+      "components": ["./src/components/index"],
+      "components/*": ["./src/components/*"],
+      "layouts": ["./src/layouts/index"],
+      "layouts/*": ["./src/layouts/*"],
+      "pages": ["./src/pages/index"],
+      "pages/*": ["./src/pages/*"],
+      "utilities": ["./src/utilities/index"],
+      "utilities/*": ["./src/utilities/*"],
+      "assets": ["./src/assets/index"],
+      "assets/*": ["./src/assets/*"]
     },
 
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
@@ -28,7 +27,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
