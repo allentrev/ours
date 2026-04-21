@@ -1,29 +1,23 @@
 {
-    "compilerOptions": {
-        /* Output */
-        "baseUrl": "./",
-        "outDir": "./dist",
-        "rootDir": "./",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./",
 
-        /* Module Settings for ESM */
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "target": "ES2020",
-        "lib": ["ES2020"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2020",
+    "lib": ["ES2020"],
 
-        /* Strictness & Safety */
-        "strict": true,
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
 
-        /* Debugging */
-        "sourceMap": true,
+    "sourceMap": true,
 
-        /* Extra Safety: Catch missing .js extensions */
-        "allowImportingTsExtensions": false, // Disallow importing .ts directly
-        "noEmit": false // Allow emitting JS
-    },
-    "include": ["**/*.ts"],
-    "exclude": ["node_modules", "dist"]
+    "allowImportingTsExtensions": false,
+    "noEmit": false
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
