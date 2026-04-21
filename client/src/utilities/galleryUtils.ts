@@ -97,7 +97,6 @@ export const updateAllGallery = async (
     updatedRecords: GalleryRecord[]
 ): Promise<void> => {
     const url = `${import.meta.env.VITE_BACKEND_URL}/gallery/updateMany`;
-
     try {
         const res = await fetch(url, {
             method: "POST",
@@ -221,8 +220,8 @@ export const getGalleryImages = async (base: string, folder: string): Promise<Im
  */
 
 export const deleteImageFromCDN = async (image: Image): Promise<void> => {
-    //console.log(`deleteImageFromCDN using ${cdn}`);
-    //console.log(image);
+    console.log(`deleteImageFromCDN using Bunny`);
+    console.log(image);
 
   // We expect `image.name` to contain the CDN fileId
   if (!image.fileId) throw new Error("Image fileId (name) is required to delete a image.");

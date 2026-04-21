@@ -9,6 +9,36 @@ import sharp from "sharp";
 import Gallery from "../models/gallery.model.js";
 import { GalleryDocument } from "../types/gallery.js";
 
+export const getGalleryImages = async (base: string, folder: string): Promise<Image[]> => {
+    const url = `${import.meta.env.VITE_BACKEND_URL}/gallery/images/${encodeURIComponent(base)}/${encodeURIComponent(folder)}`;
+    console.log(url)
+    try {
+        const res = await fetch(url, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) throw new Error(`Failed to fetch gallery [${folder}] images: ${res.statusText}`);
+        const data = await res.json();
+        //console.log("client getGalleryimages data");
+        //console.log(data);
+        const images = (data as any[])
+        .filter((f) => f.fileType === "image")
+        .map((f) => ({
+            url: f.url,
+            fileId: f.fileId,
+            base: f.base,
+            folder: f.folder,
+            filename: f.filename,
+            access: f.access ?? "public", 
+        }));
+        //console.log("client getGalleryimages images");
+        //console.log(images);
+        return images; // may be []
+    } catch (err) {
+        console.error(err);
+        return [];
+    }
+};
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import csvParser from "csv-parser";
@@ -39,27 +69,50 @@ export const getGalleryImagesByFolder = async (req: Request, res: Response) => {
   const cdnFolder = `/${base}/${folder}`;
   console.log("gallery.controller getGalleryImagesByFolder ", cdnFolder);
   try {
-    const cdn = "Bunny"
-    let result = [];
-    let images = [];
-        // List files in Bunnu folder        
-        result = await BunnyStorageSDK.file.list(
+        const cdn = "Bunny"
+        // 1. Get Bunny files
+        const bunnyFiles = await BunnyStorageSDK.file.list(
             storageZone,
             cdnFolder,
         );
-        images = result.map((file: any) => ({
+        // 2. Get DB image records for this folder/base
+        const dbImages = await Image.find({ folder, base }).lean();
+
+        // 3. Build lookup map
+        const imageMap = new Map(
+            dbImages.map(img => [img.fileName, img.originalName])
+        );
+
+
+        // 4. Map Bunny files + attach original filename
+        const images = bunnyFiles.map((file: any) => ({
             fileType: "image",
             url: `https://ours-pull.b-cdn.net${cdnFolder}/${file.objectName}`,
             name: file.objectName,
-            folder: folder,
-            base: base,
-            fileId: file.guid,
             filename: file.objectName,
+            originalFilename:
+                imageMap.get(file.objectName) || file.objectName,
+            folder,
+            base,
+            fileId: file.guid,
         }));
-    console.log("getAllImages Images");
-    console.log(images);
+        
+        // 5. Sort by original filename
+        images.sort((a, b) =>
+        a.originalFilename.localeCompare(
+            b.originalFilename,
+            undefined,
+            {
+            numeric: true,
+            sensitivity: "base",
+            }
+        )
+        );
 
-    res.status(200).json(images);
+        //console.log("getAllImages Images");
+        //console.log(images);
+
+        res.status(200).json(images);
   } catch (err) {
     console.error(`Error fetching images from ${cdn}:`, err);
     res.status(500).json({ error: "Failed to fetch images" });
