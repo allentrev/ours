@@ -11,7 +11,6 @@ import { GalleryDocument } from "../types/gallery.js";
 
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
-import csvParser from "csv-parser";
 import Image from "../models/image.model.js";
 
 
@@ -19,36 +18,6 @@ interface ParamsId {
     id: string;
 }
 
-export const getGalleryImages = async (base: string, folder: string): Promise<typeof Image[]> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/gallery/images/${encodeURIComponent(base)}/${encodeURIComponent(folder)}`;
-    console.log(url)
-    try {
-        const res = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-        if (!res.ok) throw new Error(`Failed to fetch gallery [${folder}] images: ${res.statusText}`);
-        const data = await res.json();
-        //console.log("client getGalleryimages data");
-        //console.log(data);
-        const images = (data as any[])
-        .filter((f) => f.fileType === "image")
-        .map((f) => ({
-            url: f.url,
-            fileId: f.fileId,
-            base: f.base,
-            folder: f.folder,
-            filename: f.filename,
-            access: f.access ?? "public", 
-        }));
-        //console.log("client getGalleryimages images");
-        //console.log(images);
-        return images; // may be []
-    } catch (err) {
-        console.error(err);
-        return [];
-    }
-};
 
 //TODO THink and review filetype
 export const getAllGallery = async (req: Request, res: Response) => {
