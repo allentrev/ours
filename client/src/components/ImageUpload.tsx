@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import type { UploadImageResult } from "types/galleryTypes";
+import type { UploadImageResult } from "../types/galleryTypes";
 
 interface ImageUploadProps {
   value: string;

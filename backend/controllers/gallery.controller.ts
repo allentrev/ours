@@ -9,7 +9,17 @@ import sharp from "sharp";
 import Gallery from "../models/gallery.model.js";
 import { GalleryDocument } from "../types/gallery.js";
 
-export const getGalleryImages = async (base: string, folder: string): Promise<Image[]> => {
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
+import csvParser from "csv-parser";
+import Image from "../models/image.model.js";
+
+
+interface ParamsId {
+    id: string;
+}
+
+export const getGalleryImages = async (base: string, folder: string): Promise<typeof Image[]> => {
     const url = `${import.meta.env.VITE_BACKEND_URL}/gallery/images/${encodeURIComponent(base)}/${encodeURIComponent(folder)}`;
     console.log(url)
     try {
@@ -39,14 +49,7 @@ export const getGalleryImages = async (base: string, folder: string): Promise<Im
         return [];
     }
 };
-import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import csvParser from "csv-parser";
-import Image from "../models/image.model.js";
 
-interface ParamsId {
-    id: string;
-}
 //TODO THink and review filetype
 export const getAllGallery = async (req: Request, res: Response) => {
     console.log("gallery.controller, getAllGallery");
