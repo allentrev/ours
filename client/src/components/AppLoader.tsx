@@ -32,7 +32,7 @@ interface AppLoaderProps {
 }
 
 export default function AppLoader({ children }: AppLoaderProps) {
-  const maxWaitMs = 12_000; // 90 seconds
+  const maxWaitMs = 120000; // 2 minutes
   const retryDelay = 2000; // 2 seconds
   
   const [remainingMs, setRemainingMs] = useState(maxWaitMs);

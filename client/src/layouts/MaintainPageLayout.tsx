@@ -26,7 +26,7 @@ const MaintainPageLayout: React.FC<MaintainPageLayoutProps> = ({
     >
       <div className="min-h-screen bg-opacity-50 backdrop-blur-sm p-4">
         <header className="w-full text-gray-700  rounded-b-lg mb-4">
-          <h1 className="text-4xl font-extrabold text-center drop-shadow-lg">MainPageLayoutA{ title }</h1>
+          <h1 className="text-4xl font-extrabold text-center drop-shadow-lg">{ title }</h1>
         </header>
 
         <div className="p-4 max-w-7xl mx-auto rounded-xl bg-gray-300 bg-opacity-90 shadow-2xl space-y-4">
