@@ -38,8 +38,8 @@ export default function GalleryHome() {
       />
 
       {/* ---------- Header ---------- */}
-      <div className="px-6 py-12">
-        <div className="max-w-5xl mx-auto rounded-2xl shadow-lg p-8">
+      <div className="px-6 py-4">
+        <div className="max-w-5xl mx-auto rounded-2xl shadow-lg p-2 ">
 
           {/* Top Row */}
           <div className="flex justify-between items-center mb-4">

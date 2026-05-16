@@ -16,6 +16,14 @@
    3. Global Styles
    ========================= */
 
+html,
+body,
+#root {
+    height: 100%;
+    margin: 0;
+    overscroll-behavior-y: none;
+}
+
 body {
     background-color: #e6e6ff;
     overflow-x: hidden;

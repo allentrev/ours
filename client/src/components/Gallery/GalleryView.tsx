@@ -7,6 +7,8 @@ import "swiper/css/navigation";
 
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
+import Download from "yet-another-react-lightbox/plugins/download";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
 
 import type { GalleryRecord } from "../../types/galleryTypes";
 import type { Image } from "../../types/galleryTypes";
@@ -119,7 +121,14 @@ export default function GalleryView({ gallery }: GalleryViewProps) {
           open={lightboxOpen}
           close={() => setLightboxOpen(false)}
           index={lightboxIndex}
-          slides={images.map((img) => ({ src: img.url }))}
+          slides={images.map((img, i) => ({
+            src: img.url,
+            download: {
+              url: img.url,
+              filename: `${gallery.title}-${i + 1}.jpg`,
+            },
+          }))}
+          plugins={[Download, Zoom]}
         />
       )}
     </div>
