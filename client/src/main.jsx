@@ -40,6 +40,7 @@ import {
   AdminPage,
   BlogHomePage,
   FamilyHomePage,
+  FamilyTree,
   GalleryHomePage,
   MaintainRefDataPage,
   MaintainGalleryPage,
@@ -71,6 +72,7 @@ const router = createBrowserRouter([
 
 
       { path: "/family", element: <FamilyHomePage/> },
+      { path: "/family/tree", element: <FamilyTree /> },
 
       { path: "/gallery", element: <GalleryHomePage/> },
 

@@ -44,7 +44,15 @@ export default function FamilyHome() {
               moments worth remembering.
             </p>
           </div>
-
+          {/* ---------- Family Tree CTA ---------- */}
+          <div className="mt-10 flex justify-center">
+            <button
+              onClick={() => navigate("/family/tree")}
+              className="px-6 py-3 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 transition"
+            >
+              Open Family Tree
+            </button>
+          </div>
           {/* ---------- Placeholder content ---------- */}
           <div className="mt-10 space-y-4 text-gray-700">
             <p>

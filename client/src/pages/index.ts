@@ -16,3 +16,4 @@ export { default as SinglePostPage } from "./Blog/SinglePostPage";
 export { default as Write } from "./Blog/Write";
 
 export { default as FamilyHomePage } from "./Family/FamilyHomePage";
+export { default as FamilyTree } from "./Family/FamilyTree";

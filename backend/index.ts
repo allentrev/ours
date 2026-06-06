@@ -28,6 +28,8 @@ import webhookRouter from "./routes/webhook.route.js";
 import refDataRouter from "./routes/refData.route.js";
 import imageRouter from "./routes/image.route.js";
 import galleryRouter from "./routes/gallery.route.js";
+import familyRoutes from "./routes/family.route.js";
+
 /* -------------------- App setup -------------------- */
 
 const app = express();
@@ -109,7 +111,8 @@ console.log("Node Env = ", process.env.NODE_ENV);
 app.use("/refData", refDataRouter);
 app.use("/image", imageRouter);
 app.use("/gallery", galleryRouter);
-app.use("/dishes", dishesRouter)
+app.use("/dishes", dishesRouter);
+app.use("/family", familyRoutes);
 
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
