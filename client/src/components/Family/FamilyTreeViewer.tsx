@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Background,
   Controls,
-  MiniMap,
   ReactFlow,
 } from "@xyflow/react";
 

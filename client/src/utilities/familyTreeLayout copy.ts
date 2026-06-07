@@ -12,7 +12,6 @@ import {
   PERSON_CARD_HEIGHT,
   PERSON_CARD_WIDTH,
   RELATIONSHIP_NODE_SIZE,
-  RELATIONSHIP_OFFSET_X,
 } from "../constants/familyTree.constants";
 
 export const buildFamilyTreeNodes = (

@@ -15,7 +15,7 @@ const getHiddenMultiPartnerSpouseHandles = (
 ) => {
   const hiddenSpouseHandles = new Set<string>();
 
-  //if (mode !== "descendants" || useExpandedSelectedPartnerLayout) {
+  if (mode !== "descendants" || useExpandedSelectedPartnerLayout) {
   if ( useExpandedSelectedPartnerLayout ) {
     return hiddenSpouseHandles;
   }

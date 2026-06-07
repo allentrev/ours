@@ -206,7 +206,6 @@ const manageTwoPartnerPersons = (
   visibleFamilies: FamilyTreeResponseFamily[] | undefined,
   visibleworkNodeIds: Set<string>,
   initialNodes: FamilyTreeResponseNode[],
-  selectedPersonHandle: string,
 ): TwoPartnerResult => {
   // --------------------------------------------------
   // Any visible person with exactly 2 partners
@@ -411,7 +410,7 @@ export const buildFamilyTree = (
   );
   
   //console.log("Visible work nodes before:", visibleWorkNodes);
-  const result = manageTwoPartnerPersons(workNodes, visibleFamilies, visibleworkNodeIds, initialNodes, selectedPersonHandle);
+  const result = manageTwoPartnerPersons(workNodes, visibleFamilies, visibleworkNodeIds, initialNodes);
   visibleWorkNodes = result.visibleWorkNodes;
   visibleworkNodeIds = result.visibleworkNodeIds;
   //console.log("Visible work nodes after management:", visibleWorkNodes);
