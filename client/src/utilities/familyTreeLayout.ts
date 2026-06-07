@@ -127,7 +127,7 @@ const buildAncestorTree = (
         birthDate: "",
         deathDate: "",
         depth,
-        noPartners: (depth === 0) ? person.noPartners : person.noPartners - 1,
+        noPartners: (depth === 0) ? person.noPartners : person.noPartners,
       };
 
       if (!ancestorMap.has(person.id)) {
@@ -364,6 +364,8 @@ export const buildFamilyTree = (
   // Depends on workNodeIds
   // --------------------------------------------------
   const visibleFamilies =
+    // this removes the familybelonging to the selected person and their spouse from
+    // list of visible families
     data.families?.filter((family) => {                   // ensure at least one parent is visible
       if (!family.fatherHandle && !family.motherHandle) {
         return false;
@@ -404,7 +406,7 @@ export const buildFamilyTree = (
   const hiddenIds: string[] = hiddenSpouseHandles.flatMap((entry) =>
         Object.values(entry).flat()
   );
-  console.log("Hidden Ids:", [...hiddenIds]);  
+  //console.log("Hidden Ids:", [...hiddenIds]);  
   visibleworkNodeIds = new Set(
     visibleWorkNodes.map((node) => node.id)
   );
@@ -423,8 +425,8 @@ export const buildFamilyTree = (
   //console.log("visibleWOrkNodes", [...visibleWorkNodes]);
   //console.log("flattended spouse Ids:", flattenedselectedPersonHiddenSpouseIds);
 
-  console.log("Visible families:", visibleFamilies);
-  console.log("Selected families:", selectedFamilies);
+  //console.log("Visible families:", visibleFamilies);
+  //console.log("Selected families:", selectedFamilies);
   let offSet = 0;
   // --------------------------------------------------
   // Build workNodes based on mode:
@@ -456,9 +458,9 @@ export const buildFamilyTree = (
   //      b) for ancestor of selected person: MultiPartner --- person --- ancestral other parent
   // In descendant mode, if the selected person has >2 partners, the expanded view will be shown
   // -------------------------------------------------------
-  console.log("Mode", mode);
+  //console.log("Mode", mode);
   if (mode === "descendants") {
-    console.log("Descendants route + hiddenIds", hiddenIds);
+    //console.log("Descendants route + hiddenIds", hiddenIds);
     let filteredPersonNodes :FamilyTreeResponseNode[] = [];
     if (useExpandedLayout) {
       // remove the selected person node and replace with a 
@@ -506,7 +508,7 @@ export const buildFamilyTree = (
         Object.entries(entry).forEach(([key]) => {
           const spouseNode = initialNodes.find((node) => node.id === key);
           if (!spouseNode) return; 
-          console.log("Item in hidden spouse handles", key, spouseNode);
+          //console.log("Item in hidden spouse handles", key, spouseNode);
           const dummyPerson: FamilyTreeResponseNode = {
             id: `multiple-partner-${key}`,
             label: "Dummy",
@@ -519,10 +521,10 @@ export const buildFamilyTree = (
           multiplePartnerNodes.push(dummyPerson);
         })
       })
-      console.log("multiplePartnerNodes", multiplePartnerNodes);
+      //console.log("multiplePartnerNodes", multiplePartnerNodes);
       filteredPersonNodes = visibleWorkNodes.filter((node) => !hiddenIds.includes(node.id))
       visibleWorkNodes = [...filteredPersonNodes, ...multiplePartnerNodes]; 
-      console.log("normal filteredPersonNodes", visibleWorkNodes);
+      //console.log("normal filteredPersonNodes", visibleWorkNodes);
     }
   }
 
@@ -603,8 +605,8 @@ export const buildFamilyTree = (
   })
 
   //console.log("Nodes  by depth", nodesByDepth);
-  console.log("Person nodes after initial layout:", personNodes);
-  console.log("MultiPartner Base Nodes", multiPartnerBaseNodes);
+  //console.log("Person nodes after initial layout:", personNodes);
+  //console.log("MultiPartner Base Nodes", multiPartnerBaseNodes);
 
   // --------------------------------------------------
   // Now insert relationship nodes for families where both parents are visible and not hidden due to multi-partner logic
@@ -669,11 +671,13 @@ export const buildFamilyTree = (
     ];
   });
   const multiPartnerRelationshipNodes: Node[] = multiPartnerBaseNodes.flatMap((node) => {
+    // hmmmm
     //console.log("iterate multiOartner,,,", node);
+    if (mode === "ancestors") return [];
     const wSpouseHandle = node.id.slice(17);
     //console.log("spouse Handle", wSpouseHandle);
     const spouseNode = personNodes.find( item => item.id === wSpouseHandle);
-    if (!spouseNode){ console.log("not found"); return [] };
+    if (!spouseNode){ return [] };
     //console.log("Spouse node", spouseNode)
     return [
       {
@@ -698,9 +702,9 @@ export const buildFamilyTree = (
   });
 
   //console.log("Final person nodes:", personNodes);
-  // console.log("Relationship nodes:", relationshipNodes);
+  //console.log("Relationship nodes:", relationshipNodes);
   //console.log("Multiple partner nodes:", multiplePartnerNodes);
- //console.log("Multiple partner relationship nodes:", multiPartnerRelationshipNodes);
+  //console.log("Multiple partner relationship nodes:", multiPartnerRelationshipNodes);
   mappedNodes = [
     ...personNodes,
     ...relationshipNodes,
@@ -712,7 +716,7 @@ export const buildFamilyTree = (
     data: FamilyTreeResponse,
     mode: FamilyTreeMode
   ): Edge[] => {
-    //("buildFamilyTreeedges");
+    //console.log("buildFamilyTreeedges");
     //console.log([...hiddenSpouseNodes]);
 
     //console.log("Edge: Hidden spouse handles:", [...hiddenSpouseHandles]);
@@ -727,8 +731,8 @@ export const buildFamilyTree = (
         .map((node) => node.id)
     );
 
-    const multiplePartnerBaseNodes = [...hiddenSpouseNodes];
-    console.log("Multiple partner base nodes for edges:", multiplePartnerBaseNodes);
+   // const multiplePartnerBaseNodes = [...hiddenSpouseNodes];
+    //console.log("Multiple partner base nodes for edges:", multiplePartnerBaseNodes);
     //
     // --------------------------- Family Edges -----------------------------------------  
     const familyEdges: Edge[] = visibleFamilies.flatMap((family) => {
@@ -847,11 +851,11 @@ export const buildFamilyTree = (
 
     //
     // --------------------------- Multi Partner Edges -----------------------------------------
-    console.log("Multi partner edges", multiPartnerBaseNodeHandles);
-    console.log("Multi partner nodes", [...multiPartnerBaseNodes]);
+    //console.log("Multi partner edges", multiPartnerBaseNodeHandles);
+    //console.log("Multi partner nodes", [...multiPartnerBaseNodes]);
     const multiplePartnerEdges: Edge[] = multiPartnerBaseNodes.flatMap(
       (node) => {
-        console.log("Node in flatmaap", node, mode);
+        //console.log("Node in flatmaap", node, mode);
         const relationshipNodeId = `relationship-${node.id}`;
         const markerNodeId = node.id;
         const spouseNodeId= node.id.slice(17);
@@ -859,8 +863,8 @@ export const buildFamilyTree = (
         const relatedFamilies =
           data.families?.filter(
             (family) =>
-              family.fatherHandle === node.id ||
-              family.motherHandle === node.id
+              family.fatherHandle === spouseNodeId ||
+              family.motherHandle === spouseNodeId
           ) ?? [];
 
         const directEdges: Edge[] =
@@ -876,27 +880,28 @@ export const buildFamilyTree = (
                 style: { strokeWidth: 2 },
               },
             ]
-            :/* dewcendants */ [
+            :/* deScendants */ [
               {
                 id: `edge-${node.id}-${relationshipNodeId}`,
                 source: node.id,
                 target: relationshipNodeId,
                 type: "straight",
-                sourceHandle: "spouse-right-source",
+                sourceHandle: "spouse-left-source",
                 targetHandle: "left",
                 style: { strokeWidth: 2 },
               },
               {
                 id: `edge-${relationshipNodeId}-${markerNodeId}`,
                 source: relationshipNodeId,
-                target: markerNodeId,
+                target: spouseNodeId,
                 type: "straight",
-                sourceHandle: "right-source",
-                targetHandle: "left",
+                sourceHandle: "left-source",
+                targetHandle: "spouse-right-target",
                 style: { strokeWidth: 2 },
               },
             ];
-        console.log("Direct edges", [...directEdges])
+        //console.log("Direct edges", [...directEdges])
+        //console.log("Related families", [...relatedFamilies]);
         const childEdges: Edge[] = relatedFamilies.flatMap((family) =>
           family.childHandles
             .filter((childHandle) => visiblePersonIds.has(childHandle))
@@ -921,8 +926,8 @@ export const buildFamilyTree = (
               };
             })
         );
-        console.log("directEdges", directEdges);
-        console.log("childEdges", childEdges);
+        //console.log("directEdges", directEdges);
+        //console.log("childEdges", childEdges);
         return [...directEdges, ...childEdges];
       })
     //console.log("familyEdges:", familyEdges);
