@@ -3,6 +3,9 @@ import { Handle, Position } from "@xyflow/react";
 import {
   formatFamilyDate,
   formatLifeDates,
+  formatPersonDate,
+  calculateAge,
+  isPersonProbablyLiving,
 } from "../../utilities/familyFormatters";
 
 interface FamilyPersonNodeData {
@@ -19,6 +22,12 @@ interface Props {
 }
 
 const FamilyPersonNode = ({ data }: Props) => {
+  const isLiving = isPersonProbablyLiving(
+    data.birthDate,
+    data.deathDate
+  );
+  const age = calculateAge(isLiving,data.birthDate, data.deathDate);
+
   return (
     <div
       className={`relative min-w-[180px] rounded-xl border bg-white shadow-md overflow-hidden ${
@@ -50,17 +59,19 @@ const FamilyPersonNode = ({ data }: Props) => {
       <div className="p-3 text-sm text-gray-700 space-y-1">
         <div>
           <span className="font-medium">Born:</span>{" "}
-          {formatFamilyDate(data.birthDate)}
+          {formatPersonDate(data.birthDate, isLiving)}
         </div>
-
+      
         <div>
           <span className="font-medium">Died:</span>{" "}
           {data.deathDate || "-"}
         </div>
         
-        <div className="pt-2 text-xs text-gray-500">
-          {formatLifeDates(data.birthDate, data.deathDate)}
+        <div>
+          <span className="font-medium">Age:</span>{" "}
+          { age }
         </div>
+
       </div>
     </div>
   );

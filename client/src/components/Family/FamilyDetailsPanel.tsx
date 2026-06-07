@@ -1,12 +1,16 @@
 import type { FamilyPerson } from "../../types/familyTypes";
-import { formatFamilyDate } from "../../utilities/familyFormatters";
+import { formatFamilyDate, formatPersonDate } from "../../utilities/familyFormatters";
 
 interface Props {
   person: FamilyPerson | null;
 }
 
+
 const FamilyDetailsPanel = ({ person }: Props) => {
+  const isLiving = !person?.deathDate;
+
   if (!person) {
+  
     return (
       <aside className="w-72 border-l border-gray-200 bg-white p-4 text-sm text-gray-500">
         Select a person to view details.
@@ -28,14 +32,14 @@ const FamilyDetailsPanel = ({ person }: Props) => {
 
         <div>
           <span className="font-medium">Born:</span>{" "}
-          {formatFamilyDate(person.birthDate)}
+          {formatPersonDate(person.birthDate, isLiving)}
         </div>
-
+        {person?.deathDate && (
         <div>
           <span className="font-medium">Died:</span>{" "}
-          {person.deathDate || "—"}
+          {formatPersonDate(person.deathDate) || ""}
         </div>
-
+        )}
         <div className="pt-3 border-t border-gray-200 text-xs text-gray-500">
           <div>Handle: {person.handle}</div>
           {person.grampsId && <div>Gramps ID: {person.grampsId}</div>}

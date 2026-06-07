@@ -33,3 +33,4 @@ export const fetchFamilyTree = async (
   console.log(res.data.data)
   return res.data.data;
 };
+

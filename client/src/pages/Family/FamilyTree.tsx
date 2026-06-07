@@ -25,8 +25,8 @@ const FamilyTree = () => {
         <FamilyToolbar mode={mode} onModeChange={setMode} />
         <FamilySearch onSearch={setSelectedPersonHandle} />
 
-        <div className="flex-1 flex min-h-0">
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col lg:flex-row min-h-0 gap-4 overflow-y-auto lg:overflow-hidden">
+            <div className="w-full lg:flex-1 h-[55vh] lg:h-full min-h-[350px] shrink-0">
             <FamilyTreeViewer
               selectedPersonHandle={selectedPersonHandle}
               mode={mode}
@@ -35,7 +35,9 @@ const FamilyTree = () => {
             />
           </div>
 
-          <FamilyDetailsPanel person={selectedPerson} />
+          <div className="w-full lg:w-80 lg:h-full">
+            <FamilyDetailsPanel person={selectedPerson} />
+          </div>
         </div>
       </div>
     </FamilyTreeLayout>
