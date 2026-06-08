@@ -13,7 +13,7 @@ export default function FamilyHome() {
         description="Family memories, stories, and moments collected in one place."
       />
 
-      <div className="min-h-screen bg-gray-50 px-6 py-12">
+      <div className="min-h-screen bg-blue-100 px-6 py-12">
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8">
 
           {/* ---------- Header ---------- */}
@@ -48,7 +48,7 @@ export default function FamilyHome() {
           <div className="mt-10 flex justify-center">
             <button
               onClick={() => navigate("/family/tree")}
-              className="px-6 py-3 rounded-xl bg-blue-600 text-white font-medium shadow hover:bg-blue-700 transition"
+              className="px-6 py-3 rounded-xl bg-green-700 text-white font-medium shadow hover:bg-green-900 transition"
             >
               Open Family Tree
             </button>

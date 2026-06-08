@@ -21,7 +21,7 @@ const FamilyTree = () => {
 
   return (
     <FamilyTreeLayout>
-      <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full flex flex-col "> {/* this is the main panel div */}
         <FamilyToolbar mode={mode} onModeChange={setMode} />
         <FamilySearch onSearch={setSelectedPersonHandle} />
 

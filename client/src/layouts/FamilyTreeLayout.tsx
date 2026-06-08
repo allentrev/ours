@@ -6,7 +6,7 @@ interface Props {
 
 const FamilyTreeLayout: FC<Props> = ({ children }) => {
   return (
-    <div className="w-full h-screen bg-gray-100">
+    <div className="w-full h-screen bg-blue-100">
       <div className="h-full p-4">
         <div className="h-full rounded-xl bg-white shadow overflow-hidden">
           {children}

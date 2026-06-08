@@ -1,5 +1,5 @@
 import type { FamilyPerson } from "../../types/familyTypes";
-import { formatFamilyDate, formatPersonDate } from "../../utilities/familyFormatters";
+import { formatPersonDate } from "../../utilities/familyFormatters";
 
 interface Props {
   person: FamilyPerson | null;
@@ -12,14 +12,14 @@ const FamilyDetailsPanel = ({ person }: Props) => {
   if (!person) {
   
     return (
-      <aside className="w-72 border-l border-gray-200 bg-white p-4 text-sm text-gray-500">
+      <aside className="w-full lg:w-80 border-l border-gray-200 bg-white p-4 text-sm text-gray-500">
         Select a person to view details.
       </aside>
     );
   }
 
   return (
-    <aside className="w-72 border-l border-gray-200 bg-white p-4">
+    <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 bg-blue-100 p-4">
       <h2 className="text-lg font-semibold text-gray-800">
         {person.displayName}
       </h2>

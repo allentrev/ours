@@ -1,8 +1,6 @@
 import { Handle, Position } from "@xyflow/react";
 
 import {
-  formatFamilyDate,
-  formatLifeDates,
   formatPersonDate,
   calculateAge,
   isPersonProbablyLiving,
