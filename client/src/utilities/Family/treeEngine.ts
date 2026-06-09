@@ -303,13 +303,7 @@ export const buildTree = (
 
 //TODO help
   mappedEdges = buildTreeEdges(
-    data,
-    mode,
-    visibleFamilies,
-    selectedFamilies,
-    selectedPersonHandle,
-    selectedPersonHiddenSpouseIds,
-    useExpandedLayout,
+    context,
     multiPartnerBaseNodes
   );
   //console.log("Final return");
