@@ -21,11 +21,9 @@ import { buildRelationshipNodes } from "./relationshipBuilders";
 import { buildTreeEdges } from "./edgeBuilders";
 
 import {
-  getDisplayNodeId,
   getFamilyId,
 } from "./utils";
 
-import * as TREE from "../../constants/familyTree.constants";
 
 //console.log("buildImport");
 

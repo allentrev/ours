@@ -4,7 +4,6 @@ import type {
     TreeMode,
     TreeResponse,
     TreeResponseFamily,
-    TreeResponseNode,
 } from "../../types/familyTypes";
   
 export const buildTreeEdges = (
