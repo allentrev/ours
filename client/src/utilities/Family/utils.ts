@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { TreeMode, TreeResponse } from "../../types/familyTypes";
+import type { TreeMode, TreeResponse, TreeResponseFamily } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -34,3 +34,33 @@ export const fetchTree = async (
   return res.data.data;
 };
 
+
+export const getDisplayNodeId = (
+  personHandle: string,
+  selectedPersonHandle: string,
+  familyId: string,
+  useExpandedLayout: boolean
+) => {
+  // --------------------------------------------------
+  // Helper function for relationship nodes:
+  //
+  // --------------------------------------------------    
+  if (
+    useExpandedLayout &&
+    personHandle === selectedPersonHandle
+  ) {
+    return `${personHandle}::${familyId}`;
+  }
+
+  return personHandle;
+};
+
+export const getFamilyId = (
+  personHandle: string,
+  selectedFamilies: TreeResponseFamily[] | undefined
+) => {
+  const result = selectedFamilies?.find( item =>
+     (item.fatherHandle === personHandle || item.motherHandle === personHandle) )?.id;
+
+  return result ? result : "";   
+}

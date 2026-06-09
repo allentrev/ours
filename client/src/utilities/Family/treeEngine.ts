@@ -4,7 +4,6 @@ import type {
   TreeMode,
   TreeResponse,
   TreeResponseNode,
-  TreeResponseFamily,
 } from "../../types/familyTypes";
 
 import {
@@ -17,41 +16,15 @@ import {
   manageTwoPartnerPersons
 } from "./spouseHelpers";
 
+import {
+  getDisplayNodeId,
+  getFamilyId,
+} from "./utils";
 
 import * as TREE from "../../constants/familyTree.constants";
 
 //console.log("buildImport");
 
-
-const getDisplayNodeId = (
-  personHandle: string,
-  selectedPersonHandle: string,
-  familyId: string,
-  useExpandedLayout: boolean
-) => {
-  // --------------------------------------------------
-  // Helper function for relationship nodes:
-  //
-  // --------------------------------------------------    
-  if (
-    useExpandedLayout &&
-    personHandle === selectedPersonHandle
-  ) {
-    return `${personHandle}::${familyId}`;
-  }
-
-  return personHandle;
-};
-
-const getFamilyId = (
-  personHandle: string,
-  selectedFamilies: TreeResponseFamily[] | undefined
-) => {
-  const result = selectedFamilies?.find( item =>
-     (item.fatherHandle === personHandle || item.motherHandle === personHandle) )?.id;
-
-  return result ? result : "";   
-}
 
 // --------------------------------------------------
 // Main function to build nodes for the family tree
