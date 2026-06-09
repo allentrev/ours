@@ -2,11 +2,14 @@ import type {
     TreeResponse,
     TreeResponseNode,
     TreeResponseFamily,
-    TwoPartnerResult,
     TreeMode,
-    MultiPartnerSpouseMapEntry
 } from "../../types/familyTypes";
 
+import type {
+  TwoPartnerResult,
+  MultiPartnerSpouseMapEntry
+} from "../../utilities/Family/layoutTypes";
+ 
 import { isADescendantOf } from "./ancestorHelpers";
 
 export const getSpouseNodesForPerson = (

@@ -5,6 +5,10 @@ import type {
   TreeResponseFamily,
 } from "../../types/familyTypes";
 
+import type {
+  LayoutContext,
+} from "../Family/layoutTypes"
+
 import * as TREE from "../../constants/familyTree.constants";
 
 import {
@@ -12,29 +16,29 @@ import {
 } from "./utils";
 
 interface BuildRelationshipNodesArgs {
-  mode: TreeMode;
+  context: LayoutContext;
   personNodes: Node[];
-  visibleFamilies: TreeResponseFamily[];
-  selectedFamilies: TreeResponseFamily[];
-  hiddenIds: string[];
-  useExpandedLayout: boolean;
-  selectedPersonHandle: string;
   multiPartnerBaseNodes: Node[];
 }
 
 export const buildRelationshipNodes = ({
-  mode,
+  context,
   personNodes,
-  visibleFamilies,
-  selectedFamilies,
-  hiddenIds,
-  useExpandedLayout,
-  selectedPersonHandle,
   multiPartnerBaseNodes,
 }: BuildRelationshipNodesArgs): {
+  
   relationshipNodes: Node[];
   multiPartnerRelationshipNodes: Node[];
 } => {
+  const {
+    mode,
+    visibleFamilies,
+    selectedFamilies,
+    hiddenIds,
+    useExpandedLayout,
+    selectedPersonHandle,
+  } = context;
+
   const relationshipNodes: Node[] = visibleFamilies.flatMap((family) => {
     if (
       useExpandedLayout &&

@@ -62,12 +62,3 @@ export interface TreeResponse {
   edges: TreeResponseEdge[];
   families?: TreeResponseFamily[];
 }
-
-export type HiddenSpouses = Record<string,string[]>;
-
-export type MultiPartnerSpouseMapEntry = Record<string, string[]>;
-
-export type TwoPartnerResult = {
-  visibleWorkNodes: TreeResponseNode[];
-  visibleworkNodeIds: Set<string>;
-};

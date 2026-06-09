@@ -6,6 +6,8 @@ import type {
   TreeResponseNode,
 } from "../../types/familyTypes";
 
+import type { LayoutContext } from "./layoutTypes";
+
 import {
   buildAncestorTree
 } from "./ancestorHelpers";
@@ -109,7 +111,24 @@ export const buildTree = (
 
   //console.log("Input data nodes:", data.nodes);
 
+  const context: LayoutContext = {
+    data,
+    mode,
 
+    selectedPersonHandle,
+    selectedPersonNode,
+    selectedNoPartners,
+    useExpandedLayout,
+
+    visibleFamilies,
+    selectedFamilies,
+
+    hiddenSpouseHandles,
+    selectedPersonHiddenSpouseIds,
+    hiddenIds,
+
+    initialNodes,
+  };
 
 
 
@@ -271,13 +290,8 @@ export const buildTree = (
     relationshipNodes,
     multiPartnerRelationshipNodes,
   } = buildRelationshipNodes({
-    mode,
+    context,
     personNodes,
-    visibleFamilies,
-    selectedFamilies,
-    hiddenIds,
-    useExpandedLayout,
-    selectedPersonHandle,
     multiPartnerBaseNodes,
   });
   
