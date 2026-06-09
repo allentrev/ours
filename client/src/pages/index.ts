@@ -15,5 +15,5 @@ export { default as PostListPage } from "./Blog/PostListPage";
 export { default as SinglePostPage } from "./Blog/SinglePostPage";
 export { default as Write } from "./Blog/Write";
 
-export { default as FamilyHomePage } from "./Family/FamilyHomePage";
-export { default as FamilyTree } from "./Family/FamilyTree";
+export { default as FamilyHomePage } from "./Family/HomePage";
+export { default as FamilyTree } from "./Family/Tree";

@@ -14,38 +14,38 @@ import type {
 
 import "@xyflow/react/dist/style.css";
 
-import FamilyPersonNode from "./FamilyPersonNode";
+import PersonNode from "./PersonNode";
 import RelationshipNode from "./RelationshipNode";
 import MultiplePartnerNode from "./MultiplePartnerNode";
 
-import FamilyLoadingState from "./FamilyLoadingState";
-import FamilyErrorState from "./FamilyErrorState";
-import FamilyEmptyState from "./FamilyEmptyState";
+import LoadingState from "./LoadingState";
+import ErrorState from "./ErrorState";
+import EmptyState from "./EmptyState";
 
-import { fetchFamilyTree } from "../../utilities/familyUtils";
+import { fetchTree } from "../../utilities/Family/utils";
 
 import {
-  buildFamilyTree,
-} from "../../utilities/familyTreeLayout";
+  buildTree,
+} from "../../utilities/Family/treeEngine";
 
 import type {
-  FamilyPerson,
-  FamilyTreeMode,
-  FamilyTreeResponse,
+  TreePerson,
+  TreeMode,
+  TreeResponse,
 } from "../../types/familyTypes";
 
 const nodeTypes = {
-  person: FamilyPersonNode,
+  person: PersonNode,
   relationship: RelationshipNode,
   multiplePartner: MultiplePartnerNode,
 };
 
 interface Props {
   selectedPersonHandle: string;
-  mode: FamilyTreeMode;
+  mode: TreeMode;
 
   onSelectedPersonChange: (
-    person: FamilyPerson | null
+    person: TreePerson | null
   ) => void;
 
   onPersonSelect: (
@@ -53,7 +53,7 @@ interface Props {
   ) => void;
 }
 
-const FamilyTreeViewer = ({
+const TreeViewer = ({
   selectedPersonHandle,
   mode,
   onSelectedPersonChange,
@@ -81,18 +81,18 @@ const FamilyTreeViewer = ({
       try {
         setLoading(true);
         setError(null);
-
-        const data: FamilyTreeResponse =
-          await fetchFamilyTree(
+        console.log(`Fetching family tree for [${selectedPersonHandle}]`)
+        const data: TreeResponse =
+          await fetchTree(
             selectedPersonHandle,
             mode
           );
-
+        console.log("Data",data);
         onSelectedPersonChange(
           data.selectedPerson
         );
 
-        const graph = buildFamilyTree(data, mode)
+        const graph = buildTree(data, mode)
 
         setNodes(graph.nodes);
         setEdges(graph.edges);
@@ -145,21 +145,20 @@ const FamilyTreeViewer = ({
     );
 
   if (loading) {
-    return <FamilyLoadingState />;
+    return <LoadingState />;
   }
 
   if (error) {
     return (
-      <FamilyErrorState
+      <ErrorState
         message={error}
       />
     );
   }
 
   if (nodes.length === 0) {
-    return <FamilyEmptyState />;
+    return <EmptyState />;
   }
-
   return (
     <div className="w-full h-full">
       <ReactFlow
@@ -204,4 +203,4 @@ const FamilyTreeViewer = ({
   );
 };
 
-export default FamilyTreeViewer;
+export default TreeViewer;

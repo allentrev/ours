@@ -4,9 +4,9 @@ import {
   formatPersonDate,
   calculateAge,
   isPersonProbablyLiving,
-} from "../../utilities/familyFormatters";
+} from "../../utilities/Family/formatters";
 
-interface FamilyPersonNodeData {
+interface PersonNodeData {
   label: string;
   shortId: string;
   gender?: string;
@@ -16,10 +16,10 @@ interface FamilyPersonNodeData {
 }
 
 interface Props {
-  data: FamilyPersonNodeData;
+  data: PersonNodeData;
 }
 
-const FamilyPersonNode = ({ data }: Props) => {
+const PersonNode = ({ data }: Props) => {
   const isLiving = isPersonProbablyLiving(
     data.birthDate,
     data.deathDate
@@ -75,4 +75,4 @@ const FamilyPersonNode = ({ data }: Props) => {
   );
 };
 
-export default FamilyPersonNode;
+export default PersonNode;

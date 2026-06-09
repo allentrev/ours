@@ -1,33 +1,33 @@
 import { useState } from "react";
 
-import FamilyTreeLayout from "../../layouts/FamilyTreeLayout";
-import FamilyTreeViewer from "../../components/Family/FamilyTreeViewer";
-import FamilySearch from "../../components/Family/FamilySearch";
-import FamilyDetailsPanel from "../../components/Family/FamilyDetailsPanel";
-import FamilyToolbar from "../../components/Family/FamilyToolbar";
+import TreeLayout from "../../layouts/Family/TreeLayout";
+import TreeViewer from "../../components/Family/TreeViewer";
+import Search from "../../components/Family/Search";
+import DetailsPanel from "../../components/Family/DetailsPanel";
+import Toolbar from "../../components/Family/Toolbar";
 
 import type {
-  FamilyPerson,
-  FamilyTreeMode,
+  TreePerson,
+  TreeMode,
 } from "../../types/familyTypes";
 
-const FamilyTree = () => {
+const Tree = () => {
   const [selectedPersonHandle, setSelectedPersonHandle] = useState("");
   const [selectedPerson, setSelectedPerson] =
-    useState<FamilyPerson | null>(null);
+    useState<TreePerson | null>(null);
 
   const [mode, setMode] =
-    useState<FamilyTreeMode>("descendants");
-
+    useState<TreeMode>("descendants");
+  console.log("Tree Page");
   return (
-    <FamilyTreeLayout>
+    <TreeLayout>
       <div className="w-full h-full flex flex-col "> {/* this is the main panel div */}
-        <FamilyToolbar mode={mode} onModeChange={setMode} />
-        <FamilySearch onSearch={setSelectedPersonHandle} />
+        <Toolbar mode={mode} onModeChange={setMode} />
+        <Search onSearch={setSelectedPersonHandle} />
 
           <div className="flex-1 flex flex-col lg:flex-row min-h-0 gap-4 overflow-y-auto lg:overflow-hidden">
             <div className="w-full lg:flex-1 h-[55vh] lg:h-full min-h-[350px] shrink-0">
-            <FamilyTreeViewer
+            <TreeViewer
               selectedPersonHandle={selectedPersonHandle}
               mode={mode}
               onSelectedPersonChange={setSelectedPerson}
@@ -36,12 +36,12 @@ const FamilyTree = () => {
           </div>
 
           <div className="w-full lg:w-80 lg:h-full">
-            <FamilyDetailsPanel person={selectedPerson} />
+            <DetailsPanel person={selectedPerson} />
           </div>
         </div>
       </div>
-    </FamilyTreeLayout>
+    </TreeLayout>
   );
 };
 
-export default FamilyTree;
+export default Tree;

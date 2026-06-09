@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import type { FamilyTreeMode, FamilyTreeResponse } from "../types/familyTypes";
+import type { TreeMode, TreeResponse } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -14,10 +14,10 @@ export const searchFamilyPeople = async (
   return res.data.data;
 };
 
-export const fetchFamilyTree = async (
+export const fetchTree = async (
   personHandle?: string,
-  mode: FamilyTreeMode = "descendants"
-): Promise<FamilyTreeResponse> => {
+  mode: TreeMode = "descendants"
+): Promise<TreeResponse> => {
   const params = new URLSearchParams();
 
   if (personHandle) {

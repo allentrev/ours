@@ -4,7 +4,7 @@ interface Props {
   children: ReactNode;
 }
 
-const FamilyTreeLayout: FC<Props> = ({ children }) => {
+const TreeLayout: FC<Props> = ({ children }) => {
   return (
     <div className="w-full h-screen bg-blue-100">
       <div className="h-full p-4">
@@ -16,4 +16,4 @@ const FamilyTreeLayout: FC<Props> = ({ children }) => {
   );
 };
 
-export default FamilyTreeLayout;
+export default TreeLayout;

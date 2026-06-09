@@ -1,9 +1,9 @@
-import type { FamilyTreeMode } from "../../types/familyTypes";
+import type { TreeMode } from "../../types/familyTypes";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
-  mode: FamilyTreeMode;
-  onModeChange: (mode: FamilyTreeMode) => void;
+  mode: TreeMode;
+  onModeChange: (mode: TreeMode) => void;
 }
 
 const FamilyToolbar = ({ mode, onModeChange }: Props) => {

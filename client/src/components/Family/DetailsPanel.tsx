@@ -1,8 +1,8 @@
-import type { FamilyPerson } from "../../types/familyTypes";
-import { formatPersonDate } from "../../utilities/familyFormatters";
+import type { TreePerson } from "../../types/familyTypes";
+import { formatPersonDate } from "../../utilities/Family/formatters";
 
 interface Props {
-  person: FamilyPerson | null;
+  person: TreePerson | null;
 }
 
 

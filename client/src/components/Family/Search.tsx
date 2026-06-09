@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { searchFamilyPeople } from "../../utilities/familyUtils";
+import { searchFamilyPeople } from "../../utilities/Family/utils";
 
 interface PersonResult {
   handle: string;
@@ -14,7 +14,7 @@ interface Props {
 const FamilySearch = ({ onSearch }: Props) => {
   const [searchText, setSearchText] = useState("");
   const [results, setResults] = useState<PersonResult[]>([]);
-const [hasSelected, setHasSelected] = useState(false);
+  const [hasSelected, setHasSelected] = useState(false);
 
   useEffect(() => {
     const runSearch = async () => {
@@ -36,7 +36,6 @@ const [hasSelected, setHasSelected] = useState(false);
 
     return () => clearTimeout(timeout);
   }, [searchText, hasSelected]);
-
   return (
     <div className="relative border-b border-gray-200 bg-white p-4">
       <input

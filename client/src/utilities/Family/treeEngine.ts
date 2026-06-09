@@ -1,290 +1,27 @@
 import type { Edge, Node } from "@xyflow/react";
 
 import type {
-  FamilyTreeMode,
-  FamilyTreeResponse,
-  FamilyTreeResponseNode,
-  FamilyTreeResponseFamily,
-} from "../types/familyTypes";
+  TreeMode,
+  TreeResponse,
+  TreeResponseNode,
+  TreeResponseFamily,
+} from "../../types/familyTypes";
 
-import * as TREE from "../constants/familyTree.constants";
+import {
+  buildAncestorTree
+} from "./ancestorHelpers";
+
+import {
+  getSpouseNodesForPerson,
+  getMultiPartnerSpouseMap,
+  manageTwoPartnerPersons
+} from "./spouseHelpers";
+
+
+import * as TREE from "../../constants/familyTree.constants";
 
 //console.log("buildImport");
 
-type MultiPartnerSpouseMapEntry = Record<string, string[]>;
-
-const isADescendantOf = (potentialDescendantHandle: string, ancestorHandle: string, data: FamilyTreeResponse): boolean => {
-  const visited = new Set<string>();
-  const toVisit = [potentialDescendantHandle];
-
-  while (toVisit.length > 0) {
-    const currentHandle = toVisit.pop()!;
-    if (currentHandle === ancestorHandle) {
-      return true;
-    }
-    visited.add(currentHandle);
-
-    const parentFamilies = data.families?.filter((family) =>
-      family.childHandles.includes(currentHandle)
-    ) ?? [];
-
-    parentFamilies.forEach((family) => {
-      const parentHandles = [family.fatherHandle, family.motherHandle].filter(Boolean) as string[];
-      parentHandles.forEach((parentHandle) => {
-        if (!visited.has(parentHandle)) {
-          toVisit.push(parentHandle);
-        }
-      });
-    });
-  }
-
-  return false;
-}
-
-const getSpouseNodesForPerson = (
-  personHandle: string,
-  data: FamilyTreeResponse,
-  depth: number
-): FamilyTreeResponseNode[] => {
-  const spouseHandles =
-    data.families
-      ?.filter(
-        (family) =>
-          family.fatherHandle === personHandle ||
-          family.motherHandle === personHandle
-      )
-      .map((family) =>
-        family.fatherHandle === personHandle
-          ? family.motherHandle
-          : family.fatherHandle
-      )
-      .filter((handle): handle is string => Boolean(handle)) ?? [];
-
-  const uniqueSpouseHandles = [...new Set(spouseHandles)];
-
-  if (uniqueSpouseHandles.length > 2) {
-    const person = data.nodes.find((node) => node.id === personHandle);
-
-    return [
-      {
-        id: `multiple-partner-${personHandle}`,
-        label: "Dummy",
-        gender: person?.gender === "M" ? "F" : "M",
-        birthDate: "",
-        deathDate: "",
-        depth,
-        noPartners: uniqueSpouseHandles.length,
-      },
-    ];
-  }
-  // else return either 0,1 or 2 spouse nodes
-  return uniqueSpouseHandles
-    .map((spouseHandle) => {
-      const spouse = data.nodes.find((node) => node.id === spouseHandle);
-
-      if (!spouse) return null;
-
-      return {
-        ...spouse,
-        depth,
-      };
-    })
-    .filter((node): node is FamilyTreeResponseNode => node !== null);
-};
-
-const buildAncestorTree = (
-  data: FamilyTreeResponse
-): FamilyTreeResponseNode[] => {
-  const selectedPersonHandle = data.selectedPerson.handle;
-
-  const ancestorMap = new Map<string, FamilyTreeResponseNode[][number]>();
-
-  const addAncestors = (personHandle: string, depth: number) => {
-    if (depth > 6) return;
-    //console.log("addAncestors called for:", personHandle, "at depth:", depth);
-
-    const family = data.families?.find((family) =>
-      family.childHandles.includes(personHandle)
-    );
-    //console.log("Fanily", family);
-    if (!family) { return };
-
-    const parentHandles = [
-      family.fatherHandle,
-      family.motherHandle,
-    ].filter(Boolean) as string[];
-
-    parentHandles.forEach((parentHandle) => {
-      //console.log(`Processing parent handle: ${parentHandle} for child: ${personHandle}`);
-      const person = data.nodes.find((node) => node.id === parentHandle);
-
-      if (!person) { return; }
-
-      const dummyPerson: FamilyTreeResponseNode[][number] = {
-        id: `multiple-partner-${person.id}`,
-        label: "Dummy",
-        gender: person.gender === "M" ? "F" : "M",
-        birthDate: "",
-        deathDate: "",
-        depth,
-        noPartners: (depth === 0) ? person.noPartners : person.noPartners,
-      };
-
-      if (!ancestorMap.has(person.id)) {
-        if (person.noPartners > 2) {
-          // console.log("add dummy", dummyPerson);
-          ancestorMap.set(dummyPerson.id, { ...dummyPerson, depth, });
-        }
-        ancestorMap.set(person.id, {
-          ...person,
-          depth,
-        });
-        //console.log(`Added ancestor: ${person.id} at depth: ${depth}`);
-        addAncestors(parentHandle, depth + 1);
-      } else {
-        //console.log(`Already processed ancestor: ${person.id}, skipping.`);
-        addAncestors(parentHandle, depth + 1);
-      }
-    });
-  };
-
-  addAncestors(selectedPersonHandle, 1);
-
-  return Array.from(ancestorMap.values());
-};
-
-export function getMultiPartnerSpouseMap(
-  data: FamilyTreeResponse,
-  mode: FamilyTreeMode
-): MultiPartnerSpouseMapEntry[] {
-  const { nodes, families, selectedPerson } = data;
-
-  return nodes
-    .filter((node) => node.noPartners > 2)
-    .map((node) => {
-      const partnerHandle = node.id;
-
-      const otherSpouseIds =
-        families
-          ?.filter(
-            (family) =>
-              family.fatherHandle === partnerHandle ||
-              family.motherHandle === partnerHandle
-          )
-          .map((family) =>
-            family.fatherHandle === partnerHandle
-              ? family.motherHandle
-              : family.fatherHandle
-          )
-          .filter((otherHandle): otherHandle is string => {
-            if (!otherHandle) return false;
-
-            if (mode === "ancestors") {
-              return !isADescendantOf(
-                selectedPerson.handle,
-                otherHandle,
-                data
-              );
-            }
-
-            return true;
-          }) ?? [];
-
-      return {
-        [partnerHandle]: [...new Set(otherSpouseIds)],
-      };
-    });
-}
-
-type TwoPartnerResult = {
-  visibleWorkNodes: FamilyTreeResponseNode[];
-  visibleworkNodeIds: Set<string>;
-};
-
-const manageTwoPartnerPersons = (
-  visibleWorkNodes: FamilyTreeResponseNode[],
-  visibleFamilies: FamilyTreeResponseFamily[] | undefined,
-  visibleworkNodeIds: Set<string>,
-  initialNodes: FamilyTreeResponseNode[],
-): TwoPartnerResult => {
-  // --------------------------------------------------
-  // Any visible person with exactly 2 partners
-  //
-  // Layout:
-  //
-  // Spouse1 ─ Person ─ Spouse2
-  //
-  // Applies in BOTH ancestor and descendant mode
-  //
-  // The resultant node array will only contain one instance of the persons involved in these relationships
-  // --------------------------------------------------
-  // console.log("manageTwoPartnerPersons")
-  // GET ARRAY OF PERSONS WITH = 2 PARTNER
-  const twoPartnerArray = visibleWorkNodes.filter(        // array of person nodes with 2 spouses
-    (node) =>
-      //node.id !== selectedPersonHandle &&
-      Number(node.noPartners ?? 0) === 2
-  );
-  // console.log("Persons with 2 partners:", twoPartnerArray);
-  // for each person with 2 partners, find their families and reposition spouses if both are visible
-  twoPartnerArray.forEach((personNode) => {
-    const personHandle = personNode.id;
-
-    const personFamilies = visibleFamilies?.filter(     // get their families
-      (family) =>
-        family.fatherHandle === personHandle ||
-        family.motherHandle === personHandle
-    );
-
-    if (personFamilies && personFamilies.length !== 2) return;
-    //console.log("PersonFamilies2:", personFamilies);
-
-    // Get spouse handles
-    const spouseHandles = personFamilies?.map((family) =>
-      family.fatherHandle === personHandle
-        ? family.motherHandle
-        : family.fatherHandle
-    );
-    //console.log("Spouse nodes for person with 2 partners:", spouseHandles);
-    const spouse1Handle = spouseHandles?.[0];
-    const spouse2Handle = spouseHandles?.[1];
-    // Remove these node fom visibleWorkNodes if they are there, we will add them back after repositioning
-    const spouse1 = initialNodes.find((node) => node.id === spouse1Handle);
-    const spouse2 = initialNodes.find((node) => node.id === spouse2Handle);
-    const insertionArray = [spouse1, personNode, spouse2].filter(Boolean) as typeof initialNodes;
-
-    //console.log("Spouse 1 node:", spouse1);
-    //console.log("Spouse 2 node:", spouse2);
-
-    //remove spouses
-    visibleWorkNodes = visibleWorkNodes.filter(
-      (node) =>
-        node.id !== spouse1Handle && node.id !== spouse2Handle
-    );
-    visibleworkNodeIds.delete(spouse1Handle!);
-    visibleworkNodeIds.delete(spouse2Handle!);
-
-    const insertionPoint = visibleWorkNodes.findIndex(
-      (node) => node.id === personHandle
-    );
-    //console.log("Insertion point for 2-partner person:", insertionPoint);
-
-    //console.log("Visible work nodes after removing spouses for 2-partner person:", visibleWorkNodes);
-
-    const leftHandArray = visibleWorkNodes.slice(0, insertionPoint);
-    const rightHandArray = visibleWorkNodes.slice(insertionPoint + 1);
-    //console.log("Left hand array:", leftHandArray);
-    //console.log("Right hand array:", rightHandArray);
-
-    visibleWorkNodes = [...leftHandArray, ...insertionArray, ...rightHandArray];
-    //console.log("Visible work nodes after adding back 2-partner person and spouses:", visibleWorkNodes);
-
-    visibleworkNodeIds = new Set(
-      visibleWorkNodes.map((node) => node.id)
-    );
-  })
-  return { visibleWorkNodes, visibleworkNodeIds };
-}
 
 const getDisplayNodeId = (
   personHandle: string,
@@ -308,7 +45,7 @@ const getDisplayNodeId = (
 
 const getFamilyId = (
   personHandle: string,
-  selectedFamilies: FamilyTreeResponseFamily[] | undefined
+  selectedFamilies: TreeResponseFamily[] | undefined
 ) => {
   const result = selectedFamilies?.find( item =>
      (item.fatherHandle === personHandle || item.motherHandle === personHandle) )?.id;
@@ -319,12 +56,12 @@ const getFamilyId = (
 // --------------------------------------------------
 // Main function to build nodes for the family tree
 // --------------------------------------------------
-export const buildFamilyTree = (
-  data: FamilyTreeResponse,
-  mode: FamilyTreeMode
+export const buildTree = (
+  data: TreeResponse,
+  mode: TreeMode
 ): { nodes: Node[]; edges: Edge[] } => {
 
-  //console.log("buildFamilyTreee");
+  //console.log("buildTreee");
 
   // --------------------------------------------------
   // INitialisation and preprocessing:
@@ -349,11 +86,11 @@ export const buildFamilyTree = (
   const useExpandedLayout =
     mode === "descendants" && selectedNoPartners > 2;
 
-  let workNodes: FamilyTreeResponseNode[] = [...data.nodes];
+  let workNodes: TreeResponseNode[] = [...data.nodes];
   const workNodeIds = new Set(workNodes.map((node) => node.id));
   const initialNodes = [...data.nodes];
 
-  let visibleWorkNodes:FamilyTreeResponseNode[] = [];
+  let visibleWorkNodes:TreeResponseNode[] = [];
   let visibleworkNodeIds: Set<string> = new Set<string>();
 
   // --------------------------------------------------
@@ -461,7 +198,7 @@ export const buildFamilyTree = (
   //console.log("Mode", mode);
   if (mode === "descendants") {
     //console.log("Descendants route + hiddenIds", hiddenIds);
-    let filteredPersonNodes :FamilyTreeResponseNode[] = [];
+    let filteredPersonNodes :TreeResponseNode[] = [];
     if (useExpandedLayout) {
       // remove the selected person node and replace with a 
       // multiple person node for eachfamily they are in
@@ -474,12 +211,12 @@ export const buildFamilyTree = (
       //console.log("FilteredPersonNodes", filteredPersonNodes);
       
       let wDepth = 0;
-      const expandedSet: FamilyTreeResponseNode[] = [];
+      const expandedSet: TreeResponseNode[] = [];
       hiddenSpouseNodes.forEach((spouseNode) => {
         const familyId = getFamilyId(spouseNode.id, selectedFamilies);
         //console.log("Family ID for spouse node:", familyId, spouseNode);
         spouseNode.depth = wDepth;
-        const dummyNode:FamilyTreeResponseNode = {
+        const dummyNode:TreeResponseNode = {
           id: `multiple-partner-${selectedPersonHandle}::${familyId}`,
           label: selectedPersonNode.label,
           gender: selectedPersonNode.gender,
@@ -503,13 +240,13 @@ export const buildFamilyTree = (
       //  console.log("Expanded node set for multi-partner selected person:", expandedNodeSet);
     } else {
       // normaldescendants - remove multiple spouse nodes and replace bya single multiple partner node
-      const multiplePartnerNodes: FamilyTreeResponseNode[] = [];
+      const multiplePartnerNodes: TreeResponseNode[] = [];
       hiddenSpouseHandles.forEach((entry) => {
         Object.entries(entry).forEach(([key]) => {
           const spouseNode = initialNodes.find((node) => node.id === key);
           if (!spouseNode) return; 
           //console.log("Item in hidden spouse handles", key, spouseNode);
-          const dummyPerson: FamilyTreeResponseNode = {
+          const dummyPerson: TreeResponseNode = {
             id: `multiple-partner-${key}`,
             label: "Dummy",
             gender: spouseNode.gender === "M" ? "F" : "M",
@@ -712,11 +449,11 @@ export const buildFamilyTree = (
   ];
 
 //TODO help
-  const buildFamilyTreeEdges = (
-    data: FamilyTreeResponse,
-    mode: FamilyTreeMode
+  const buildTreeEdges = (
+    data: TreeResponse,
+    mode: TreeMode
   ): Edge[] => {
-    //console.log("buildFamilyTreeedges");
+    //console.log("buildTreeedges");
     //console.log([...hiddenSpouseNodes]);
 
     //console.log("Edge: Hidden spouse handles:", [...hiddenSpouseHandles]);
@@ -935,7 +672,7 @@ export const buildFamilyTree = (
     return [...familyEdges, ...multiplePartnerEdges];
   }
 
-  mappedEdges = buildFamilyTreeEdges(
+  mappedEdges = buildTreeEdges(
     data,
     mode
   );

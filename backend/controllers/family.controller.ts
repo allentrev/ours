@@ -20,10 +20,9 @@ export const getFamilyTree = async (req: Request, res: Response) => {
       typeof req.query.personHandle === "string"
         ? req.query.personHandle
         : undefined;
-
     const startPerson =
       mapped.people.find((person) => person.handle === personHandle) ??
-      mapped.people[0];
+      mapped.people[mapped.people.length - 1];
 
     const mode =
       req.query.mode === "ancestors" ? "ancestors" : "descendants";

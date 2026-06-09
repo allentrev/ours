@@ -1,7 +1,7 @@
 
-export type FamilyTreeMode = "ancestors" | "descendants";
+export type TreeMode = "ancestors" | "descendants";
 
-export interface FamilyTreeNodeData {
+export interface TreeNodeData {
   label?: string;
   gender?: string;
   birthDate?: string;
@@ -9,23 +9,23 @@ export interface FamilyTreeNodeData {
   isSelected?: boolean;
 }
 
-export interface FamilyTreeNode {
+export interface TreeNode {
   id: string;
   type?: "person" | "relationship";
   position: {
     x: number;
     y: number;
   };
-  data: FamilyTreeNodeData;
+  data: TreeNodeData;
 }
 
-export interface FamilyTreeEdge {
+export interface TreeEdge {
   id: string;
   source: string;
   target: string;
 }
 
-export interface FamilyPerson {
+export interface TreePerson {
   handle: string;
   grampsId?: string;
   gender?: string;
@@ -35,7 +35,7 @@ export interface FamilyPerson {
   birthDate?: string;
   deathDate?: string;
 }
-export interface FamilyTreeResponseNode {
+export interface TreeResponseNode {
   id: string;
   label: string;
   gender?: string;
@@ -44,25 +44,30 @@ export interface FamilyTreeResponseNode {
   depth: number;
   noPartners:number
 };
-export interface FamilyTreeResponseEdge {
+export interface TreeResponseEdge {
   source: string;
   target: string;
   relationshipType: string;
 }
-export interface FamilyTreeResponseFamily {
+export interface TreeResponseFamily {
   id: string;
   fatherHandle?: string;
   motherHandle?: string;
   childHandles: string[];
 }
 
-export interface FamilyTreeResponse {
-  selectedPerson: FamilyPerson;
-  nodes: FamilyTreeResponseNode[];
-  edges: FamilyTreeResponseEdge[];
-  families?: FamilyTreeResponseFamily[];
+export interface TreeResponse {
+  selectedPerson: TreePerson;
+  nodes: TreeResponseNode[];
+  edges: TreeResponseEdge[];
+  families?: TreeResponseFamily[];
 }
 
 export type HiddenSpouses = Record<string,string[]>;
 
+export type MultiPartnerSpouseMapEntry = Record<string, string[]>;
 
+export type TwoPartnerResult = {
+  visibleWorkNodes: TreeResponseNode[];
+  visibleworkNodeIds: Set<string>;
+};
