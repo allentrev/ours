@@ -17,6 +17,7 @@ import {
 } from "./spouseHelpers";
 
 import { buildPersonNodes } from "./nodeBuilders";
+import { buildRelationshipNodes } from "./relationshipBuilders";
 
 import {
   getDisplayNodeId,
@@ -46,35 +47,17 @@ export const buildTree = (
   // --------------------------------------------------
   let mappedNodes: Node[] = [];
   let mappedEdges: Edge[] = [];
-
+  // --------------------------------------------------
+  // Layout Context
+  // --------------------------------------------------
   const selectedPersonHandle = data.selectedPerson.handle;
-
-  const selectedPersonNode = data.nodes.find(
-    (node) => node.id === selectedPersonHandle
-  );
-  if (!selectedPersonNode) { return { nodes: [], edges: [] }; } 
-
-  //console.log("Input data nodes:", data.nodes);
-
+  const selectedPersonNode = data.nodes.find((node) => node.id === selectedPersonHandle);
   const selectedNoPartners = selectedPersonNode?.noPartners ?? 0;
-
-  const useExpandedLayout =
-    mode === "descendants" && selectedNoPartners > 2;
+  const useExpandedLayout = mode === "descendants" && selectedNoPartners > 2;
 
   let workNodes: TreeResponseNode[] = [...data.nodes];
   const workNodeIds = new Set(workNodes.map((node) => node.id));
   const initialNodes = [...data.nodes];
-
-  let visibleWorkNodes:TreeResponseNode[] = [];
-  let visibleworkNodeIds: Set<string> = new Set<string>();
-
-  // --------------------------------------------------
-  // Determine which families are visible based on the visible person nodes
-  // This is important for determining where to place relationship nodes and
-  // how to handle multi-partner logic
-  //
-  // Depends on workNodeIds
-  // --------------------------------------------------
   const visibleFamilies =
     // this removes the familybelonging to the selected person and their spouse from
     // list of visible families
@@ -98,12 +81,16 @@ export const buildTree = (
     (family) =>
       family.fatherHandle === selectedPersonHandle ||
       family.motherHandle === selectedPersonHandle
-  );
+    );
 
   const hiddenSpouseHandles = getMultiPartnerSpouseMap(
     data,
     mode,
   );
+
+  let visibleWorkNodes:TreeResponseNode[] = [];
+  let visibleworkNodeIds: Set<string> = new Set<string>();
+
   
   // 1. Find the entry object that contains the selected handle as a key
   const matchedEntry = hiddenSpouseHandles.find(
@@ -118,6 +105,23 @@ export const buildTree = (
   const hiddenIds: string[] = hiddenSpouseHandles.flatMap((entry) =>
         Object.values(entry).flat()
   );
+
+  if (!selectedPersonNode) { return { nodes: [], edges: [] }; } 
+
+  //console.log("Input data nodes:", data.nodes);
+
+
+
+
+
+  // --------------------------------------------------
+  // Determine which families are visible based on the visible person nodes
+  // This is important for determining where to place relationship nodes and
+  // how to handle multi-partner logic
+  //
+  // Depends on workNodeIds
+  // --------------------------------------------------
+
   //console.log("Hidden Ids:", [...hiddenIds]);  
   visibleworkNodeIds = new Set(
     visibleWorkNodes.map((node) => node.id)
@@ -264,103 +268,20 @@ export const buildTree = (
   //console.log("Person nodes after initial layout:", personNodes);
   //console.log("MultiPartner Base Nodes", multiPartnerBaseNodes);
 
-  // --------------------------------------------------
-  // Now insert relationship nodes for families where both parents are visible and not hidden due to multi-partner logic
-  // --------------------------------------------------
-  const relationshipNodes: Node[] = visibleFamilies.flatMap((family) => {
-    //console.log("iterate familties", family.fatherHandle, family.motherHandle);
-    if (
-      useExpandedLayout &&
-      selectedFamilies.includes(family)
-    ) {
-      //console.log("1");
-      return [];
-    }
-
-    if (!family.fatherHandle || !family.motherHandle) {
-      //console.log("2");
-      return [];
-    }
-
-    if (
-      hiddenIds.includes(family.fatherHandle) ||
-      hiddenIds.includes(family.motherHandle)
-    ) {
-      //console.log("3");
-      return [];
-    }
-    
-    const fatherNode = personNodes.find(
-      (node) =>
-        node.id === getDisplayNodeId(family.fatherHandle!, selectedPersonHandle, family.id, useExpandedLayout)
-    );
-
-    const motherNode = personNodes.find(
-      (node) =>
-        node.id === getDisplayNodeId(family.motherHandle!, selectedPersonHandle, family.id, useExpandedLayout)
-    );
-
-    if (!fatherNode || !motherNode) {
-      //console.log("4");
-      return [];
-    }
-    //console.log("5");
-    return [
-      {
-        id: `relationship-${family.id}`,
-        type: "relationship",
-        position: {
-          x:
-            (fatherNode.position.x +
-              TREE.PERSON_CARD_WIDTH / 2 +
-              motherNode.position.x +
-              TREE.PERSON_CARD_WIDTH / 2) /
-            2 -
-            TREE.RELATIONSHIP_NODE_SIZE / 2,
-          y:
-            fatherNode.position.y +
-            TREE.PERSON_CARD_HEIGHT / 2 -
-            TREE.RELATIONSHIP_NODE_SIZE / 2,
-        },
-        data: {},
-      },
-    ];
+  const {
+    relationshipNodes,
+    multiPartnerRelationshipNodes,
+  } = buildRelationshipNodes({
+    mode,
+    personNodes,
+    visibleFamilies,
+    selectedFamilies,
+    hiddenIds,
+    useExpandedLayout,
+    selectedPersonHandle,
+    multiPartnerBaseNodes,
   });
-  const multiPartnerRelationshipNodes: Node[] = multiPartnerBaseNodes.flatMap((node) => {
-    // hmmmm
-    //console.log("iterate multiOartner,,,", node);
-    if (mode === "ancestors") return [];
-    const wSpouseHandle = node.id.slice(17);
-    //console.log("spouse Handle", wSpouseHandle);
-    const spouseNode = personNodes.find( item => item.id === wSpouseHandle);
-    if (!spouseNode){ return [] };
-    //console.log("Spouse node", spouseNode)
-    return [
-      {
-        id: `relationship-${node.id}`,
-        type: "relationship",
-        position: {
-          x:
-            (node.position.x +
-              TREE.PERSON_CARD_WIDTH / 2 +
-              spouseNode.position.x +
-              TREE.PERSON_CARD_WIDTH / 2) /
-            2 -
-            TREE.RELATIONSHIP_NODE_SIZE / 2,
-          y:
-            node.position.y +
-            TREE.PERSON_CARD_HEIGHT / 2 -
-            TREE.RELATIONSHIP_NODE_SIZE / 2,
-        },
-        data: {},
-      },
-    ];
-  });
-
-  //console.log("Final person nodes:", personNodes);
-  //console.log("Relationship nodes:", relationshipNodes);
-  //console.log("Multiple partner nodes:", multiplePartnerNodes);
-  //console.log("Multiple partner relationship nodes:", multiPartnerRelationshipNodes);
+  
   mappedNodes = [
     ...personNodes,
     ...relationshipNodes,
