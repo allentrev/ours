@@ -19,6 +19,7 @@ import {
   getMultiPartnerSpouseMap,
   manageTwoPartnerPersons
 } from "./spouseHelpers";
+import { buildAncestorWorkNodes } from "./ancestorProcessor";
 
 import { buildPersonNodes } from "./nodeBuilders";
 import { buildRelationshipNodes } from "./relationshipBuilders";
@@ -138,19 +139,13 @@ const {
   // --------------------------------------------------
   // Build workNodes based on mode:
   if (mode === "ancestors") {
-    //if (selectedNoPartners> 2) {
-      // add multi partner Node with No Partners = selectedNoPartners
-    //}
-    const ancestorNodes = buildAncestorTree(data);
-    workNodes = [...workNodes, ...ancestorNodes];
-    const spouseNodes = getSpouseNodesForPerson(
-      selectedPersonHandle,
-      data,
-      0
+    const result = buildAncestorWorkNodes(
+      context,
+      workNodes
     );
-    //console.log("ancestor, selectedPerson, spouseNodes");
-    //console.log(ancestorNodes, selectedPersonNode, spouseNodes);
-    visibleWorkNodes = [...ancestorNodes, selectedPersonNode, ...spouseNodes];
+
+    workNodes = result.workNodes;
+    visibleWorkNodes = result.visibleWorkNodes;
   }
 
   // -------------------------------------------------------
