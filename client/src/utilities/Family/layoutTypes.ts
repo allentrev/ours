@@ -13,20 +13,29 @@ export type TwoPartnerResult = {
 };
 
 export interface LayoutContext {
-  data: TreeResponse;
-  mode: TreeMode;
+    data: TreeResponse;
+    mode: TreeMode;
 
-  selectedPersonHandle: string;
-  selectedPersonNode: TreeResponseNode;
-  selectedNoPartners: number;
-  useExpandedLayout: boolean;
+    selectedPersonHandle: string;
+    selectedPersonNode: TreeResponseNode;
+    selectedNoPartners: number;
+    useExpandedLayout: boolean;
 
-  visibleFamilies: TreeResponseFamily[];
-  selectedFamilies: TreeResponseFamily[];
+    visibleFamilies: TreeResponseFamily[];
+    selectedFamilies: TreeResponseFamily[];
 
-  hiddenSpouseHandles: MultiPartnerSpouseMapEntry[];
-  selectedPersonHiddenSpouseIds: string[];
-  hiddenIds: string[];
+    hiddenSpouseHandles:
+        MultiPartnerSpouseMapEntry[];
 
-  initialNodes: TreeResponseNode[];
+    selectedPersonHiddenSpouseIds:
+        string[];
+
+    hiddenSpouseNodes:
+        TreeResponseNode[];
+
+    hiddenIds: string[];
+
+    initialNodes: TreeResponseNode[];
+
+    workNodeIds: Set<string>;
 }

@@ -12,6 +12,8 @@ import {
   buildAncestorTree
 } from "./ancestorHelpers";
 
+import { buildLayoutContext } from "./contextBuilder";
+
 import {
   getSpouseNodesForPerson,
   getMultiPartnerSpouseMap,
@@ -51,70 +53,20 @@ export const buildTree = (
   // --------------------------------------------------
   // Layout Context
   // --------------------------------------------------
-  const selectedPersonHandle = data.selectedPerson.handle;
-  const selectedPersonNode = data.nodes.find((node) => node.id === selectedPersonHandle);
-  const selectedNoPartners = selectedPersonNode?.noPartners ?? 0;
-  const useExpandedLayout = mode === "descendants" && selectedNoPartners > 2;
 
-  let workNodes: TreeResponseNode[] = [...data.nodes];
-  const workNodeIds = new Set(workNodes.map((node) => node.id));
-  const initialNodes = [...data.nodes];
-  const visibleFamilies =
-    // this removes the familybelonging to the selected person and their spouse from
-    // list of visible families
-    data.families?.filter((family) => {                   // ensure at least one parent is visible
-      if (!family.fatherHandle && !family.motherHandle) {
-        return false;
-      }
-
-      const parentHandles = [                             // remove any null/undefined handles
-        family.fatherHandle,
-        family.motherHandle,
-      ].filter(Boolean) as string[];
-
-      return parentHandles.some((parentHandle) =>
-        workNodeIds.has(parentHandle)
-      );
-    }) ?? [];
-    
-  //  the set of families with the selected person as a parent
-  const selectedFamilies = visibleFamilies.filter(
-    (family) =>
-      family.fatherHandle === selectedPersonHandle ||
-      family.motherHandle === selectedPersonHandle
-    );
-
-  const hiddenSpouseHandles = getMultiPartnerSpouseMap(
-    data,
-    mode,
-  );
-
-  let visibleWorkNodes:TreeResponseNode[] = [];
-  let visibleworkNodeIds: Set<string> = new Set<string>();
-
-  
-  // 1. Find the entry object that contains the selected handle as a key
-  const matchedEntry = hiddenSpouseHandles.find(
-    (entry) => selectedPersonHandle in entry
-  );
-  // 2. Extract the array of strings safely
-  const selectedPersonHiddenSpouseIds: string[] = matchedEntry ? matchedEntry[selectedPersonHandle] : [];
-
-  const hiddenSpouseNodes = initialNodes.filter((item) => selectedPersonHiddenSpouseIds.includes(item.id));
-  visibleWorkNodes = workNodes.filter((node) => !selectedPersonHiddenSpouseIds.includes(node.id))  //take away hidden spouse ids
-
-  const hiddenIds: string[] = hiddenSpouseHandles.flatMap((entry) =>
-        Object.values(entry).flat()
-  );
-
-  if (!selectedPersonNode) { return { nodes: [], edges: [] }; } 
+  /////if (!selectedPersonNode) { return { nodes: [], edges: [] }; } 
 
   //console.log("Input data nodes:", data.nodes);
 
-  const context: LayoutContext = {
-    data,
-    mode,
+const context = buildLayoutContext(data, mode);
 
+if (!context) {
+  return {
+      nodes: [],
+      edges: [],
+  };
+}
+const {
     selectedPersonHandle,
     selectedPersonNode,
     selectedNoPartners,
@@ -125,30 +77,51 @@ export const buildTree = (
 
     hiddenSpouseHandles,
     selectedPersonHiddenSpouseIds,
+    hiddenSpouseNodes,
     hiddenIds,
 
     initialNodes,
-  };
+} = context;
 
 
+    // --------------------------------------------------
+    // Initialise work nodes
+    // --------------------------------------------------
+    let workNodes: TreeResponseNode[] = [...data.nodes];
+    let visibleWorkNodes: TreeResponseNode[] = [];
+    let visibleworkNodeIds = new Set<string>();
+  ;
+    // --------------------------------------------------
+    // Hide spouses
+    // --------------------------------------------------
+    visibleWorkNodes =
+        workNodes.filter(
+            (node) =>
+                !selectedPersonHiddenSpouseIds.includes(
+                    node.id
+                )
+        );
 
-  // --------------------------------------------------
-  // Determine which families are visible based on the visible person nodes
-  // This is important for determining where to place relationship nodes and
-  // how to handle multi-partner logic
-  //
-  // Depends on workNodeIds
-  // --------------------------------------------------
+    visibleworkNodeIds =
+        new Set(
+            visibleWorkNodes.map(
+                (node) => node.id
+            )
+        );
 
-  //console.log("Hidden Ids:", [...hiddenIds]);  
-  visibleworkNodeIds = new Set(
-    visibleWorkNodes.map((node) => node.id)
-  );
+    // --------------------------------------------------
+    // Two-partner processing
+    // --------------------------------------------------
+    const result = 
+      manageTwoPartnerPersons(
+        workNodes,
+        visibleFamilies,
+        visibleworkNodeIds,
+        initialNodes
+      );
   
-  //console.log("Visible work nodes before:", visibleWorkNodes);
-  const result = manageTwoPartnerPersons(workNodes, visibleFamilies, visibleworkNodeIds, initialNodes);
-  visibleWorkNodes = result.visibleWorkNodes;
-  visibleworkNodeIds = result.visibleworkNodeIds;
+    visibleWorkNodes = result.visibleWorkNodes;
+    visibleworkNodeIds = result.visibleworkNodeIds;
   //console.log("Visible work nodes after management:", visibleWorkNodes);
 
   //console.log("initial Nodes", initialNodes);
@@ -272,7 +245,7 @@ export const buildTree = (
 
   // ----------------------------------------------------------
   // Now process the visibleworkNodes to produce the final nodes for React Flow 
-  // Produce Output nodes for React Flow
+  // Produce Output nodes for React Flow  PERSON NODES
 
   const {
     personNodes,
