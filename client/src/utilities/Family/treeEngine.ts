@@ -6,32 +6,16 @@ import type {
   TreeResponseNode,
 } from "../../types/familyTypes";
 
-import type { LayoutContext } from "./layoutTypes";
-
-import {
-  buildAncestorTree
-} from "./ancestorHelpers";
-
 import { buildLayoutContext } from "./contextBuilder";
 
-import {
-  getSpouseNodesForPerson,
-  getMultiPartnerSpouseMap,
-  manageTwoPartnerPersons
-} from "./spouseHelpers";
+import { manageTwoPartnerPersons } from "./spouseHelpers";
+
 import { buildAncestorWorkNodes } from "./ancestorProcessor";
+import { buildDescendantWorkNodes } from "./descendantProcessor";
 
 import { buildPersonNodes } from "./nodeBuilders";
 import { buildRelationshipNodes } from "./relationshipBuilders";
 import { buildTreeEdges } from "./edgeBuilders";
-
-import {
-  getFamilyId,
-} from "./utils";
-
-
-//console.log("buildImport");
-
 
 // --------------------------------------------------
 // Main function to build nodes for the family tree
@@ -57,36 +41,28 @@ export const buildTree = (
 
   /////if (!selectedPersonNode) { return { nodes: [], edges: [] }; } 
 
-  //console.log("Input data nodes:", data.nodes);
+  const context = buildLayoutContext(data, mode);
 
-const context = buildLayoutContext(data, mode);
-
-if (!context) {
-  return {
-      nodes: [],
-      edges: [],
-  };
-}
-const {
+  if (!context) {
+    return {
+        nodes: [],
+        edges: [],
+    };
+  }
+  
+  const {
     selectedPersonHandle,
-    selectedPersonNode,
-    selectedNoPartners,
-    useExpandedLayout,
 
     visibleFamilies,
-    selectedFamilies,
 
-    hiddenSpouseHandles,
     selectedPersonHiddenSpouseIds,
-    hiddenSpouseNodes,
-    hiddenIds,
 
     initialNodes,
-} = context;
+  } = context;
 
 
     // --------------------------------------------------
-    // Initialise work nodes
+    // Work nodes
     // --------------------------------------------------
     let workNodes: TreeResponseNode[] = [...data.nodes];
     let visibleWorkNodes: TreeResponseNode[] = [];
@@ -123,21 +99,11 @@ const {
   
     visibleWorkNodes = result.visibleWorkNodes;
     visibleworkNodeIds = result.visibleworkNodeIds;
-  //console.log("Visible work nodes after management:", visibleWorkNodes);
-
-  //console.log("initial Nodes", initialNodes);
-  //console.log("Hidden spouse handles:", [...hiddenSpouseHandles]);
-  //console.log("Hidden IDs:", [...hiddenIds]);
-  //console.log("selectedPersonHiddenSpouseIds", selectedPersonHiddenSpouseIds);
-  //console.log("Hidden spouse nodes:", [...hiddenSpouseNodes]);
-  //console.log("visibleWOrkNodes", [...visibleWorkNodes]);
-  //console.log("flattended spouse Ids:", flattenedselectedPersonHiddenSpouseIds);
-
-  //console.log("Visible families:", visibleFamilies);
-  //console.log("Selected families:", selectedFamilies);
-  let offSet = 0;
   // --------------------------------------------------
-  // Build workNodes based on mode:
+  // Processors
+  // --------------------------------------------------
+  // A) Ancestors
+  // ----------------------------------------------------------
   if (mode === "ancestors") {
     const result = buildAncestorWorkNodes(
       context,
@@ -149,98 +115,23 @@ const {
   }
 
   // -------------------------------------------------------
-  // Set up visible work nodes:
-  //  Descendants = workNodes minus hidden spouses
-  //  Ancestors = all workNodes
-  //
-  // AT THIS POINT WORKNODES MUST BE FULLY POPULATED.
-  //  2 partner person must be in the nodes as spouse 1 --- person ---spouse 2
-  //  >2 partner person must be in the nodes as:
-  //      a) for descendant of selected person: person --- MultiPartner 
-  //      b) for ancestor of selected person: MultiPartner --- person --- ancestral other parent
-  // In descendant mode, if the selected person has >2 partners, the expanded view will be shown
-  // -------------------------------------------------------
-  //console.log("Mode", mode);
+  // B) Descendants
+  // ----------------------------------------------------------
   if (mode === "descendants") {
-    //console.log("Descendants route + hiddenIds", hiddenIds);
-    let filteredPersonNodes :TreeResponseNode[] = [];
-    if (useExpandedLayout) {
-      // remove the selected person node and replace with a 
-      // multiple person node for eachfamily they are in
-      // calculate the depth offset
-      // add the children nodes
-
-      filteredPersonNodes = visibleWorkNodes.filter(
-        (node) => node.id !== selectedPersonHandle && !selectedPersonHiddenSpouseIds.includes(node.id)
-      );
-      //console.log("FilteredPersonNodes", filteredPersonNodes);
-      
-      let wDepth = 0;
-      const expandedSet: TreeResponseNode[] = [];
-      hiddenSpouseNodes.forEach((spouseNode) => {
-        const familyId = getFamilyId(spouseNode.id, selectedFamilies);
-        //console.log("Family ID for spouse node:", familyId, spouseNode);
-        spouseNode.depth = wDepth;
-        const dummyNode:TreeResponseNode = {
-          id: `multiple-partner-${selectedPersonHandle}::${familyId}`,
-          label: selectedPersonNode.label,
-          gender: selectedPersonNode.gender,
-          birthDate: selectedPersonNode.birthDate,
-          deathDate: selectedPersonNode.deathDate,
-          depth: wDepth,
-          noPartners: 1,
-        }
-        expandedSet.push(dummyNode, spouseNode);
-        wDepth += 1;
-      })
-      //console.log("expanded set", [...expandedSet]);
-      offSet = wDepth - 1;
-      const updatedFilteredPersonNodes = filteredPersonNodes.map((item) => ({
-        ...item,
-        depth: item.depth + offSet
-      }));
-      visibleWorkNodes = [...expandedSet, ...updatedFilteredPersonNodes];
-      //console.log("Visible work nodes after expanded layout processing:", visibleWorkNodes);  
-      //const expandedNodeSet = [...repeatedSelectedNodes, ...hiddenSpouseNodes]
-      //  console.log("Expanded node set for multi-partner selected person:", expandedNodeSet);
-    } else {
-      // normaldescendants - remove multiple spouse nodes and replace bya single multiple partner node
-      const multiplePartnerNodes: TreeResponseNode[] = [];
-      hiddenSpouseHandles.forEach((entry) => {
-        Object.entries(entry).forEach(([key]) => {
-          const spouseNode = initialNodes.find((node) => node.id === key);
-          if (!spouseNode) return; 
-          //console.log("Item in hidden spouse handles", key, spouseNode);
-          const dummyPerson: TreeResponseNode = {
-            id: `multiple-partner-${key}`,
-            label: "Dummy",
-            gender: spouseNode.gender === "M" ? "F" : "M",
-            birthDate: "",
-            deathDate: "",
-            depth: spouseNode.depth ?? 0, 
-            noPartners: spouseNode.noPartners ?? 1,
-          };
-          multiplePartnerNodes.push(dummyPerson);
-        })
-      })
-      //console.log("multiplePartnerNodes", multiplePartnerNodes);
-      filteredPersonNodes = visibleWorkNodes.filter((node) => !hiddenIds.includes(node.id))
-      visibleWorkNodes = [...filteredPersonNodes, ...multiplePartnerNodes]; 
-      //console.log("normal filteredPersonNodes", visibleWorkNodes);
-    }
+    visibleWorkNodes = buildDescendantWorkNodes(
+      context,
+      visibleWorkNodes
+    );
   }
-
-    //-------------------------- end of section -----------------------------------
-  
-    //visibleWorkNodes = workNodes.filter((node) => !hiddenIds.has(node.id))  //take away hidden ids
+  //-------------------------- end of section -----------------------------------
 
   visibleworkNodeIds = new Set(
     visibleWorkNodes.map((node) => node.id)
   );
 
   // ----------------------------------------------------------
-  // Now process the visibleworkNodes to produce the final nodes for React Flow 
-  // Produce Output nodes for React Flow  PERSON NODES
+  // React Flow Nodes
+  // ----------------------------------------------------------
 
   const {
     personNodes,
@@ -269,12 +160,16 @@ const {
     ...multiPartnerRelationshipNodes
   ];
 
-//TODO help
+  // ----------------------------------------------------------
+  // React Flow Edges
+  // ----------------------------------------------------------
   mappedEdges = buildTreeEdges(
     context,
     multiPartnerBaseNodes
   );
-  //console.log("Final return");
+  // ----------------------------------------------------------
+  // Return graph
+  // ----------------------------------------------------------
 
   return { nodes: mappedNodes, edges: mappedEdges };
 };

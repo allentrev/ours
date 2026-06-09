@@ -1,7 +1,6 @@
 import type {
     TreeMode,
     TreeResponse,
-    TreeResponseNode,
     TreeResponseFamily,
 } from "../../types/familyTypes";
 
