@@ -46,7 +46,7 @@ export const buildPersonNodes = (
         : node.label;
 
     if (node.label === "Dummy") {
-      multiPartnerBaseNodeHandles.push(node.id);
+      multiPartnerBaseNodeHandles.push(wNodeId);
     }
 
     return {

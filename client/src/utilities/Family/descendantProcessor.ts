@@ -8,6 +8,9 @@ export const buildDescendantWorkNodes = (
   context: LayoutContext,
   visibleWorkNodes: TreeResponseNode[]
 ): TreeResponseNode[] => {
+  
+  const SPOUSE_DEPTH_OFFSET = 0;
+
   const {
     selectedPersonHandle,
     selectedPersonNode,
@@ -88,5 +91,65 @@ export const buildDescendantWorkNodes = (
     (node) => !hiddenIds.includes(node.id)
   );
 
-  return [...filteredPersonNodes, ...multiplePartnerNodes];
+  const visibleNodeIds = new Set(
+    filteredPersonNodes.map((node) => node.id)
+  );
+
+  const spouseIdsToAdd = new Set<string>();
+
+  context.visibleFamilies.forEach((family) => {
+    const fatherVisible =
+      family.fatherHandle &&
+      visibleNodeIds.has(family.fatherHandle);
+
+    const motherVisible =
+      family.motherHandle &&
+      visibleNodeIds.has(family.motherHandle);
+
+    if (fatherVisible && family.motherHandle) {
+      spouseIdsToAdd.add(family.motherHandle);
+    }
+
+    if (motherVisible && family.fatherHandle) {
+      spouseIdsToAdd.add(family.fatherHandle);
+    }
+  });
+
+  const spouseNodesToAdd = initialNodes
+    .filter(
+      (node) =>
+        spouseIdsToAdd.has(node.id) &&
+        !visibleNodeIds.has(node.id) &&
+        !hiddenIds.includes(node.id)
+    )
+    .map((spouseNode) => {
+      const family = context.visibleFamilies.find(
+        (item) =>
+          item.fatherHandle === spouseNode.id ||
+          item.motherHandle === spouseNode.id
+      );
+
+      const partnerHandle =
+        family?.fatherHandle === spouseNode.id
+          ? family.motherHandle
+          : family?.fatherHandle;
+
+      const partnerNode = filteredPersonNodes.find(
+        (node) => node.id === partnerHandle
+      );
+
+      return {
+        ...spouseNode,
+        depth:
+          partnerNode?.depth !== undefined
+            ? partnerNode.depth + SPOUSE_DEPTH_OFFSET
+            : spouseNode.depth,
+      };
+    });
+
+  return [
+    ...filteredPersonNodes,
+    ...spouseNodesToAdd,
+    ...multiplePartnerNodes,
+  ];
 };

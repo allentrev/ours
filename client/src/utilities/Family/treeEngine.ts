@@ -6,6 +6,9 @@ import type {
   TreeResponseNode,
 } from "../../types/familyTypes";
 
+import { positionSelectedFamilyBlocks } from "./familyBlockLayout";
+import { orderFamilyBlocks } from "./familyBlockOrdering";
+
 import { buildLayoutContext } from "./contextBuilder";
 
 import { manageTwoPartnerPersons } from "./spouseHelpers";
@@ -124,6 +127,10 @@ export const buildTree = (
     );
   }
   //-------------------------- end of section -----------------------------------
+  visibleWorkNodes = orderFamilyBlocks(
+    context,
+    visibleWorkNodes
+  );
 
   visibleworkNodeIds = new Set(
     visibleWorkNodes.map((node) => node.id)
@@ -134,13 +141,17 @@ export const buildTree = (
   // ----------------------------------------------------------
 
   const {
-    personNodes,
+    personNodes: rawPersonNodes,
     multiPartnerBaseNodes,
   } = buildPersonNodes(
     visibleWorkNodes,
     selectedPersonHandle,
     mode
   );
+  const personNodes = positionSelectedFamilyBlocks({
+    context,
+    personNodes: rawPersonNodes,
+  });
   //console.log("Nodes  by depth", nodesByDepth);
   //console.log("Person nodes after initial layout:", personNodes);
   //console.log("MultiPartner Base Nodes", multiPartnerBaseNodes);
