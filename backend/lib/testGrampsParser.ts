@@ -3,7 +3,7 @@ import { parseGrampsFile } from "./grampsParser.js";
 import { mapFamilyTreeData } from "./familyTreeMapper.js";
 
 const run = async () => {
-  const filePath = path.join(process.cwd(), "test-data", "test2.gramps");
+  const filePath = path.join(process.cwd(), "test-data", "test3.gramps");
 
   console.log(`Loading file: ${filePath}`);
 

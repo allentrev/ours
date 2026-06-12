@@ -11,7 +11,7 @@ import {
 export const getFamilyTree = async (req: Request, res: Response) => {
   try {
     //const filePath = path.join(process.cwd(), "test-data", "data.gramps");
-    const filePath = path.join(process.cwd(), "test-data", "test2.gramps");
+    const filePath = path.join(process.cwd(), "test-data", "test3.gramps");
 
     const parsed = await parseGrampsFile(filePath);
     const mapped = mapFamilyTreeData(parsed);
@@ -62,7 +62,7 @@ export const searchFamilyPeople = async (
     const filePath = path.join(
       process.cwd(),
       "test-data",
-      "test2.gramps"
+      "test3.gramps"
     );
 
     const parsed = await parseGrampsFile(filePath);

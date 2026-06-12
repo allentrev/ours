@@ -25,7 +25,7 @@ const FamilySearch = ({ onSearch }: Props) => {
 
       try {
         const data = await searchFamilyPeople(searchText);
-
+        console.log("Search results", data);
         setResults(data);
       } catch (error) {
         console.error("Search failed", error);
@@ -36,6 +36,7 @@ const FamilySearch = ({ onSearch }: Props) => {
 
     return () => clearTimeout(timeout);
   }, [searchText, hasSelected]);
+
   return (
     <div className="relative border-b border-gray-200 bg-white p-4">
       <input
