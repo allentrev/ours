@@ -97,7 +97,12 @@ export const buildRelationshipNodes = ({
             TREE.PERSON_CARD_HEIGHT / 2 -
             TREE.RELATIONSHIP_NODE_SIZE / 2,
         },
-        data: {},
+        data: {
+          familyId: family.id,
+          fatherHandle: family.fatherHandle,
+          motherHandle: family.motherHandle,
+          relationshipKind: "family",
+        },
       },
     ];
   });
@@ -136,7 +141,11 @@ export const buildRelationshipNodes = ({
               TREE.PERSON_CARD_HEIGHT / 2 -
               TREE.RELATIONSHIP_NODE_SIZE / 2,
           },
-          data: {},
+          data: {
+            relationshipKind: "multiPartner",
+            baseNodeId: node.id,
+            spouseHandle,
+          },
         },
       ];
     });

@@ -14,6 +14,8 @@ import type {
 
 import "@xyflow/react/dist/style.css";
 
+import { layoutTreeWithElk } from "../../utilities/Family/elkTreeLayout";
+
 import PersonNode from "./PersonNode";
 import RelationshipNode from "./RelationshipNode";
 import MultiplePartnerNode from "./MultiplePartnerNode";
@@ -33,6 +35,8 @@ import type {
   TreeMode,
   TreeResponse,
 } from "../../types/familyTypes";
+
+const USE_ELK_LAYOUT = false;
 
 const nodeTypes = {
   person: PersonNode,
@@ -93,8 +97,12 @@ const TreeViewer = ({
         );
 
         const graph = buildTree(data, mode)
+        
+        const layoutedNodes = USE_ELK_LAYOUT
+          ? await layoutTreeWithElk(graph.nodes, graph.edges)
+          : graph.nodes;
 
-        setNodes(graph.nodes);
+        setNodes(layoutedNodes);
         setEdges(graph.edges);
 
       } catch (error) {
