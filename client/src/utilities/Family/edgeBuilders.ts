@@ -16,6 +16,10 @@ export const buildTreeEdges = (
     useExpandedLayout,
   } = context;
 
+  const BORDER_RADIUS= 50;
+  
+  const FAMILY_CHANNELS = [60, 85, 100, 120, 130];
+
   const visiblePersonIds = new Set(
     data.nodes
       .filter(
@@ -26,7 +30,7 @@ export const buildTreeEdges = (
       .map((node) => node.id)
   );
 
-  const familyEdges: Edge[] = visibleFamilies.flatMap((family) => {
+  const familyEdges: Edge[] = visibleFamilies.flatMap((family,familyIndex) => {
     const parentHandles = [
       family.fatherHandle,
       family.motherHandle,
@@ -59,7 +63,10 @@ export const buildTreeEdges = (
               type: "straight",
               sourceHandle: "spouse-right-source",
               targetHandle: "spouse-left-target",
-              style: { strokeWidth: 2 },
+              style: { 
+                strokeWidth: 2.5,
+                stroke: "#374151",
+              },
             },
           ]
         : [];
@@ -71,10 +78,17 @@ export const buildTreeEdges = (
           source: spouseHandle!,
           target: childHandle,
           type: "smoothstep",
+          classname:"child-edge",
           sourceHandle: "spouse-right-source",
           targetHandle: "top-target",
-          pathOptions: { borderRadius: 30 },
-          style: { strokeWidth: 2 },
+          interactionWidth: 30,
+          pathOptions: {
+            borderRadius: BORDER_RADIUS,
+          },
+          style: {
+            strokeWidth: 2.5,
+            stroke: "#2563eb",
+          },
         }));
 
       return [...spouseEdges, ...childEdges];
@@ -90,10 +104,17 @@ export const buildTreeEdges = (
           source: parentHandle,
           target: childHandle,
           type: "smoothstep",
+          classname:"child-edge",
           sourceHandle: "bottom-source",
           targetHandle: "top-target",
-          pathOptions: { borderRadius: 30 },
-          style: { strokeWidth: 2 },
+          interactionWidth: 30,
+          pathOptions: {
+            borderRadius: BORDER_RADIUS,
+          },
+          style: {
+            strokeWidth: 2.5,
+            stroke: "#2563eb",
+          },
         }));
     }
 
@@ -107,7 +128,10 @@ export const buildTreeEdges = (
         type: "straight",
         sourceHandle: "spouse-right-source",
         targetHandle: "left",
-        style: { strokeWidth: 2 },
+        style: {
+          strokeWidth: 2.5,
+          stroke: "#374151",
+        },
       },
       {
         id: `edge-${family.motherHandle}-${relationshipNodeId}`,
@@ -116,7 +140,10 @@ export const buildTreeEdges = (
         type: "straight",
         sourceHandle: "spouse-left-source",
         targetHandle: "right-target",
-        style: { strokeWidth: 2 },
+        style: {
+          strokeWidth: 2.5,
+          stroke: "#374151",
+        },
       },
     ];
 
@@ -126,11 +153,22 @@ export const buildTreeEdges = (
         id: `edge-${relationshipNodeId}-${childHandle}`,
         source: relationshipNodeId,
         target: childHandle,
-        type: "smoothstep",
+        type: "familyChild",
+        classname:"child-edge",
+        animated: true,
         sourceHandle: "bottom",
         targetHandle: "top-target",
-        pathOptions: { borderRadius: 30 },
-        style: { strokeWidth: 2 },
+        interactionWidth: 30,
+        data: {
+          channelOffset: FAMILY_CHANNELS[familyIndex % FAMILY_CHANNELS.length],
+        },
+        pathOptions: { 
+          borderRadius: BORDER_RADIUS,
+        },
+        style: {
+          strokeWidth: 2.5,
+          stroke: "#2563eb",
+        },
       }));
 
     return [...spouseEdges, ...childEdges];
@@ -158,7 +196,10 @@ export const buildTreeEdges = (
               type: "straight",
               sourceHandle: "spouse-right-source",
               targetHandle: "spouse-left-target",
-              style: { strokeWidth: 2 },
+              style: {
+                strokeWidth: 2.5,
+                stroke:"#374151",
+              },
             },
           ]
         : [
@@ -169,7 +210,10 @@ export const buildTreeEdges = (
               type: "straight",
               sourceHandle: "spouse-left-source",
               targetHandle: "left",
-              style: { strokeWidth: 2 },
+              style: {
+                strokeWidth: 2.5,
+                stroke: "374151"
+              },
             },
             {
               id: `edge-${relationshipNodeId}-${markerNodeId}`,
@@ -178,7 +222,10 @@ export const buildTreeEdges = (
               type: "straight",
               sourceHandle: "left-source",
               targetHandle: "spouse-right-target",
-              style: { strokeWidth: 2 },
+              style: {
+                strokeWidth: 2.5,
+                stroke: "#374151",
+              },
             },
           ];
 
@@ -197,12 +244,17 @@ export const buildTreeEdges = (
             target: targetNodeId,
             type: "smoothstep",
             sourceHandle: "bottom",
+            classname:"child-edge",
             targetHandle:
               mode === "ancestors"
                 ? "right"
                 : "top-target",
-            pathOptions: { borderRadius: 30 },
-            style: { strokeWidth: 2 },
+            pathOptions: { borderRadius: BORDER_RADIUS },
+            style: {
+              strokeWidth: 2.5,
+              stroke: "#2563eb",
+              strokedDasharray: "6 4",
+            },
           };
         })
     );

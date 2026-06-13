@@ -14,11 +14,10 @@ import type {
 
 import "@xyflow/react/dist/style.css";
 
-import { layoutTreeWithElk } from "../../utilities/Family/elkTreeLayout";
-
 import PersonNode from "./PersonNode";
 import RelationshipNode from "./RelationshipNode";
 import MultiplePartnerNode from "./MultiplePartnerNode";
+import FamilyChildEdge from "./FamilyChildEdge";
 
 import LoadingState from "./LoadingState";
 import ErrorState from "./ErrorState";
@@ -36,12 +35,14 @@ import type {
   TreeResponse,
 } from "../../types/familyTypes";
 
-const USE_ELK_LAYOUT = false;
-
 const nodeTypes = {
   person: PersonNode,
   relationship: RelationshipNode,
   multiplePartner: MultiplePartnerNode,
+};
+
+const edgeTypes = {
+  familyChild: FamilyChildEdge,
 };
 
 interface Props {
@@ -65,7 +66,8 @@ const TreeViewer = ({
 }: Props) => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-
+  const [highlightedEdges, setHighlightedEdges] = useState(new Set<string>());
+  
   const [loading, setLoading] =
     useState(true);
 
@@ -85,24 +87,19 @@ const TreeViewer = ({
       try {
         setLoading(true);
         setError(null);
-        console.log(`Fetching family tree for [${selectedPersonHandle}]`)
         const data: TreeResponse =
           await fetchTree(
             selectedPersonHandle,
             mode
           );
-        console.log("Data",data);
+        console.log("Fetched Data",data);
         onSelectedPersonChange(
           data.selectedPerson
         );
 
         const graph = buildTree(data, mode)
         
-        const layoutedNodes = USE_ELK_LAYOUT
-          ? await layoutTreeWithElk(graph.nodes, graph.edges)
-          : graph.nodes;
-
-        setNodes(layoutedNodes);
+        setNodes(graph.nodes);
         setEdges(graph.edges);
 
       } catch (error) {
@@ -146,16 +143,37 @@ const TreeViewer = ({
     nodes,
   ]);
 
-  const memoizedNodeTypes =
-    useMemo(
+  const memoizedNodeTypes = useMemo(
       () => nodeTypes,
       []
     );
 
+  const memoizedEdgeTypes = useMemo(
+    () => edgeTypes,
+    []
+  );
+
+  const displayedEdges = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        style: {
+          ...edge.style,
+          stroke: highlightedEdges.has(edge.id)
+            ? "red"
+            : edge.style?.stroke,
+          strokeWidth: highlightedEdges.has(edge.id)
+            ? 4
+            : edge.style?.strokeWidth,
+        },
+      })),
+    [edges, highlightedEdges]
+  );
+
   if (loading) {
     return <LoadingState />;
   }
-
+  
   if (error) {
     return (
       <ErrorState
@@ -167,14 +185,51 @@ const TreeViewer = ({
   if (nodes.length === 0) {
     return <EmptyState />;
   }
+  
+  const handleEdgeClick = (
+    _event: React.MouseEvent,
+    edge: Edge
+  ) => {
+    const relationshipNodeId = edge.source.startsWith("relationship-")
+      ? edge.source
+      : edge.target.startsWith("relationship-")
+        ? edge.target
+        : null;
+
+    if (!relationshipNodeId) {
+      return;
+    }
+
+    const branchEdgeIds = edges
+      .filter(
+        (item) =>
+          item.source === relationshipNodeId ||
+          item.target === relationshipNodeId
+      )
+      .map((item) => item.id);
+
+        setHighlightedEdges((current) => {
+          const isSameBranch =
+            current.size === branchEdgeIds.length &&
+            branchEdgeIds.every((id) => current.has(id));
+
+          if (isSameBranch) {
+            return new Set();
+          }
+
+          return new Set(branchEdgeIds);
+        });
+  };
+  
   return (
     <div className="w-full h-full">
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={displayedEdges}
         nodeTypes={
           memoizedNodeTypes
         }
+        edgeTypes={memoizedEdgeTypes}
         fitView
         onInit={
           setReactFlowInstance
@@ -182,6 +237,7 @@ const TreeViewer = ({
         connectionLineStyle={{
           strokeWidth: 2,
         }}
+        onEdgeClick={handleEdgeClick}
         onNodeClick={(
           _event,
           node
