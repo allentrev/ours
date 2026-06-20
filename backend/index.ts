@@ -30,6 +30,8 @@ import imageRouter from "./routes/image.route.js";
 import galleryRouter from "./routes/gallery.route.js";
 import familyRoutes from "./routes/family.route.js";
 
+import familyImportRoute from "./routes/familyMongoImport.route.js";
+
 /* -------------------- App setup -------------------- */
 
 const app = express();
@@ -98,12 +100,12 @@ console.log("Node Env = ", process.env.NODE_ENV);
 /* -------------------- Trace Route -------------------- */
 
 //if (process.env.NODE_ENV !== "testing, should be production") {
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.url !== "/health") {
-      console.log(`Incoming request: [${req.method}] ${req.url}`);
-    } 
-    next();
-  });
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.url !== "/health") {
+    console.log(`Incoming request: [${req.method}] ${req.url}`);
+  }
+  next();
+});
 //}
 
 /* -------------------- Routers -------------------- */
@@ -112,11 +114,15 @@ app.use("/refData", refDataRouter);
 app.use("/image", imageRouter);
 app.use("/gallery", galleryRouter);
 app.use("/dishes", dishesRouter);
+app.use("/family/mongo-import", familyImportRoute);
 app.use("/family", familyRoutes);
 
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
 app.use("/comments", commentRouter);
+
+
+
 
 /* -------------------- Routes -------------------- */
 /* Health / readiness check */

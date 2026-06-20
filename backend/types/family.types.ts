@@ -7,6 +7,11 @@ export interface RawGrampsPerson {
   displayName: string;
   birthDate?: string;
   deathDate?: string;
+  birthPlaceHandle?: string;
+  deathPlaceHandle?: string;
+  noteHandles?: string[];
+  mediaHandles?: string[];
+  primaryPhotoMediaHandle?: string;
 }
 
 export interface RawGrampsFamily {
@@ -15,11 +20,52 @@ export interface RawGrampsFamily {
   fatherHandle?: string;
   motherHandle?: string;
   childHandles: string[];
+  relationshipType:string;
+  relationshipDate?: string;
+  relationshipPlaceHandle?: string;
+  noteHandles?: string[];
+  mediaHandles?: string[];
+}
+
+export interface RawGrampsPlace {
+  handle: string;
+  grampsId?: string;
+  type: string;
+  line1?: string;
+  line2?: string;
+  urbanArea: string;     // village | town | city
+  county?: string;       // county | region
+  country?: string[]; 
+  code: string;
+  displayPlace: string;
+  geoPlace: string;
+  latitude?: number;
+  longitude?: number;
+  noteHandles?: string[];
+}
+
+export interface RawGrampsNote {
+  handle: string;
+  grampsId?: string;
+  text: string;
+  type?: string;
+}
+
+export interface RawGrampsMedia {
+  handle: string;
+  grampsId?: string;
+  title?: string;
+  path?: string;
+  mimeType?: string;
+  description?: string;
 }
 
 export interface ParsedGrampsData {
   people: RawGrampsPerson[];
   families: RawGrampsFamily[];
+  places: RawGrampsPlace[];
+  notes: RawGrampsNote[];
+  media: RawGrampsMedia[];
 }
 
 export interface RawRelationship {
