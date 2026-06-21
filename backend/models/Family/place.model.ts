@@ -14,7 +14,7 @@ const placeSchema = new Schema(
       default: [],
     },
     code: { type: String },
-    displayPlace: { type: String },
+    displayPlace: { type: String, required: true },
     latitude: { type: Number },
     longitude: { type: Number },
     noteHandles: [{ type: String }],

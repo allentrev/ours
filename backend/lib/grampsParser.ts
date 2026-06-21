@@ -110,6 +110,16 @@ const extractPlaceData = (place: any) => {
   };
 };
 
+const readGrampsBuffer = (buffer: Buffer): string => {
+  const isGzip = buffer[0] === 0x1f && buffer[1] === 0x8b;
+
+  if (isGzip) {
+    return zlib.gunzipSync(buffer).toString("utf-8");
+  }
+
+  return buffer.toString("utf-8");
+};
+
 const readGrampsXml = async (filePath: string): Promise<string> => {
   const buffer = await fs.readFile(filePath);
 
@@ -122,15 +132,11 @@ const readGrampsXml = async (filePath: string): Promise<string> => {
   return buffer.toString("utf-8");
 };
 
-export const parseGrampsFile = async (
-  filePath: string
-): Promise<ParsedGrampsData> => {
-    const xml = await readGrampsXml(filePath);
-
-    const parser = new XMLParser({
-        ignoreAttributes: false,
-        attributeNamePrefix: "_",
-        textNodeName: "#text",
+const parseGrampsXml = (xml: string): ParsedGrampsData => {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: "_",
+    textNodeName: "#text",
   });
 
   const parsed = parser.parse(xml);
@@ -163,7 +169,7 @@ export const parseGrampsFile = async (
       handle: note._handle,
       grampsId: note._id,
       type: getTextValue(note._type),
-      text: getTextValue(note.text),
+      text: getTextValue(note.text) ?? "",
     };
   });
   // ----------------------------- Person --------------------------------------
@@ -269,7 +275,7 @@ export const parseGrampsFile = async (
     const wPlace = buildPlaceName(rawPlace);
     let wEntry = wPlace[0];
     //console.log("Map start", rawPlace, "Entry", wEntry);
-    const wType = wEntry.type;
+    const wType = wEntry.type ?? "";
     let wLine1 = undefined;
     let wLine2 = undefined;
     let wUrbanArea = undefined;
@@ -278,7 +284,7 @@ export const parseGrampsFile = async (
     let wCountyHandle = undefined;
     let wCountry = [];
     let wCountryHandles = [];
-    let wDisplayPlace = undefined;
+    let wDisplayPlace = "";
     let wGeoPlace = undefined;
     const wLat = undefined;
     const wLong = undefined;
@@ -324,7 +330,7 @@ export const parseGrampsFile = async (
           wCountryHandles.push(wItem.handle);
           break;
         default:
-          console.log("Got a unknown place element ", wItem);
+          console.log("Got a unknown type place element ", wItem);
           break;
       }
     }
@@ -386,4 +392,20 @@ export const parseGrampsFile = async (
     notes,
     media: [],
   };
+
 };
+
+export const parseGrampsFile = async (
+  filePath: string
+): Promise<ParsedGrampsData> => {
+  const xml = await readGrampsXml(filePath);
+  return parseGrampsXml(xml);
+};
+
+export const parseGrampsBuffer = (
+  buffer: Buffer
+): ParsedGrampsData => {
+  const xml = readGrampsBuffer(buffer);
+  return parseGrampsXml(xml);
+};
+

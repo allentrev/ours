@@ -1,5 +1,3 @@
-import path from "path";
-
 import {
   PersonModel,
   FamilyModel,
@@ -9,19 +7,20 @@ import {
   ImportBatchModel,
 } from "../models/Family/index.js";
 
-import { parseGrampsFile } from "../lib/grampsParser.js";
+import type { ParsedGrampsData } from "../types/family.types.js";
 import { geocodePlace } from "../lib/geocodePlace.js";
 
-export const importFamilyDataToMongo = async () => {
+export const importFamilyDataToMongo = async (
+  parsedData: ParsedGrampsData,
+  filename = "uploaded.gramps"
+) => {
   console.log("Services: ImportFamilDataToMongo");
   // Create import batch record
   const importBatch = await ImportBatchModel.create({
     source: "gramps",
-    filename: "data.gramps",
+    filename,
   });
   //console.log("Schema created");
-  const filePath = path.join(process.cwd(), "test-data", "test4.gramps");
-  const parsedData = await parseGrampsFile(filePath);
   
   const peopleCount = parsedData.people.length;
   const familyCount = parsedData.families.length;

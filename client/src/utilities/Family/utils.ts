@@ -34,7 +34,6 @@ export const fetchTree = async (
   return res.data.data;
 };
 
-
 export const getDisplayNodeId = (
   personHandle: string,
   selectedPersonHandle: string,
@@ -63,4 +62,17 @@ export const getFamilyId = (
      (item.fatherHandle === personHandle || item.motherHandle === personHandle) )?.id;
 
   return result ? result : "";   
-}
+};
+
+export const importGrampsFile = async (file: File) => {
+  const formData = new FormData();
+
+  formData.append("grampsFile", file);
+
+  const res = await axios.post(
+    `${API_URL}/family/import/gramps`,
+    formData
+  );
+
+  return res.data.data;
+};

@@ -1,42 +1,85 @@
-import path from "path";
+// backend/controllers/family.controller.ts
+
 import type { Request, Response } from "express";
 
-import { parseGrampsFile } from "../lib/grampsParser.js";
-import { mapFamilyTreeData } from "../lib/familyTreeMapper.js";
-import {
-  buildAncestorTree,
-  buildDescendantTree,
-} from "../services/familyTree.service.js";
+import { PersonModel } from "../models/Family/person.model.js";
+
+import { parseGrampsBuffer } from "../lib/grampsParser.js";
+
+import { buildFamilyTreeFromDb } from "../services/familyTreeDb.service.js";
+import { importFamilyDataToMongo } from "../services/familyImport.service.js";
+
+const getDefaultFamilyPersonHandle = async (): Promise<string> => {
+  const person = await PersonModel.findOne({})
+    .sort({ createdAt: -1 })
+    .lean();
+
+  if (!person) {
+    throw new Error("No family people found");
+  }
+
+  return person.handle;
+};
+
+export const importGrampsFile = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No Gramps file uploaded",
+      });
+    }
+
+    const parsedData = parseGrampsBuffer(req.file.buffer);
+
+    const result = await importFamilyDataToMongo(
+      parsedData,
+      req.file.originalname
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Gramps file imported successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to import Gramps file",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error",
+    });
+  }
+};
 
 export const getFamilyTree = async (req: Request, res: Response) => {
   try {
-    //const filePath = path.join(process.cwd(), "test-data", "data.gramps");
-    const filePath = path.join(process.cwd(), "test-data", "test4.gramps");
-
-    const parsed = await parseGrampsFile(filePath);
-    const mapped = mapFamilyTreeData(parsed);
-
     const personHandle =
       typeof req.query.personHandle === "string"
         ? req.query.personHandle
         : undefined;
-    const startPerson =
-      mapped.people.find((person) => person.handle === personHandle) ??
-      mapped.people[mapped.people.length - 1];
+
+    const startPersonHandle =
+      personHandle ?? (await getDefaultFamilyPersonHandle());
 
     const mode =
       req.query.mode === "ancestors" ? "ancestors" : "descendants";
 
-    const tree =
-      mode === "ancestors"
-        ? buildAncestorTree(mapped, startPerson.handle)
-        : buildDescendantTree(mapped, startPerson.handle);
+    const { selectedPerson, tree } = await buildFamilyTreeFromDb(
+      startPersonHandle,
+      mode
+    );
 
     return res.status(200).json({
       success: true,
       message: "Family tree retrieved successfully",
       data: {
-        selectedPerson: startPerson,
+        selectedPerson,
         ...tree,
       },
     });
@@ -55,34 +98,17 @@ export const searchFamilyPeople = async (
 ) => {
   try {
     const query =
-      typeof req.query.q === "string"
-        ? req.query.q.trim().toLowerCase()
-        : "";
+      typeof req.query.q === "string" ? req.query.q.trim() : "";
 
-    const filePath = path.join(
-      process.cwd(),
-      "test-data",
-      "test4.gramps"
-    );
-
-    const parsed = await parseGrampsFile(filePath);
-
-    const mapped = mapFamilyTreeData(parsed);
-
-    console.log("People parsed:", mapped.people.length);
-    console.log(
-      mapped.people
-        .filter((person) =>
-          person.displayName.toLowerCase().includes("janet")
-        )
-        .map((person) => person.displayName)
-    );
-
-    const results = mapped.people
-      .filter((person) =>
-        person.displayName.toLowerCase().includes(query)
-      )
-      .slice(0, 20);
+    const results = await PersonModel.find({
+      displayName: {
+        $regex: query,
+        $options: "i",
+      },
+    })
+      .sort({ displayName: 1 })
+      .limit(20)
+      .lean();
 
     return res.status(200).json({
       success: true,

@@ -30,8 +30,6 @@ import imageRouter from "./routes/image.route.js";
 import galleryRouter from "./routes/gallery.route.js";
 import familyRoutes from "./routes/family.route.js";
 
-import familyImportRoute from "./routes/familyMongoImport.route.js";
-
 /* -------------------- App setup -------------------- */
 
 const app = express();
@@ -114,7 +112,6 @@ app.use("/refData", refDataRouter);
 app.use("/image", imageRouter);
 app.use("/gallery", galleryRouter);
 app.use("/dishes", dishesRouter);
-app.use("/family/mongo-import", familyImportRoute);
 app.use("/family", familyRoutes);
 
 app.use("/users", userRouter);

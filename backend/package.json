@@ -23,7 +23,6 @@
     "@types/body-parser": "^1.19.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/multer": "^2.0.0",
     "@types/node": "^24.2.1",
     "@types/nodemailer": "^6.4.17",
     "axios": "^1.10.0",
@@ -37,7 +36,7 @@
     "micro": "^10.0.1",
     "mongodb": "^6.17.0",
     "mongoose": "^8.18.0",
-    "multer": "^2.0.1",
+    "multer": "^2.2.0",
     "reading-time": "^1.5.0",
     "sharp": "^0.34.5",
     "slugify": "^1.6.8",
@@ -45,6 +44,7 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/multer": "^2.1.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsx": "^4.22.1",

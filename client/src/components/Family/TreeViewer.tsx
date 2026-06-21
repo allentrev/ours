@@ -46,6 +46,7 @@ const edgeTypes = {
 };
 
 interface Props {
+  refreshKey: number;
   selectedPersonHandle: string;
   mode: TreeMode;
 
@@ -59,6 +60,7 @@ interface Props {
 }
 
 const TreeViewer = ({
+  refreshKey,
   selectedPersonHandle,
   mode,
   onSelectedPersonChange,
@@ -115,6 +117,7 @@ const TreeViewer = ({
     loadTree();
 
   }, [
+    refreshKey,
     selectedPersonHandle,
     mode,
     onSelectedPersonChange,

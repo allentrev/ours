@@ -1,6 +1,6 @@
 export interface RawGrampsPerson {
   handle: string;
-  grampsId?: string;
+  grampsId: string;
   gender?: string;
   firstName?: string;
   surname?: string;
@@ -33,12 +33,12 @@ export interface RawGrampsPlace {
   type: string;
   line1?: string;
   line2?: string;
-  urbanArea: string;     // village | town | city
+  urbanArea?: string;     // village | town | city
   county?: string;       // county | region
   country?: string[]; 
-  code: string;
+  code?: string;
   displayPlace: string;
-  geoPlace: string;
+  geoPlace?: string;
   latitude?: number;
   longitude?: number;
   noteHandles?: string[];

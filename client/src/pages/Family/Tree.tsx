@@ -7,16 +7,35 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 
+import { importGrampsFile } from "../../utilities/Family/utils";
+
 import TreeLayout from "../../layouts/Family/TreeLayout";
 import TreeViewer from "../../components/Family/TreeViewer";
 import Search from "../../components/Family/Search";
 import DetailsPanel from "../../components/Family/DetailsPanel";
 import Toolbar from "../../components/Family/Toolbar";
+import ImportStatusModal from "../../components/Family/ImportStatusModal";
 
 import type {
   TreePerson,
   TreeMode,
 } from "../../types/familyTypes";
+
+declare global {
+  interface Window {
+    showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
+  }
+}
+
+type TransferAction = "import" | "export";
+
+type TransferState = "idle" | "running" | "success" | "error";
+
+interface TransferStatus {
+  action: TransferAction;
+  state: TransferState;
+  message: string;
+}
 
 const MIN_PANEL_SIZE = 220;
 const MAX_PANEL_SIZE = 600;
@@ -27,10 +46,26 @@ const Tree = () => {
     useState<TreePerson | null>(null);
 
   const [mode, setMode] = useState<TreeMode>("descendants");
+  const [refreshKey, setRefreshKey] = useState(0);  
 
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [detailsSize, setDetailsSize] = useState(320);
   const [isDragging, setIsDragging] = useState(false);
+
+  const [transferStatus, setTransferStatus] =
+    useState<TransferStatus>({
+      action: "import",
+      state: "idle",
+      message: "",
+    });  
+  
+  const importing =
+    transferStatus.action === "import" &&
+    transferStatus.state === "running";
+
+  const exporting =
+    transferStatus.action === "export" &&
+    transferStatus.state === "running";
 
   useEffect(() => {
     if (!isDragging) return;
@@ -65,16 +100,115 @@ const Tree = () => {
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
+    
+  const handleImportGrampsFile = async (file: File) => {
+    try {
+      setTransferStatus({
+        action: "import",
+        state: "running",
+        message: "",
+      });
+
+      const result = await importGrampsFile(file);
+
+      setSelectedPersonHandle("");
+      setRefreshKey((value) => value + 1);
+
+      setTransferStatus({
+        action: "import",
+        state: "success",
+        message:
+          `Imported ${result.mongoPeople} people, ` +
+          `${result.mongoFamily} families, ` +
+          `${result.mongoPlaces} places and ` +
+          `${result.mongoNotes} notes.`,
+      });
+    } catch (error) {
+      console.error(error);
+
+      setTransferStatus({
+        action: "import",
+        state: "error",
+        message:
+          "Import failed. Please check the Gramps file and try again.",
+      });
+    }
+  };
+  
+  const handleCloseStatusModal = () => {
+    setTransferStatus((current) => ({
+      ...current,
+      state: "idle",
+      message: "",
+    }));
+  };
+
+  const handleExportFamilyData = async () => {
+    try {
+      setTransferStatus({
+        action: "export",
+        state: "running",
+        message: "",
+      });
+
+      if (!window.showDirectoryPicker) {
+        throw new Error("Directory picker is not supported.");
+      }
+
+      const directoryHandle = await window.showDirectoryPicker();
+
+      console.log("Selected export directory:", directoryHandle);
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      setTransferStatus({
+        action: "export",
+        state: "success",
+        message:
+          "Export folder selected. Export routine is not implemented yet.",
+      });
+    } catch (error) {
+      console.error(error);
+
+      setTransferStatus({
+        action: "export",
+        state: "error",
+        message: "This feature is unavailable at the moment.",
+      });
+    }
+  };
 
   return (
     <TreeLayout>
       <div className="w-full h-full flex flex-col">
-        <Toolbar mode={mode} onModeChange={setMode} />
+        <Toolbar
+          mode={mode}
+          onModeChange={setMode}
+          onImportGrampsFile={handleImportGrampsFile}
+          onExportFamilyData={handleExportFamilyData}
+          importing={importing}
+          exporting={exporting}
+        />
         <Search onSearch={setSelectedPersonHandle} />
-
+        <ImportStatusModal
+          action={transferStatus.action}
+          running={transferStatus.state === "running"}
+          message={
+            transferStatus.state === "success"
+              ? transferStatus.message
+              : ""
+          }
+          error={
+            transferStatus.state === "error"
+              ? transferStatus.message
+              : ""
+          }
+          onClose={handleCloseStatusModal}
+        />
         <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto lg:overflow-hidden">
           <div className="w-full lg:flex-1 h-[50vh] lg:h-full min-h-[300px] lg:min-h-0 shrink-0">
             <TreeViewer
+              refreshKey={refreshKey}
               selectedPersonHandle={selectedPersonHandle}
               mode={mode}
               onSelectedPersonChange={setSelectedPerson}
