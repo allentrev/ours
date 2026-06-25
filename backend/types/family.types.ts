@@ -1,3 +1,5 @@
+import mongoose, { Document, HydratedDocument } from "mongoose";
+
 export interface RawGrampsPerson {
   handle: string;
   grampsId: string;
@@ -12,6 +14,13 @@ export interface RawGrampsPerson {
   noteHandles?: string[];
   mediaHandles?: string[];
   primaryPhotoMediaHandle?: string;
+}
+
+export interface PersonDocument extends RawGrampsPerson {
+  deceased: boolean;
+  primaryPhotoUrl?: string;
+  thumbnailUrl?: string;
+  importBatchId?: mongoose.Types.ObjectId;
 }
 
 export interface RawGrampsFamily {
@@ -38,6 +47,8 @@ export interface RawGrampsPlace {
   country?: string[]; 
   code?: string;
   displayPlace: string;
+  name: string;
+  shortName: string;
   geoPlace?: string;
   latitude?: number;
   longitude?: number;
@@ -108,3 +119,79 @@ export interface FamilyGroup {
   motherHandle?: string;
   childHandles: string[];
 }
+
+export interface FamilyDocument extends Document {
+    handle: string;
+    grampsId: string;
+
+    fatherHandle?: string;
+    motherHandle?: string;
+    childHandles?: string[];
+
+    relationshipType?: string; 
+    relationshipDate?: string;
+    relationshipPlaceHandle?: string;
+
+    mediaHandles?: string[];
+    noteHandles?: string[];
+
+    importBatchId?: mongoose.Types.ObjectId;
+}
+
+export interface Place {
+    handle: string;
+    grampsId: string;
+    type: string;
+    line1?: string;
+    line2?: string;
+    urbanArea?: string;
+    county?: string;
+    country?: string[];
+    code?: string;
+    name: string;
+    shortName: string;
+    displayPlace: string;
+    latitude?: number;
+    longitude?: number;
+    noteHandles?: string[];
+
+    importBatchId?: mongoose.Types.ObjectId; 
+}
+
+export type PlaceDocument = HydratedDocument<Place>;
+
+export interface NoteDocument extends Document {
+    handle: string;
+    grampsId: string;
+    
+    text: string;
+    type?: string;
+
+    importBatchId?: mongoose.Types.ObjectId;
+}
+
+export interface MediaDocument extends Document {
+    handle: string;
+
+    title?: string;
+    path?: string;
+    mimeType?: string;
+
+    cdnUrl?: string;
+    thumbnailUrl?: string;
+
+    noteHandles?: string[];
+
+    importBatchId?: string; 
+}
+
+export interface ImportBatchDocument extends Document {
+    source: string;
+    filename: string;
+
+    peopleCount: number;
+    familyCount: number;
+    placeCount: number;
+    noteCount: number;
+    mediaCount: number;
+ }

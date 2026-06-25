@@ -25,4 +25,4 @@ const familySchema = new Schema(
   { timestamps: true }
 );
 
-export const FamilyModel = model("Family", familySchema);
+export const Family = model("Family", familySchema);

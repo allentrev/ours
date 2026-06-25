@@ -1,10 +1,10 @@
 import {
-  PersonModel,
-  FamilyModel,
-  PlaceModel,
-  NoteModel,
-  MediaModel,
-  ImportBatchModel,
+  Person,
+  Family,
+  Place,
+  Note,
+  Media,
+  ImportBatch,
 } from "../models/Family/index.js";
 
 import type { ParsedGrampsData } from "../types/family.types.js";
@@ -14,13 +14,13 @@ export const importFamilyDataToMongo = async (
   parsedData: ParsedGrampsData,
   filename = "uploaded.gramps"
 ) => {
-  console.log("Services: ImportFamilDataToMongo");
+  console.log("Services: ImportFamilyDataToMongo");
   // Create import batch record
-  const importBatch = await ImportBatchModel.create({
+  const importBatch = await ImportBatch.create({
     source: "gramps",
     filename,
   });
-  //console.log("Schema created");
+  console.log("Schema created");
   
   const peopleCount = parsedData.people.length;
   const familyCount = parsedData.families.length;
@@ -34,7 +34,8 @@ export const importFamilyDataToMongo = async (
   importBatch.mediaCount = 0;
 // --------------------------------------- Notes -----------------------
 //
-  await NoteModel.deleteMany({});
+try {
+  await Note.deleteMany({});
   //console.log("Import service notes", parsedData.notes);
   const noteRecords = parsedData.notes.map((note) => {
     //console.log("In map, note", note);
@@ -46,13 +47,18 @@ export const importFamilyDataToMongo = async (
       importBatchId: importBatch._id,
     }
   })
-  //console.log("mapped records", noteRecords);
-  await NoteModel.insertMany(noteRecords);
-  const mongoNoteCount = await NoteModel.countDocuments();
+  await Note.insertMany(noteRecords);
+  const mongoNoteCount = await Note.countDocuments();
+  console.log("mapped Note records", mongoNoteCount);
+}
+  catch (err) {
+    console.log("Caught Note error", err);
+}
 // --------------------------------------- Person -----------------------
 //
-  await PersonModel.deleteMany({});
-  await PersonModel.insertMany(
+try {
+  await Person.deleteMany({});
+  await Person.insertMany(
     parsedData.people.map((person) => ({
       handle: person.handle,
       grampsId: person.grampsId,
@@ -77,11 +83,17 @@ export const importFamilyDataToMongo = async (
       importBatchId: importBatch._id,
     }))
   );
-  const mongoPeopleCount = await PersonModel.countDocuments();
+  const mongoPeopleCount = await Person.countDocuments();
+  console.log("mapped People records", mongoPeopleCount);
+}
+  catch (err) {
+    console.log("Caught People error", err);
+}
 // --------------------------------------- Family -----------------------
 //
-  await FamilyModel.deleteMany({});
-  await FamilyModel.insertMany(
+try {  
+  await Family.deleteMany({});
+  await Family.insertMany(
     parsedData.families.map((family) => ({
       handle: family.handle,
       grampsId: family.grampsId,
@@ -100,10 +112,16 @@ export const importFamilyDataToMongo = async (
       importBatchId: importBatch._id,
     }))
   )
-  const mongoFamilyCount = await FamilyModel.countDocuments();
-// --------------------------------------- Place -----------------------
+  const mongoFamilyCount = await Family.countDocuments();
+  console.log("mapped Family records", mongoFamilyCount);
+}
+  catch (err) {
+    console.log("Caught Family error", err);
+}
+  // --------------------------------------- Place -----------------------
 //
-  await PlaceModel.deleteMany({});
+try {
+  await Place.deleteMany({});
 
   const placeDocs = [];
   const geocodeCache = new Map<
@@ -130,7 +148,7 @@ export const importFamilyDataToMongo = async (
       latitude = geo.latitude;
       longitude = geo.longitude;
     }
-
+    if (!place.displayPlace) console.log("Error: ", place);
     placeDocs.push({
       handle: place.handle,
       grampsId: place.grampsId,
@@ -144,6 +162,8 @@ export const importFamilyDataToMongo = async (
 
       code: place.code ?? undefined,
       displayPlace: place.displayPlace ?? undefined,
+      name: place.name,
+      shortName: place.shortName,
 
       noteHandles: place.noteHandles ?? [],
 
@@ -153,10 +173,15 @@ export const importFamilyDataToMongo = async (
       importBatchId: importBatch._id,
     });
   }
+  console.log(placeDocs);
+  await Place.insertMany(placeDocs);
 
-  await PlaceModel.insertMany(placeDocs);
-
-  const mongoPlaceCount = await PlaceModel.countDocuments();
+  const mongoPlaceCount = await Place.countDocuments();
+  console.log("mapped Place records", mongoPlaceCount);
+}
+  catch (err) {
+    console.log("Caught Place error", err);
+}
 // --------------------------------------- Finish up -----------------------
 //
   console.log("Import service complete");
@@ -165,9 +190,9 @@ export const importFamilyDataToMongo = async (
   return {
     importBatchId: importBatch._id,
     people: parsedData.people.length,
-    mongoPeople: mongoPeopleCount,
-    mongoFamily: mongoFamilyCount,
-    mongoPlaces: mongoPlaceCount,
-    mongoNotes: mongoNoteCount,
+    mongoPeople: await Person.countDocuments(),
+    mongoFamily: await Family.countDocuments(),
+    mongoPlaces: await Place.countDocuments(),
+    mongoNotes: await Note.countDocuments(),
     };
 };

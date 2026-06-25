@@ -14,6 +14,8 @@ const placeSchema = new Schema(
       default: [],
     },
     code: { type: String },
+    name: { type: String, required: true, indexed: true},
+    shortName: { type: String, require: true},
     displayPlace: { type: String, required: true },
     latitude: { type: Number },
     longitude: { type: Number },
@@ -24,4 +26,4 @@ const placeSchema = new Schema(
   { timestamps: true }
 );
 
-export const PlaceModel = model("Place", placeSchema);
+export const Place = model("Place", placeSchema);

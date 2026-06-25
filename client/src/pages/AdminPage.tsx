@@ -135,19 +135,19 @@ const AdminPage: React.FC = () => {
           </Link>
 
           <Link
-            to="/maintainEvent"
+            to="/maintainFamilyPerson"
             state={{ skipAuth: true, adminName }}
             className="block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            Maintain Event
+            Maintain Family
           </Link>
 
           <Link
-            to="/maintainMember"
+            to="/maintainPlace"
             state={{ skipAuth: true, adminName }}
             className="block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            Maintain Member
+            Maintain Place
           </Link>
 
           <Link

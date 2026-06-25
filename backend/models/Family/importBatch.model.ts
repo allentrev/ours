@@ -20,4 +20,4 @@ const importBatchSchema = new Schema(
   { timestamps: true }
 );
 
-export const ImportBatchModel = model("ImportBatch", importBatchSchema);
+export const ImportBatch = model("ImportBatch", importBatchSchema);

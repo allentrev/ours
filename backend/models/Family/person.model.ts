@@ -1,14 +1,7 @@
 import mongoose, { Schema, model } from "mongoose";
-import type { RawGrampsPerson } from "../../types/family.types.js";
+import type { RawGrampsPerson, PersonDocument } from "../../types/family.types.js";
 
-export interface FamilyPersonDocument extends RawGrampsPerson {
-  deceased: boolean;
-  primaryPhotoUrl?: string;
-  thumbnailUrl?: string;
-  importBatchId?: mongoose.Types.ObjectId;
-}
-
-const personSchema = new Schema<FamilyPersonDocument>(
+const personSchema = new Schema<PersonDocument>(
   {
     handle: { type: String, required: true, unique: true, index: true },
     grampsId: { type: String, required: true, index: true },
@@ -35,4 +28,4 @@ const personSchema = new Schema<FamilyPersonDocument>(
   { timestamps: true }
 );
 
-export const PersonModel = model<FamilyPersonDocument>("Person", personSchema);
+export const Person = model<PersonDocument>("Person", personSchema);

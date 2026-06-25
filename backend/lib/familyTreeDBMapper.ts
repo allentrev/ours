@@ -1,9 +1,9 @@
 // backend/lib/familyTreeDbMapper.ts
 
-import { PersonModel } from "../models/Family/person.model.js";
-import { FamilyModel } from "../models/Family/family.model.js";
-import { PlaceModel } from "../models/Family/place.model.js";
-import { NoteModel } from "../models/Family/note.model.js";
+import { Person } from "../models/Family/person.model.js";
+import { Family } from "../models/Family/family.model.js";
+import { Place } from "../models/Family/place.model.js";
+import { Note } from "../models/Family/note.model.js";
 
 import type {
   ParsedGrampsData,
@@ -16,10 +16,10 @@ import type {
 export const loadParsedFamilyDataFromDb =
   async (): Promise<ParsedGrampsData> => {
     const [people, families, places, notes] = await Promise.all([
-      PersonModel.find({}).lean(),
-      FamilyModel.find({}).lean(),
-      PlaceModel.find({}).lean(),
-      NoteModel.find({}).lean(),
+      Person.find({}).lean(),
+      Family.find({}).lean(),
+      Place.find({}).lean(),
+      Note.find({}).lean(),
     ]);
 
     const mappedPeople: RawGrampsPerson[] = people.map((person) => ({

@@ -44,6 +44,8 @@ import {
   GalleryHomePage,
   MaintainRefDataPage,
   MaintainGalleryPage,
+  MaintainFamilyPersonPage,
+  MaintainPlacePage,
   NotFoundPage,
 } from "./pages";
 
@@ -68,6 +70,8 @@ const router = createBrowserRouter([
       { path: "/admin", element: <AdminPage/> },
       { path: "/maintainRefData", element: <MaintainRefDataPage/> },
       { path: "/maintainGallery", element: <MaintainGalleryPage/> },
+      { path: "/maintainFamilyPerson", element: <MaintainFamilyPersonPage/> },
+      { path: "/maintainPlace", element: <MaintainPlacePage/> },
       
 
 

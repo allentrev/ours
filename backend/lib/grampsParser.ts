@@ -270,7 +270,24 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
     return result;
   }
 
-  const places: RawGrampsPlace[] = rawPlaces.map((rawPlace: any) => {
+  const splitAtFirstComma = (value: string | undefined) => {
+    if (!value) return [undefined, undefined];
+    const commaIndex = value.indexOf(",");
+
+    if (commaIndex === -1) {
+      return [
+        value,
+        undefined
+      ];
+    }
+
+    return [
+      value.slice(0, commaIndex).trim(),
+      value.slice(commaIndex + 1).trim(),
+    ];
+  };
+
+const places: RawGrampsPlace[] = rawPlaces.map((rawPlace: any) => {
     const noterefs = toArray(rawPlace.noteref?._hlink);
     const wPlace = buildPlaceName(rawPlace);
     let wEntry = wPlace[0];
@@ -284,15 +301,20 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
     let wCountyHandle = undefined;
     let wCountry = [];
     let wCountryHandles = [];
+    let wName = wEntry.name ?? "";
+    let wShortName = "";
     let wDisplayPlace = "";
     let wGeoPlace = undefined;
     const wLat = undefined;
     const wLong = undefined;
 
     for (let wItem of wPlace) {
+      let [wLine1In, wLine2In] = splitAtFirstComma(wItem.name);
       switch (wItem.type) {
         case "Address":
-          wLine1= wItem.name
+          wLine1 = wLine1In;
+          wLine2 = wLine2In;
+          wName = wLine1 ?? "";
           break;
         case "Building":
         case "Street":
@@ -300,14 +322,15 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
         case "District":
         case "Parish":
           if (wLine1) {
-            wLine2 = wItem.name;
+            wLine2 = (wLine2) ? wLine2 + "," + wItem.name : wItem.name;
           } else {
             wLine1 = wItem.name;
           }
+          wName = wLine1 ?? "";
           break;
         case "Village":
           if (wUrbanArea){
-            wLine2= wUrbanArea;
+            wLine2= (wLine2) ? wLine2 + ", " + wUrbanArea : wUrbanArea;
             wUrbanArea = wItem.name;
             wUrbanAreaHandle = wItem.handle;
           } else {
@@ -361,6 +384,32 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
             value !== ""
         )
         .join(", ");
+      if (wType === "County") {
+        wShortName = [
+          wCounty,
+          wCountry[0],
+        ]
+        .filter(
+          (value) =>
+            value !== undefined &&
+            value !== null &&
+            value !== ""
+        )
+        .join(", ");
+      } else { 
+        wShortName = [
+          wLine1,
+          wUrbanArea,
+          wCountry[0],
+        ]
+        .filter(
+          (value) =>
+            value !== undefined &&
+            value !== null &&
+            value !== ""
+        )
+        .join(", ");
+      }
     } catch (err){
       console.log("backend grampsParser TryCatch ", err)
     }
@@ -375,6 +424,8 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
       country: wCountryHandles,
       code: rawPlace.code,
       displayPlace: wDisplayPlace,
+      name: wName,
+      shortName: wShortName,
       geoPlace: wGeoPlace,
       latitude: wLat,
       longitude: wLong,

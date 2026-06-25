@@ -1,5 +1,5 @@
-import { PersonModel } from "../models/Family/person.model.js";
-import { FamilyModel } from "../models/Family/family.model.js";
+import { Person } from "../models/Family/person.model.js";
+import { Family } from "../models/Family/family.model.js";
 
 import {
   buildAncestorTree,
@@ -38,7 +38,7 @@ const loadPeopleByHandles = async (
 ): Promise<RawGrampsPerson[]> => {
   if (handles.length === 0) return [];
 
-  const people = await PersonModel.find({
+  const people = await Person.find({
     handle: { $in: [...new Set(handles)] },
   }).lean();
 
@@ -55,7 +55,7 @@ const collectDescendantData = async (
   let currentHandles = [startHandle];
 
   for (let depth = 0; depth < maxDepth; depth++) {
-    const families = await FamilyModel.find({
+    const families = await Family.find({
       $or: [
         { fatherHandle: { $in: currentHandles } },
         { motherHandle: { $in: currentHandles } },
@@ -106,7 +106,7 @@ const collectAncestorData = async (
   let currentHandles = [startHandle];
 
   for (let depth = 0; depth < maxDepth; depth++) {
-    const families = await FamilyModel.find({
+    const families = await Family.find({
       childHandles: { $in: currentHandles },
     }).lean();
 
@@ -213,7 +213,7 @@ export const buildFamilyTreeFromDb = async (
   selectedPerson: RawGrampsPerson;
   tree: FamilyTreeResponse;
 }> => {
-  const selectedPersonDoc = await PersonModel.findOne({
+  const selectedPersonDoc = await Person.findOne({
     handle: startHandle,
   }).lean();
 

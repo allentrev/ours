@@ -8,6 +8,8 @@ export { default as NotFoundPage } from "./NotFoundPage";
 
 export { default as MaintainGalleryPage } from "./MaintainGalleryPage";
 export { default as MaintainRefDataPage } from "./MaintainRefDataPage";
+export { default as MaintainPlacePage } from "./MaintainPlacePage";
+export { default as MaintainFamilyPersonPage } from "./MaintainFamilyPersonPage";
 
 export { default as GalleryHomePage } from "./Gallery/GalleryHomePage";
 export { default as BlogHomePage } from "./Blog/BlogHomePage";

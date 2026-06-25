@@ -18,4 +18,4 @@ const mediaSchema = new Schema(
   { timestamps: true }
 );
 
-export const MediaModel = model("Media", mediaSchema);
+export const Media = model("Media", mediaSchema);
