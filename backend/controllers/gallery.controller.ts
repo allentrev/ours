@@ -2,6 +2,8 @@ import * as BunnyStorageSDK from "@bunny.net/storage-sdk";
 import { Readable } from "stream";
 
 import { Request, Response } from "express";
+import type {} from "multer";
+
 import { storageZone } from "../lib/bunny.js";
 
 import sharp from "sharp";

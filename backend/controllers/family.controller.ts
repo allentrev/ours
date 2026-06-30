@@ -2,6 +2,7 @@
 import crypto from "crypto";
 
 import type { Request, Response } from "express";
+import type {} from "multer";
 
 import { PersonModel } from "../models/Family/person.model.js";
 import { PlaceModel } from "../models/Family/place.model.js";

@@ -9,6 +9,7 @@ import {
 } from "../controllers/gallery.controller.js";
 
 import multer from "multer";
+import type {} from "multer";
 
 const router = express.Router();
 
