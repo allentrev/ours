@@ -1,9 +1,10 @@
 import { useRouteError, isRouteErrorResponse } from 'react-router-dom';
 
 const RouteError: React.FC = () => {
+  const modName = "/components/RouteError";
   const error = useRouteError();
 
-  console.log("RouteError entry");
+  console.log(`${modName} RouteError entry,error`);
   console.error(error);
 
   let message = "Unknown error";

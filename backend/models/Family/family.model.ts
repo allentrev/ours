@@ -1,8 +1,11 @@
 import mongoose, { Schema, model } from "mongoose";
+import type { FamilyRecord } from "../../types/family.types.js";
 
-const familySchema = new Schema(
+const familySchema = new Schema<FamilyRecord>(
   {
     handle: { type: String, required: true, unique: true, index: true },
+    origin: { type: String, enum: ["gramps", "local"], required: true, default: "local"},
+    localId: {type: String, unique: true, sparse: true},
     grampsId: { type: String, required: true, unique: true, index: true },
 
     fatherHandle: { type: String, index: true },
@@ -25,4 +28,4 @@ const familySchema = new Schema(
   { timestamps: true }
 );
 
-export const Family = model("Family", familySchema);
+export const FamilyModel = model<FamilyRecord>("Family", familySchema);

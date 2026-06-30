@@ -93,16 +93,12 @@ export interface PlaceRecord {
   country?: string[];
   code?: string;
   displayPlace: string;
+  name: string;
+  shortName: string;
   geocodeName?: string;
   latitude?: number;
   longitude?: number;
   noteHandles?: string[];
-}
-
-export interface PlaceOptions {
-  urbanAreas: string[];
-  counties: string[];
-  countries: string[];
 }
 
 export type NewPlaceKind = "country" | "county" | "urbanArea";
@@ -120,4 +116,16 @@ export interface CreateSimplePlaceRequest {
 export interface CreateSimplePlaceResponse {
   place: PlaceRecord;
   options: PlaceOptions;
+}
+
+export interface PlaceOption {
+  handle: string;
+  name: string;
+}
+
+export interface PlaceOptions {
+  places: PlaceRecord[];
+  urbanAreas: PlaceOption[];
+  counties: PlaceOption[];
+  countries: PlaceOption[];
 }

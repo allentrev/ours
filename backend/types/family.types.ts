@@ -1,5 +1,17 @@
-import mongoose, { Document, HydratedDocument } from "mongoose";
+import mongoose, { HydratedDocument } from "mongoose";
 
+export type FamilyRecordOrigin = "gramps" | "local";
+
+export interface LocalRecordFields {
+  origin: FamilyRecordOrigin;
+  localId?: string;
+}
+
+export interface ImportBatchRef {
+  importBatchId?: mongoose.Types.ObjectId;
+}
+//  ------------------------------------- Person -----------------------------
+//
 export interface RawGrampsPerson {
   handle: string;
   grampsId: string;
@@ -13,29 +25,40 @@ export interface RawGrampsPerson {
   deathPlaceHandle?: string;
   noteHandles?: string[];
   mediaHandles?: string[];
-  primaryPhotoMediaHandle?: string;
-}
-
-export interface PersonDocument extends RawGrampsPerson {
-  deceased: boolean;
   primaryPhotoUrl?: string;
-  thumbnailUrl?: string;
-  importBatchId?: mongoose.Types.ObjectId;
 }
 
+export interface PersonRecord
+  extends RawGrampsPerson,
+    LocalRecordFields,
+    ImportBatchRef {
+      deceased: boolean;
+      thumbnailUrl?: string;
+    }
+
+export type PersonDocument = HydratedDocument<PersonRecord>;
+//  ------------------------------------- Family -----------------------------
+//
 export interface RawGrampsFamily {
   handle: string;
   grampsId?: string;
   fatherHandle?: string;
   motherHandle?: string;
   childHandles: string[];
-  relationshipType:string;
+  relationshipType: string;
   relationshipDate?: string;
   relationshipPlaceHandle?: string;
   noteHandles?: string[];
   mediaHandles?: string[];
 }
+export interface FamilyRecord
+  extends RawGrampsFamily,
+    LocalRecordFields,
+    ImportBatchRef {grampsId: string}
 
+export type FamilyDocument = HydratedDocument<FamilyRecord>;
+//  ------------------------------------- Place -----------------------------
+//
 export interface RawGrampsPlace {
   handle: string;
   grampsId?: string;
@@ -54,14 +77,30 @@ export interface RawGrampsPlace {
   longitude?: number;
   noteHandles?: string[];
 }
+export interface PlaceRecord
+  extends RawGrampsPlace,
+    LocalRecordFields,
+    ImportBatchRef {grampsId: string}
 
+export type PlaceDocument = HydratedDocument<PlaceRecord>;
+
+//  ------------------------------------- Note -----------------------------
+//
 export interface RawGrampsNote {
   handle: string;
   grampsId?: string;
   text: string;
   type?: string;
 }
+export interface NoteRecord
+  extends RawGrampsNote,
+    LocalRecordFields,
+    ImportBatchRef {grampsId: string}
 
+export type NoteDocument = HydratedDocument<NoteRecord>;
+
+//  ------------------------------------- Media -----------------------------
+//
 export interface RawGrampsMedia {
   handle: string;
   grampsId?: string;
@@ -71,6 +110,34 @@ export interface RawGrampsMedia {
   description?: string;
 }
 
+export interface MediaRecord
+  extends RawGrampsMedia,
+    LocalRecordFields,
+    ImportBatchRef {
+      grampsId: string;
+      thumbnailUrl?: string;
+      noteHandles?: string[];
+    }
+
+export type MediaDocument = HydratedDocument<MediaRecord>;
+
+//  ------------------------------------- Import Batch -----------------------------
+//
+export interface ImportBatchRecord {
+    source: string;
+    filename: string;
+
+    peopleCount: number;
+    familyCount: number;
+    placeCount: number;
+    noteCount: number;
+    mediaCount: number;
+ }
+
+export type ImportBatchDocument = HydratedDocument<ImportBatchRecord>;
+
+//  ------------------------------------- Other -----------------------------
+//
 export interface ParsedGrampsData {
   people: RawGrampsPerson[];
   families: RawGrampsFamily[];
@@ -98,7 +165,7 @@ export interface FamilyTreeNode {
   birthDate?: string;
   deathDate?: string;
   depth: number;
-  noPartners:number
+  noPartners: number
 }
 
 export interface FamilyTreeEdge {
@@ -119,79 +186,3 @@ export interface FamilyGroup {
   motherHandle?: string;
   childHandles: string[];
 }
-
-export interface FamilyDocument extends Document {
-    handle: string;
-    grampsId: string;
-
-    fatherHandle?: string;
-    motherHandle?: string;
-    childHandles?: string[];
-
-    relationshipType?: string; 
-    relationshipDate?: string;
-    relationshipPlaceHandle?: string;
-
-    mediaHandles?: string[];
-    noteHandles?: string[];
-
-    importBatchId?: mongoose.Types.ObjectId;
-}
-
-export interface Place {
-    handle: string;
-    grampsId: string;
-    type: string;
-    line1?: string;
-    line2?: string;
-    urbanArea?: string;
-    county?: string;
-    country?: string[];
-    code?: string;
-    name: string;
-    shortName: string;
-    displayPlace: string;
-    latitude?: number;
-    longitude?: number;
-    noteHandles?: string[];
-
-    importBatchId?: mongoose.Types.ObjectId; 
-}
-
-export type PlaceDocument = HydratedDocument<Place>;
-
-export interface NoteDocument extends Document {
-    handle: string;
-    grampsId: string;
-    
-    text: string;
-    type?: string;
-
-    importBatchId?: mongoose.Types.ObjectId;
-}
-
-export interface MediaDocument extends Document {
-    handle: string;
-
-    title?: string;
-    path?: string;
-    mimeType?: string;
-
-    cdnUrl?: string;
-    thumbnailUrl?: string;
-
-    noteHandles?: string[];
-
-    importBatchId?: string; 
-}
-
-export interface ImportBatchDocument extends Document {
-    source: string;
-    filename: string;
-
-    peopleCount: number;
-    familyCount: number;
-    placeCount: number;
-    noteCount: number;
-    mediaCount: number;
- }

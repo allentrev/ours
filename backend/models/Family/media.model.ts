@@ -1,14 +1,16 @@
 import mongoose, { Schema, model } from "mongoose";
+import type { MediaRecord } from "../../types/family.types.js";
 
-const mediaSchema = new Schema(
+const mediaSchema = new Schema<MediaRecord>(
   {
     handle: { type: String, required: true, unique: true, index: true },
+    origin: { type: String, enum: ["gramps", "local"], required: true, default: "local"},
+    localId: {type: String, unique: true, sparse: true},
 
     title: { type: String },
     path: { type: String },
     mimeType: { type: String },
 
-    cdnUrl: { type: String },
     thumbnailUrl: { type: String },
 
     noteHandles: [{ type: String }],
@@ -18,4 +20,4 @@ const mediaSchema = new Schema(
   { timestamps: true }
 );
 
-export const Media = model("Media", mediaSchema);
+export const MediaModel = model<MediaRecord>("Media", mediaSchema);

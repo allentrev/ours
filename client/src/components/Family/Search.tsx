@@ -25,7 +25,6 @@ const FamilySearch = ({ onSearch }: Props) => {
 
       try {
         const data = await searchFamilyPeople(searchText);
-        console.log("Search results", data);
         setResults(data);
       } catch (error) {
         console.error("Search failed", error);

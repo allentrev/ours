@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
+import { ImportBatchRecord } from "../../types/family.types.js";
 
-const importBatchSchema = new Schema(
+const importBatchSchema = new Schema<ImportBatchRecord>(
   {
     source: {
       type: String,
@@ -20,4 +21,4 @@ const importBatchSchema = new Schema(
   { timestamps: true }
 );
 
-export const ImportBatch = model("ImportBatch", importBatchSchema);
+export const ImportBatchModel = model<ImportBatchRecord>("ImportBatch", importBatchSchema);

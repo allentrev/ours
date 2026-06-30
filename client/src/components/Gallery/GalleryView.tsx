@@ -29,7 +29,6 @@ export default function GalleryView({ gallery }: GalleryViewProps) {
     const fetchImages = async () => {
       try {
         const imgs = await getGalleryImages(gallery.base, gallery.folder);
-        console.log(`Found ${imgs.length} images`);
         setImages(imgs);
       } catch (err) {
         console.error("Failed to fetch gallery images:", err);

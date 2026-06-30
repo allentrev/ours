@@ -10,14 +10,8 @@ export function getPlaceColumns(): ColumnDescriptor<PlaceRecord>[] {
             optional: false,
         },
         {
-            key: "line1",
-            label: "line1",
-            align: "center",
-            optional: false,
-        },
-        {
-            key: "urbanArea",
-            label: "Village/Town/City",
+            key: "shortName",
+            label: "Village/Town/City/Country",
             align: "center",
             optional: true,
         },

@@ -20,21 +20,23 @@ export default function FilterBar({
   setFilterKey,
   filterOptions,
 }: FilterBarProps) {
+  const hasSelector = filterOptions.length > 1 ? true : false;
   return (
     <div className="mb-6 space-y-2">
       <div className="flex gap-2">
-        <select
-          className="p-2 border rounded"
-          value={filterKey}
-          onChange={(e) => setFilterKey(e.target.value)}
-        >
-          {filterOptions.map((opt) => (
-            <option key={opt.key} value={opt.key}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-
+        { hasSelector && (              // no dropdown selector if no options = 0 or 1
+          <select
+            className="p-2 border rounded"
+            value={filterKey}
+            onChange={(e) => setFilterKey(e.target.value)}
+          >
+            {filterOptions.map((opt) => (
+              <option key={opt.key} value={opt.key}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        )}
         <div className="relative flex-1">
           <input
             type="text"

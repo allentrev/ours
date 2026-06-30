@@ -94,7 +94,7 @@ const TreeViewer = ({
             selectedPersonHandle,
             mode
           );
-        console.log("Fetched Data",data);
+        console.log("components/TreeViewer/ useEffect Fetched Data",data);
         onSelectedPersonChange(
           data.selectedPerson
         );

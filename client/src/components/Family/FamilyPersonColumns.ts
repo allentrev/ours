@@ -1,5 +1,6 @@
 import type { ColumnDescriptor } from "../MaintainEntityManager";
 import type { PersonRecord } from "../../types/familyTypes";
+import { outFormPhotoMarker } from "../../utilities/Family/utils";
 
 export function getFamilyPersonColumns(): ColumnDescriptor<PersonRecord>[] {
     return [
@@ -16,10 +17,11 @@ export function getFamilyPersonColumns(): ColumnDescriptor<PersonRecord>[] {
             optional: false,
         },
         {
-            key: "thumbnail",
+            key: "primaryPhotoUrl",
             label: "Photo",
             align: "center",
             optional: true,
+            render: (value: string | undefined) => outFormPhotoMarker(value), 
         },
     ];
 }

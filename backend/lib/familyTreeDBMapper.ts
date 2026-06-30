@@ -1,11 +1,15 @@
 // backend/lib/familyTreeDbMapper.ts
 
-import { Person } from "../models/Family/person.model.js";
-import { Family } from "../models/Family/family.model.js";
-import { Place } from "../models/Family/place.model.js";
-import { Note } from "../models/Family/note.model.js";
+import { PersonModel } from "../models/Family/person.model.js";
+import { FamilyModel } from "../models/Family/family.model.js";
+import { PlaceModel } from "../models/Family/place.model.js";
+import { NoteModel } from "../models/Family/note.model.js";
 
 import type {
+  PersonRecord,
+  FamilyRecord,
+  PlaceRecord,
+  NoteRecord,
   ParsedGrampsData,
   RawGrampsFamily,
   RawGrampsNote,
@@ -16,10 +20,10 @@ import type {
 export const loadParsedFamilyDataFromDb =
   async (): Promise<ParsedGrampsData> => {
     const [people, families, places, notes] = await Promise.all([
-      Person.find({}).lean(),
-      Family.find({}).lean(),
-      Place.find({}).lean(),
-      Note.find({}).lean(),
+      PersonModel.find({}).lean<PersonRecord[]>(),
+      FamilyModel.find({}).lean<FamilyRecord[]>(),
+      PlaceModel.find({}).lean<PlaceRecord[]>(),
+      NoteModel.find({}).lean<NoteRecord[]>(),
     ]);
 
     const mappedPeople: RawGrampsPerson[] = people.map((person) => ({
@@ -35,8 +39,7 @@ export const loadParsedFamilyDataFromDb =
       deathPlaceHandle: person.deathPlaceHandle ?? undefined,
       noteHandles: person.noteHandles ?? [],
       mediaHandles: person.mediaHandles ?? [],
-      primaryPhotoMediaHandle:
-        person.primaryPhotoMediaHandle ?? undefined,
+      primaryPhotoUrl: person.primaryPhotoUrl ?? undefined,
     }));
 
     const mappedFamilies: RawGrampsFamily[] = families.map((family) => ({
@@ -63,6 +66,8 @@ export const loadParsedFamilyDataFromDb =
       county: place.county ?? undefined,
       country: place.country ?? [],
       code: place.code ?? "",
+      name: place.name,
+      shortName: place.shortName,
       displayPlace:
         place.displayPlace ??
         place.line1 ??

@@ -56,7 +56,7 @@ const ImportStatusModal = ({
           )}
 
           {!running && message && (
-            <div className="rounded border border-green-200 bg-green-50 p-3 text-green-800">
+            <div className="rounded border whitespace-pre-line border-green-200 bg-green-50 p-3 text-green-800">
               {message}
             </div>
           )}

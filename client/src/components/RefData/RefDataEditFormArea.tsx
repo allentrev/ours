@@ -20,7 +20,6 @@ const RefDataEditFormArea: React.FC<RefDataEditFormAreaProps> = ({
   isNew,
 }) => {
 
-  console.log(webPageOptions);
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {

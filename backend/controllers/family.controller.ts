@@ -3,12 +3,14 @@ import crypto from "crypto";
 
 import type { Request, Response } from "express";
 
-import { Person } from "../models/Family/person.model.js";
-import { Place } from "../models/Family/place.model.js";
+import { PersonModel } from "../models/Family/person.model.js";
+import { PlaceModel } from "../models/Family/place.model.js";
 
 import type {
   PersonDocument,
+  PersonRecord,
   PlaceDocument,
+  PlaceRecord,
 } from "../types/family.types.js"
 
 import { parseGrampsBuffer } from "../lib/grampsParser.js";
@@ -18,9 +20,9 @@ import { buildFamilyTreeFromDb } from "../services/familyTreeDb.service.js";
 import { importFamilyDataToMongo } from "../services/familyImport.service.js";
 
 const getDefaultFamilyPersonHandle = async (): Promise<string> => {
-  const person = await Person.findOne({})
+  const person = await PersonModel.findOne({})
     .sort({ createdAt: -1 })
-    .lean();
+    .lean<PersonRecord>();
 
   if (!person) {
     throw new Error("No family people found");
@@ -43,13 +45,13 @@ export const importGrampsFile = async (
     }
 
     const parsedData = parseGrampsBuffer(req.file.buffer);
-    console.log("Result of parseGrampsBuffer, parsedData", parsedData.people.length);
+    //console.log("Result of parseGrampsBuffer, parsedData", parsedData);
 
     const result = await importFamilyDataToMongo(
       parsedData,
       req.file.originalname
     );
-    console.log("Result of importFamilyDataToMongo, result", result);
+    //console.log("Result of importFamilyDataToMongo, result", result);
     return res.status(200).json({
       success: true,
       message: "Gramps file imported successfully",
@@ -110,7 +112,7 @@ export const searchFamilyPeople = async (
     const query =
       typeof req.query.q === "string" ? req.query.q.trim() : "";
 
-    const results = await Person.find({
+    const results = await PersonModel.find({
       displayName: {
         $regex: query,
         $options: "i",
@@ -118,7 +120,7 @@ export const searchFamilyPeople = async (
     })
       .sort({ displayName: 1 })
       .limit(20)
-      .lean();
+      .lean<PersonRecord[]>();
 
     return res.status(200).json({
       success: true,
@@ -141,7 +143,7 @@ export const searchFamilyPeople = async (
 export const getAllPersons = async (req: Request, res: Response) => {
     try {
         //console.log("family.controller, getAllPersons");
-        const person: PersonDocument[] = await Person.find().sort({
+        const person: PersonDocument[] = await PersonModel.find().sort({
             surname: 1,
         });
         res.status(200).json(person);
@@ -157,7 +159,7 @@ export const createPerson = async (
 ) => {
     try {
         console.log("family.controller, createPerson", req.body);
-        const newPerson = new Person(req.body);
+        const newPerson = new PersonModel(req.body);
         const savedPerson: PersonDocument = await newPerson.save();
         console.log("Person created");
         res.status(201).json(savedPerson);
@@ -177,7 +179,7 @@ export const updatePerson = async (
         console.log("family.controller, updatePerson", wGrampsId, updateData);
 
         const updatedPerson: PersonDocument | null =
-            await Person.findOneAndUpdate({ wGrampsId }, updateData, {
+            await PersonModel.findOneAndUpdate({ grampsId: wGrampsId }, updateData, {
                 new: true,
             });
 
@@ -198,7 +200,7 @@ export const deletePerson = async (
         console.log("family.controller, deletePerson");
         const wGrampsId = req.params.grampsId;
 
-        const deletedPerson = await Person.findOneAndDelete({ wGrampsId });
+        const deletedPerson = await PersonModel.findOneAndDelete({ grampsId: wGrampsId });
 
         if (!deletedPerson) {
             return res
@@ -222,7 +224,7 @@ export const searchFamilyPlaces = async (
     const query =
       typeof req.query.q === "string" ? req.query.q.trim() : "";
 
-    const results = await Place.find({
+    const results = await PlaceModel.find({
       displayPlace: {
         $regex: query,
         $options: "i",
@@ -230,7 +232,7 @@ export const searchFamilyPlaces = async (
     })
       .sort({ displayPlace: 1 })
       .limit(30)
-      .lean();
+      .lean<PlaceRecord[]>();
 
     return res.status(200).json({
       success: true,
@@ -258,7 +260,7 @@ export const createFamilyPlace = async (
 
     const geo = geocodeName ? await geocodePlace(geocodeName) : {};
 
-    const place = await Place.create({
+    const place = await PlaceModel.create({
       handle: crypto.randomUUID(),
       grampsId: `P${Date.now()}`,
       type: req.body.type ?? "Address",
@@ -359,10 +361,10 @@ export const createSimpleFamilyPlace = async (
           ? "County"
           : placeType;
 
-    const existing = await Place.findOne({
+    const existing = await PlaceModel.findOne({
       type,
       displayPlace,
-    }).lean();
+    }).lean<PlaceRecord>();
 
     if (existing) {
       const options = await buildFamilyPlaceOptions();
@@ -379,7 +381,7 @@ export const createSimpleFamilyPlace = async (
 
     const geo = await geocodePlace(displayPlace);
 
-    const place = await Place.create({
+    const place = await PlaceModel.create({
       handle: crypto.randomUUID(),
       grampsId: `P${Date.now()}`,
       type,
@@ -406,7 +408,6 @@ export const createSimpleFamilyPlace = async (
       success: true,
       message: "Place created successfully",
       data: {
-        place,
         options,
       },
     });
@@ -441,123 +442,64 @@ export const getFamilyPlaceOptions = async (
 };
 
 const buildFamilyPlaceOptions = async () => {
-  const places = await Place.find({})
-    .select("type urbanArea county country displayPlace")
-    .lean();
+  console.log("controller: buildFamilyPlaceOptions");
+  const places = await PlaceModel.find({})
+    .lean<PlaceRecord[]>();
 
-  const urbanAreas = new Set<string>();
-  const counties = new Set<string>();
-  const countries = new Set<string>();
-
-  places.forEach((place) => {
-    if (place.urbanArea) urbanAreas.add(place.urbanArea);
-    if (place.county) counties.add(place.county);
-
-    (place.country ?? []).forEach((country: string) => {
-      if (country) countries.add(country);
-    });
-
-    if (place.type === "Country" && place.displayPlace) {
-      countries.add(place.displayPlace);
-    }
-
-    if (
-      (place.type === "County" || place.type === "Region") &&
-      place.displayPlace
-    ) {
-      counties.add(place.displayPlace.split(",")[0].trim());
-    }
-
-    if (
-      ["Village", "Town", "City"].includes(place.type) &&
-      place.displayPlace
-    ) {
-      urbanAreas.add(place.displayPlace.split(",")[0].trim());
-    }
+  const toOption = (place: {
+    handle: string;
+    name: string;
+  }) => ({
+    handle: place.handle,
+    name: place.name,
   });
 
   return {
-    urbanAreas: [...urbanAreas].sort(),
-    counties: [...counties].sort(),
-    countries: [...countries].sort(),
+    places: places,
+    urbanAreas: places
+      .filter((place) =>
+        ["Village", "Town", "City"].includes(place.type)
+      )
+      .map(toOption)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+
+    counties: places
+      .filter((place) =>
+        ["County", "Region"].includes(place.type)
+      )
+      .map(toOption)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+
+    countries: places
+      .filter((place) => place.type === "Country")
+      .map(toOption)
+      .sort((a, b) => a.name.localeCompare(b.name)),
   };
 };
 
 export const getAllPlaces = async (req: Request, res: Response) => {
     try {
         //console.log("family.controller, getAllPlaces");
-        const dbPlaces = await Place.find().sort({
-            displayPlace: 1,
-        }).lean();
-        let shortName = "";
-        const place = dbPlaces.map( item => {
-          /*
-          let newPlace: PlaceDocument = {
-              handle: "",
-              grampsId: "",
-              type: "",
-              line1?: "",
-              line2?: "",
-              urbanArea?: "",
-              county?: "",
-              country?: [],
-              code?: "",
-              name: "",
-              shortName: "",
-              displayPlace: "",
-              latitude?: 0,
-              longitude?: 0,
-              noteHandles?: [],
-          
-              importBatchId?: "",  
-          };
-          */
-          let newPlace = {shortName: "", ...item};
-
-          switch (item.type) {
-            case "address":
-              if (item.line1) {
-                shortName = item.line1 + getPlaceName(item.urbanArea);
-              } else if (item.line2) {
-                shortName = item.line2 + getPlaceName(item.urbanArea);
-              };
-              break;
-            case "village":
-            case "town":
-            case "city":
-              shortName = getPlaceName("urban", item.urbanArea);
-              break;
-            case "county":
-              shortName = getPlaceName("county", item.county);
-              break;
-            case "country":
-              shortName = getPlaceName("country", item.country[0]);
-            default:
-              console.log("controller: getAllPlaces, unknown place.type", item);
-              break;
-          }
-          newPlace.shortName = shortName;
-          return newPlace;
-        })
-        res.status(200).json(place);
+        const places = await PlaceModel.find().sort({
+            name: 1,
+        }).lean<PlaceRecord[]>();
+        res.status(200).json(places);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch places", error });
     }
 };
 
-const getPlaceName = async (type: string, handle: string) => {
-  const place = await Place.findOne( {handle});
-  if (place) {
-    switch (type) {
-      case "urban":
-        return place.name;
-        break;
-    
-      default:
-        break;
+export const getPlaceName = async (handle: string) => {
+  try {
+    const place = await PlaceModel.findOne( {handle});
+    if (place) {
+      return place.name;
+    } else {
+      return undefined;
     }
+  } catch (err) {
+    console.log("controller: getPlaceName try catch error", err);
   }
-
 }
 
 export const createPlace = async (
@@ -566,7 +508,7 @@ export const createPlace = async (
 ) => {
     try {
         console.log("family.controller, createPlace", req.body);
-        const newPlace = new Place(req.body);
+        const newPlace = new PlaceModel(req.body);
         const savedPlace = await newPlace.save();
         console.log("Place created");
         res.status(201).json(savedPlace);
@@ -577,16 +519,16 @@ export const createPlace = async (
 };
 
 export const updatePlace = async (
-    req: Request<{ grampsId: string }, {}, Partial<PlaceDocument>>,
+    req: Request<{ placeId: string }, {}, Partial<PlaceDocument>>,
     res: Response
 ) => {
     try {
-        const wGrampsId = req.params.grampsId;
+        const wPlaceId = req.params.placeId;
         const updateData = req.body;
-        console.log("family.controller, updatePlace", wGrampsId, updateData);
+        console.log("family.controller, updatePlace", wPlaceId, updateData);
 
         const updatedPlace: PlaceDocument | null =
-            await Person.findOneAndUpdate({ wGrampsId }, updateData, {
+            await PlaceModel.findOneAndUpdate({ handle: wPlaceId }, updateData, {
                 new: true,
             });
 
@@ -607,7 +549,7 @@ export const deletePlace = async (
         console.log("family.controller, deletePlace");
         const wGrampsId = req.params.grampsId;
 
-        const deletedPlace = await Place.findOneAndDelete({ wGrampsId });
+        const deletedPlace = await PlaceModel.findOneAndDelete({ wGrampsId });
 
         if (!deletedPlace) {
             return res

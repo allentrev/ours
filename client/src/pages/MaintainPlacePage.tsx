@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 import type { PlaceRecord } from "../types/familyTypes";
 import { getPlaceColumns } from '../components/Family/PlaceColumns';
 import EditFormArea from "../components/Family/PlaceEditFormArea";
-import { createPlace, updatePlace, deletePlace, getAllPlaces,fetchFamilyPlaceOptions } from 'utilities'; // Adjust path as needed
+import { createPlace, updatePlace, deletePlace, getAllPlaces } from 'utilities'; // Adjust path as needed
 import FilterBar from '../components/FilterBar';
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
@@ -18,7 +18,7 @@ const MaintainPlacePage: React.FC = () => {
   const { confirm, dialog } = useConfirmDialog();
   const { isAuthenticated } = useAuth();
 
-  const [place, setPlace] = useState<PlaceRecord[]>([]);
+  const [places, setPlaces] = useState<PlaceRecord[]>([]);
   
   const [selectedItems, setSelectedItems] = useState<PlaceRecord[]>([]);
   const [isNewEdit, setIsNewEdit] = useState(false);
@@ -35,10 +35,8 @@ const MaintainPlacePage: React.FC = () => {
     const fetchData = async () => {
       try {
         const data = await getAllPlaces();
-        const familyPlaces = await fetchFamilyPlaceOptions();
-        console.log(data);
-        console.log(familyPlaces);
-        setPlace(data);
+        //console.log("getAllPlace", data);
+        setPlaces(data);
 
       } catch (error) {
         console.error("Failed to load places:", error);
@@ -47,7 +45,9 @@ const MaintainPlacePage: React.FC = () => {
     };
     fetchData();
   }, []);
-
+  
+  const modName = "/pages/MaintainPlacePage/";
+  
   const filterOptions = [
     { key: '', label: 'All' },
     { key: "village", label: "Village" },
@@ -115,6 +115,8 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
     country:  [],
     code:  "",
     displayPlace:  "",
+    name: "",
+    shortName: "",
     latitude:  0,
     longitude: 0,
     noteHandles: [],
@@ -136,6 +138,7 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
   };
 
   const handleDeleteSelected = async (): Promise<void> => {
+    const funcName = "handleDeleteSelected";
     if (!isAuthenticated || selectedItems.length === 0) return;
 
     const shouldDelete = await confirm({
@@ -153,9 +156,9 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
     try {
       await deletePlace(wGrampsId);
       toast.success("Place deleted successfully");
-      setPlace(prev => prev.filter(e => e.grampsId !== wGrampsId));
+      setPlaces(prev => prev.filter(e => e.grampsId !== wGrampsId));
     } catch (error) {
-      console.log(`Delete failed: ${(error as Error).message}`);
+      console.log(`${modName}${funcName} Delete failed: ${(error as Error).message}`);
       toast.error(`Delete failed: ${(error as Error).message}`);
     }
     setEditMode(false);
@@ -194,7 +197,7 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
         toast.success("Place updated successfully");
       }
 
-      setPlace(prev => {
+      setPlaces(prev => {
         const updated = prev.some(e => e.grampsId === savedItem.grampsId)
           ? prev.map(e => (e.grampsId === savedItem.grampsId ? savedItem : e))
           : [...prev, savedItem];
@@ -257,6 +260,7 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
           editMode && itemBeingEdited  ? (
             <EditFormArea
               item={itemBeingEdited}
+              places={places}
               setItem={setItemBeingEdited}
               isNew={isNewEdit}
             />
@@ -265,10 +269,10 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
         listPanel={
           <MaintainEntityManager
             columns={getPlaceColumns()}
-            entities={place}
+            entities={places}
             selectedItems={selectedItems}
             onSelectItem={onSelectItem}
-            onSelectAll={(checked) => setSelectedItems(checked ? [...place] : [])}
+            onSelectAll={(checked) => setSelectedItems(checked ? [...places] : [])}
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
             currentPage={currentPage}

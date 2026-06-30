@@ -6,8 +6,6 @@ import type { PostRecord,CreatePost } from "../types/blogTypes";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const fetchPost = async () => {
-  console.log("blogUtils fetchPost");
-  console.log("API URL:", import.meta.env.VITE_BACKEND_URL);
 
   const res = await axios.get(
     `${import.meta.env.VITE_BACKEND_URL}/posts?featured=true&limit=4&sort=newest`

@@ -190,8 +190,8 @@ export default function NewPlaceModal({
               >
                 <option value="">Select country...</option>
                 {placeOptions.countries.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+                  <option key={option.handle} value={option.name}>
+                    {option.name}
                   </option>
                 ))}
               </select>
@@ -208,8 +208,8 @@ export default function NewPlaceModal({
               >
                 <option value="">None / unknown</option>
                 {placeOptions.counties.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+                  <option key={option.handle} value={option.name}>
+                    {option.name}
                   </option>
                 ))}
               </select>

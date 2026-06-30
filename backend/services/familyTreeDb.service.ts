@@ -1,5 +1,5 @@
-import { Person } from "../models/Family/person.model.js";
-import { Family } from "../models/Family/family.model.js";
+import { PersonModel } from "../models/Family/person.model.js";
+import { FamilyModel } from "../models/Family/family.model.js";
 
 import {
   buildAncestorTree,
@@ -7,6 +7,8 @@ import {
 } from "./familyTree.service.js";
 
 import type {
+  PersonRecord,
+  FamilyRecord,
   FamilyGroup,
   FamilyTreeResponse,
   RawGrampsPerson,
@@ -29,8 +31,7 @@ const mapPerson = (person: any): RawGrampsPerson => ({
   deathPlaceHandle: person.deathPlaceHandle ?? undefined,
   noteHandles: person.noteHandles ?? [],
   mediaHandles: person.mediaHandles ?? [],
-  primaryPhotoMediaHandle:
-    person.primaryPhotoMediaHandle ?? undefined,
+  primaryPhotoUrl: person.primaryPhotoUrl ?? undefined,
 });
 
 const loadPeopleByHandles = async (
@@ -38,9 +39,9 @@ const loadPeopleByHandles = async (
 ): Promise<RawGrampsPerson[]> => {
   if (handles.length === 0) return [];
 
-  const people = await Person.find({
+  const people = await PersonModel.find({
     handle: { $in: [...new Set(handles)] },
-  }).lean();
+  }).lean<PersonRecord[]>();
 
   return people.map(mapPerson);
 };
@@ -55,12 +56,12 @@ const collectDescendantData = async (
   let currentHandles = [startHandle];
 
   for (let depth = 0; depth < maxDepth; depth++) {
-    const families = await Family.find({
+    const families = await FamilyModel.find({
       $or: [
         { fatherHandle: { $in: currentHandles } },
         { motherHandle: { $in: currentHandles } },
       ],
-    }).lean();
+    }).lean<FamilyRecord[]>();
 
     const nextHandles: string[] = [];
 
@@ -106,9 +107,9 @@ const collectAncestorData = async (
   let currentHandles = [startHandle];
 
   for (let depth = 0; depth < maxDepth; depth++) {
-    const families = await Family.find({
+    const families = await FamilyModel.find({
       childHandles: { $in: currentHandles },
-    }).lean();
+    }).lean<FamilyRecord[]>();
 
     const nextHandles: string[] = [];
 
@@ -213,9 +214,9 @@ export const buildFamilyTreeFromDb = async (
   selectedPerson: RawGrampsPerson;
   tree: FamilyTreeResponse;
 }> => {
-  const selectedPersonDoc = await Person.findOne({
+  const selectedPersonDoc = await PersonModel.findOne({
     handle: startHandle,
-  }).lean();
+  }).lean<PersonRecord>();
 
   if (!selectedPersonDoc) {
     throw new Error("Selected person not found");

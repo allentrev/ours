@@ -68,7 +68,8 @@ const extractEventDate = (
   eventType: "Birth" | "Death" | "Baptism" | "Census" | "Marriage" | "Residence" | "Adopted" | "Civil Union"
 ) => {
   const expectedRole = recordType === "Person" ? "Primary" : "Family";
-  
+
+
   const eventRefs = toArray(record.eventref);
   for (const eventRef of eventRefs) {
     const eventHandle = eventRef?._hlink;
@@ -88,13 +89,50 @@ const extractEventDate = (
       getTextValue(event._type);
 
     if (type === eventType && eventRef._role ===  expectedRole) {
-      return (
-          event.dateval?._val
-        );
+      return event.dateval?._val;
     }
   }
 
   return undefined;
+};
+
+
+const extractEventData = (
+  record: any,
+  recordType: GrampsRecordType,
+  eventMap: Map<string, any>,
+  eventType: "Birth" | "Death" | "Baptism" | "Census" | "Marriage" | "Residence" | "Adopted" | "Civil Union"
+) => {
+  const expectedRole = recordType === "Person" ? "Primary" : "Family";
+
+
+  const eventRefs = toArray(record.eventref);
+  for (const eventRef of eventRefs) {
+    const eventHandle = eventRef?._hlink;
+
+    if (!eventHandle) {
+      continue;
+    }
+
+    const event = eventMap.get(eventHandle);
+
+    if (!event) {
+      continue;
+    }
+
+    const type =
+      getTextValue(event.type) ||
+      getTextValue(event._type);
+
+    if (type === eventType && eventRef._role ===  expectedRole) {
+      return [
+          event.dateval?._val,
+          event.place?._hlink,
+      ];
+    }
+  }
+
+  return [];
 };
 
 const extractPlaceData = (place: any) => {
@@ -177,6 +215,9 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
   const people: RawGrampsPerson[] = rawPeople.map((person: any) => {
     const { firstName, surname, displayName } = extractPersonName(person);
     const noterefs = toArray(person.noteref?._hlink);
+    const [birthDate, birthPlaceHandle] = extractEventData(person, "Person", eventMap, "Birth");
+    const [deathDate, deathPlaceHandle] = extractEventData(person, "Person", eventMap, "Death");
+
     return {
       handle: person._handle,
       grampsId: person._id,
@@ -184,8 +225,10 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
       firstName,
       surname,
       displayName,
-      birthDate: extractEventDate(person, "Person", eventMap, "Birth"),
-      deathDate: extractEventDate(person, "Person", eventMap, "Death"),
+      birthDate: birthDate,
+      deathDate: deathDate,
+      birthPlaceHandle: birthPlaceHandle,
+      deathPlaceHandle: deathPlaceHandle,
       noteHandles: noterefs,
       mediaHandles: [],
     };
@@ -197,12 +240,14 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
     const noterefs = toArray(family.noteref?._hlink);
     //console.log("family",family._handle );
     //console.log("Notes", noterefs);
+    const [eventDate, eventPlaceHandle] = extractEventData(family, "Family", eventMap, "Marriage");
 
     return {
       handle: family._handle,
       grampsId: family._id,
       relationshipType: family.rel?._type,
-      relationshipDate: extractEventDate(family, "Family", eventMap, "Marriage"),
+      relationshipDate: eventDate ?? undefined,
+      relationshipPlaceHandle: eventPlaceHandle ?? undefined,
       fatherHandle: family.father?._hlink,
       motherHandle: family.mother?._hlink,
       childHandles: children

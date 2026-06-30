@@ -42,7 +42,6 @@ export const createGallery = async (
     item: GalleryRecord
 ): Promise<GalleryRecord> => {
     const url = `${import.meta.env.VITE_BACKEND_URL}/gallery`;
-    console.log("util/createGallery");
 
     const payload: GalleryRecord = {
         ...item,
@@ -117,7 +116,6 @@ export const updateAllGallery = async (
  * Deletes a gallery record by its refKey.
  */
 export const deleteGallery = async (gallery: GalleryRecord): Promise<void> => {
-    console.log("utility delete Gallery");
     if (!gallery._id) throw new Error("Gallery._id is required for deletion.");
 
     const url = `${import.meta.env.VITE_BACKEND_URL}/gallery/${gallery._id}`;
@@ -132,7 +130,6 @@ export const deleteGallery = async (gallery: GalleryRecord): Promise<void> => {
             const errorText = await res.text();
             throw new Error(`Failed to delete gallery: ${errorText}`);
         }
-        console.log("Gallery deleted successfully");
     } catch (err) {
         throw new Error(`deleteGallery error: ${err}`);
     }
@@ -185,7 +182,6 @@ export async function importFile(file: File, folder: string): Promise<UploadImag
 
 export const getGalleryImages = async (base: string, folder: string): Promise<Image[]> => {
     const url = `${import.meta.env.VITE_BACKEND_URL}/gallery/images/${encodeURIComponent(base)}/${encodeURIComponent(folder)}`;
-    console.log(url)
     try {
         const res = await fetch(url, {
             method: "GET",
@@ -220,8 +216,6 @@ export const getGalleryImages = async (base: string, folder: string): Promise<Im
  */
 
 export const deleteImageFromCDN = async (image: Image): Promise<void> => {
-    console.log(`deleteImageFromCDN using Bunny`);
-    console.log(image);
 
   // We expect `image.name` to contain the CDN fileId
   if (!image.fileId) throw new Error("Image fileId (name) is required to delete a image.");

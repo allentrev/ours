@@ -52,6 +52,8 @@ const MaintainRefDataPage: React.FC = () => {
     fetchData();
   }, []);
 
+  const modName = "/pages/MaintainRefDataPage/";
+  
   const pageOptions = websiteOptions.map(item => ({
     key: item,
     label: item,
@@ -139,6 +141,8 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
   };
 
   const handleDeleteSelected = async (): Promise<void> => {
+    const funcName = "handleDeleteSelected";
+    
     if (!isAuthenticated || selectedItems.length === 0) return;
 
     const shouldDelete = await confirm({
@@ -158,7 +162,7 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
       toast.success("Reference data deleted successfully");
       setRefData(prev => prev.filter(e => e.refKey !== refKey));
     } catch (error) {
-      console.log(`Delete failed: ${(error as Error).message}`);
+      console.log(`${modName}${funcName} Delete failed: ${(error as Error).message}`);
       toast.error(`Delete failed: ${(error as Error).message}`);
     }
     setEditMode(false);

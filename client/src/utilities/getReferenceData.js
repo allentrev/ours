@@ -1,6 +1,6 @@
 export const getRefData = async (pWebPage) => {
-    console.log("getRefData v2", pWebPage);
-
+  const modName = "/utitlies/";
+  const funcName = "getRefData";
     try {
         let wReply = [];
         let wURL = "";
@@ -32,7 +32,7 @@ export const getRefData = async (pWebPage) => {
                 return data;
             }
         } else {
-            console.log("getRefData fail", res);
+            console.log(`${modName}${funcName} fail`, res);
             return [];
         }
     } catch (err) {

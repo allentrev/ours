@@ -3,7 +3,10 @@ import React, { useState, useEffect } from "react";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
+
+import type { Image } from "../../types/galleryTypes";
 
 import type {
   PersonRecord,
@@ -12,8 +15,11 @@ import type {
 } from "../../types/familyTypes";
 
 import PlaceSelectorModal from "./SelectorPlaceModal";
-import NewPlaceModal from "./NewPlaceModal";
-import { fetchFamilyPlaceOptions } from "../../utilities/Family/utils";
+import GenealogyDatePickerModal from "./GenealogyDatePickerModal";
+import PhotoSelectorModal from "./PhotoSelectorModal";
+
+
+import { fetchFamilyPlaceOptions , getPlaceName } from "../../utilities/Family/utils";
 
 import manOutline from "../../assets/man_outline.jpg";
 import womanOutline from "../../assets/woman_outline.jpg";
@@ -30,7 +36,7 @@ const iconButtonClass =
 const FamilyPersonEditFormArea: React.FC<
   FamilyPersonEditFormAreaProps
 > = ({ item, setItem, isNew }) => {
-
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [selectPlaceModal, setSelectPlaceModal] = useState<{
     open: boolean;
     field: "birthPlaceHandle" | "deathPlaceHandle";
@@ -39,16 +45,17 @@ const FamilyPersonEditFormArea: React.FC<
     field: "birthPlaceHandle",
   });
 
-  const [newPlaceModal, setNewPlaceModal] = useState<{
+  const [dateModal, setDateModal] = useState<{
     open: boolean;
-    field: "birthPlaceHandle" | "deathPlaceHandle";
+    field: "birthDate" | "deathDate";
   }>({
     open: false,
-    field: "birthPlaceHandle",
+    field: "birthDate",
   });
 
   const [placeOptions, setPlaceOptions] =
     useState<PlaceOptions>({
+      places: [],
       urbanAreas: [],
       counties: [],
       countries: [],
@@ -56,8 +63,8 @@ const FamilyPersonEditFormArea: React.FC<
   
   useEffect(() => {
     fetchFamilyPlaceOptions()
-    .then(setPlaceOptions)
-    .catch(console.error)
+      .then(setPlaceOptions)
+      .catch(console.error)
   }, []);
 
   const displayName = [item.firstName, item.surname]
@@ -106,24 +113,15 @@ const FamilyPersonEditFormArea: React.FC<
     }));
   };
 
-  const handlePlaceCreated = (
-    place: PlaceRecord,
-    options: PlaceOptions
-  ) => {
-    setItem({
-      ...item,
-      [newPlaceModal.field]: place.handle,
-    });
+  const handlePhotoSelected = (image: Image) => {
+  setItem({
+    ...item,
+    primaryPhotoUrl: image.url,
+  });
 
-    setPlaceOptions(options);
-
-    setNewPlaceModal((current) => ({
-      ...current,
-      open: false,
-    }));
-  };
-
-  return (
+  setPhotoModalOpen(false);
+};
+    return (
     <form
       id="edit-form"
       className="bg-white shadow-md rounded p-4 my-4 space-y-4"
@@ -193,7 +191,7 @@ const FamilyPersonEditFormArea: React.FC<
           Events
         </legend>
 
-        <div className="grid grid-cols-[auto_1fr_1fr_auto_auto] gap-2 items-center">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto_auto] gap-2 items-center">
           <div />
           <div className="font-semibold text-gray-700">Date</div>
           <div className="font-semibold text-gray-700">Place</div>
@@ -201,95 +199,98 @@ const FamilyPersonEditFormArea: React.FC<
           <div />
 
           <div className="font-semibold text-gray-700">Birth</div>
+          <>
+            <div className="flex items-center gap-2 min-w-0">
+              <input
+                type="text"
+                name="birthDate"
+                value={item.birthDate ?? ""}
+                onChange={handleChange}
+                className="w-full min-w-0 border border-gray-300 rounded px-2 py-1"
+              />
+              <button
+                type="button"
+                className="h-9 shrink-0 rounded border border-gray-300 bg-gray-100 px-2 text-sm text-gray-700 hover:bg-gray-200"
+                title="Select birth date"
+                onClick={() =>
+                  setDateModal({
+                    open: true,
+                    field: "birthDate",
+                  })
+                }
+              >
+                Date
+              </button>
+            </div>
+            <input
+              type="text"
+              name="birthPlaceHandle"
+              value={(item.birthPlaceHandle) ? getPlaceName("short", item.birthPlaceHandle, placeOptions.places) : ""}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-2 py-1"
+            />
 
-          <input
-            type="date"
-            name="birthDate"
-            value={item.birthDate ?? ""}
-            onChange={handleChange}
-            className="border border-gray-300 rounded px-2 py-1"
-          />
+            <div />
 
-          <input
-            type="text"
-            name="birthPlaceHandle"
-            value={item.birthPlaceHandle ?? ""}
-            onChange={handleChange}
-            className="border border-gray-300 rounded px-2 py-1"
-          />
-
-          <button
-            type="button"
-            className={iconButtonClass}
-            title="New birth place"
-            onClick={() =>
-              setNewPlaceModal({
-                open: true,
-                field: "birthPlaceHandle",
-              })
-            }
-          >
-            <PlusIcon className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            className={iconButtonClass}
-            title="Select birth place"
-            onClick={() => setSelectPlaceModal({
-                open: true,
-                field: "birthPlaceHandle",
-              })
-            }
-          >
-            <MagnifyingGlassIcon className="h-5 w-5" />
-          </button>
-
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className={iconButtonClass}
+                title="Select birth place"
+                onClick={() => setSelectPlaceModal({
+                    open: true,
+                    field: "birthPlaceHandle",
+                  })
+                }
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" />
+              </button>
+            </div>
+          </>
           <div className="font-semibold text-gray-700">Death</div>
-
-          <input
-            type="date"
-            name="deathDate"
-            value={item.deathDate ?? ""}
-            onChange={handleChange}
-            className="border border-gray-300 rounded px-2 py-1"
-          />
-
-          <input
-            type="text"
-            name="deathPlaceHandle"
-            value={item.deathPlaceHandle ?? ""}
-            onChange={handleChange}
-            className="border border-gray-300 rounded px-2 py-1"
-          />
-
-          <button
-            type="button"
-            className={iconButtonClass}
-            title="New death place"
-            onClick={() =>
-              setNewPlaceModal({
-                open: true,
-                field: "deathPlaceHandle",
-              })
-            }
-          >
-            <PlusIcon className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            className={iconButtonClass}
-            title="Select death place"
-            onClick={() =>
-              setSelectPlaceModal({
-                open: true,
-                field: "deathPlaceHandle",
-              })
-            }
-          >
-            <MagnifyingGlassIcon className="h-5 w-5" />
-          </button>
+            <div className="flex items-center gap-2 min-w-0">
+              <input
+                type="text"
+                name="deathDate"
+                value={item.deathDate ?? ""}
+                onChange={handleChange}
+                className="w-full min-w-0 border border-gray-300 rounded px-2 py-1"
+              />
+              <button
+                type="button"
+                className="h-9 shrink-0 rounded border border-gray-300 bg-gray-100 px-2 text-sm text-gray-700 hover:bg-gray-200"
+                title="Select death date"
+                onClick={() =>
+                  setDateModal({
+                    open: true,
+                    field: "deathDate",
+                  })
+                }
+              >
+                Date
+              </button>
+            </div>
+            <input
+              type="text"
+              name="deathPlaceHandle"
+              value={(item.deathPlaceHandle) ? getPlaceName("short", item.deathPlaceHandle, placeOptions.places) : ""}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-2 py-1"
+            />
+            <div />
+            <button
+              type="button"
+              className={iconButtonClass}
+              title="Select death place"
+              onClick={() =>
+                setSelectPlaceModal({
+                  open: true,
+                  field: "deathPlaceHandle",
+                })
+              }
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </button>
         </div>
       </fieldset>
 
@@ -301,7 +302,6 @@ const FamilyPersonEditFormArea: React.FC<
 
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
           <label className="flex flex-col flex-1 w-full">
-            Photo URL:
             <input
               type="text"
               value={item.primaryPhotoUrl ?? ""}
@@ -314,17 +314,23 @@ const FamilyPersonEditFormArea: React.FC<
             <button
               type="button"
               className={iconButtonClass}
-              title="New photo"
+              title="Select photo"
+              onClick={() => setPhotoModalOpen(true)}
             >
-              <PlusIcon className="h-5 w-5" />
+              <MagnifyingGlassIcon className="h-5 w-5" />
             </button>
-
             <button
               type="button"
               className={iconButtonClass}
-              title="Select photo"
+              title="Remove photo"
+              onClick={() =>
+                setItem({
+                  ...item,
+                  primaryPhotoUrl: "",
+                })
+              }
             >
-              <MagnifyingGlassIcon className="h-5 w-5" />
+              <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
@@ -411,16 +417,32 @@ const FamilyPersonEditFormArea: React.FC<
         onSelectPlace={handlePlaceSelected}
       />
 
-      <NewPlaceModal
-        open={newPlaceModal.open}
-        placeOptions={placeOptions}
+      <GenealogyDatePickerModal
+        open={dateModal.open}
+        value={item[dateModal.field] ?? ""}
         onClose={() =>
-          setNewPlaceModal((current) => ({
+          setDateModal((current) => ({
             ...current,
             open: false,
           }))
         }
-        onPlaceCreated={handlePlaceCreated}
+        onSelect={(date) => {
+          setItem({
+            ...item,
+            [dateModal.field]: date,
+          });
+
+          setDateModal((current) => ({
+            ...current,
+            open: false,
+          }));
+        }}
+      />
+      <PhotoSelectorModal
+        open={photoModalOpen}
+        currentPhotoUrl={item.primaryPhotoUrl}
+        onClose={() => setPhotoModalOpen(false)}
+        onSelectPhoto={handlePhotoSelected}
       />
     </form>
   );

@@ -41,6 +41,7 @@ const MIN_PANEL_SIZE = 220;
 const MAX_PANEL_SIZE = 600;
 
 const Tree = () => {
+  const modName = "/pages/Family/Tree/";
   const [selectedPersonHandle, setSelectedPersonHandle] = useState("");
   const [selectedPerson, setSelectedPerson] =
     useState<TreePerson | null>(null);
@@ -118,10 +119,11 @@ const Tree = () => {
         action: "import",
         state: "success",
         message:
-          `Imported ${result.mongoPeople} people, ` +
-          `${result.mongoFamily} families, ` +
-          `${result.mongoPlaces} places and ` +
-          `${result.mongoNotes} notes.`,
+          `Imported:\n` +
+          `${result.mongoPeople} people\n` +
+          `${result.mongoFamily} families\n` +
+          `${result.mongoPlaces} places\n` +
+          `${result.mongoNotes} notes`,
       });
     } catch (error) {
       console.error(error);
@@ -144,6 +146,7 @@ const Tree = () => {
   };
 
   const handleExportFamilyData = async () => {
+    const funcName = "handleExportFamilyData";
     try {
       setTransferStatus({
         action: "export",
@@ -157,7 +160,7 @@ const Tree = () => {
 
       const directoryHandle = await window.showDirectoryPicker();
 
-      console.log("Selected export directory:", directoryHandle);
+      console.log(`${modName}${funcName} Selected export directory:`, directoryHandle);
 
       await new Promise((resolve) => setTimeout(resolve, 800));
 

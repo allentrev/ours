@@ -11,6 +11,7 @@ import type { PersonRecord } from "../types/familyTypes";
 import { getFamilyPersonColumns } from '../components/Family/FamilyPersonColumns';
 import EditFormArea from "../components/Family/FamilyPersonEditFormArea";
 import { createPerson, updatePerson, deletePerson, getAllPersons } from 'utilities'; // Adjust path as needed
+import FilterBar from '../components/FilterBar';
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
 const MaintainFamilyPersonPage: React.FC = () => {
@@ -26,12 +27,15 @@ const MaintainFamilyPersonPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
+  const [filterKey, setFilterKey] = useState('');
+  const [filterText, setFilterText] = useState('');
+
   // Load all person data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getAllPersons();
-        console.log("Result of getAllPersons", data);
+        //console.log("Result of getAllPersons", data);
         setPerson(data);
 
       } catch (error) {
@@ -41,6 +45,29 @@ const MaintainFamilyPersonPage: React.FC = () => {
     };
     fetchData();
   }, []);
+  const modName = "/pages/MaintainFamilyPersonPage/";
+  const filterOptions = [{ key: '', label: "All fields"}];
+
+  const PersonFilterFunction = (e: PersonRecord, filterText?: string, filterKey?: string): boolean => {
+    const trimmed = filterText?.trim().toLowerCase() || '';
+    const key = filterKey?.trim().toLowerCase() || '';
+
+    const matchesDisplayName = key === '' || e.displayName?.trim().toLowerCase() === key;
+
+    if (trimmed === '' && key === '') {
+      return true;
+    }
+
+    if (trimmed === '') {
+      return matchesDisplayName;
+    }
+
+    const matchesText = Object.values(e).some(
+      (val) => typeof val === 'string' && val.toLowerCase().includes(trimmed)
+    );
+
+    return matchesDisplayName && matchesText;
+  };
 
   const isSelected = (item: PersonRecord) =>
     selectedItems.some(i => i.grampsId === item.grampsId);
@@ -85,6 +112,8 @@ const MaintainFamilyPersonPage: React.FC = () => {
   };
 
   const handleDeleteSelected = async (): Promise<void> => {
+    const funcName = "handleDeleteSelected";
+
     if (!isAuthenticated || selectedItems.length === 0) return;
 
     const shouldDelete = await confirm({
@@ -104,7 +133,7 @@ const MaintainFamilyPersonPage: React.FC = () => {
       toast.success("Family Person deleted successfully");
       setPerson(prev => prev.filter(e => e.grampsId !== wGrampsId));
     } catch (error) {
-      console.log(`Delete failed: ${(error as Error).message}`);
+      console.log(`${modName}${funcName} Delete failed: ${(error as Error).message}`);
       toast.error(`Delete failed: ${(error as Error).message}`);
     }
     setEditMode(false);
@@ -181,6 +210,15 @@ const MaintainFamilyPersonPage: React.FC = () => {
         backgroundImage={backgroundImage as string}
         title="Maintain Family Person"
         editMode={editMode}
+        filter={
+          <FilterBar
+            filterText={filterText}
+            setFilterText={setFilterText}
+            filterKey={filterKey}
+            setFilterKey={setFilterKey}
+            filterOptions={filterOptions}
+          />
+        }
         commands={
           <Commands
             editMode={editMode}
@@ -215,6 +253,9 @@ const MaintainFamilyPersonPage: React.FC = () => {
             currentPage={currentPage}
             onPageChange={setCurrentPage}
             isSelected={isSelected}
+            filterText={filterText}
+            filterKey={filterKey}
+            filterFunction={ PersonFilterFunction }
           />
         }
       />

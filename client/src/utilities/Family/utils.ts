@@ -12,6 +12,7 @@ import type {
 } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
+const modName = "/utilities/Family/utils/";
 
 export const searchFamilyPeople = async (
   query: string
@@ -38,7 +39,7 @@ export const fetchTree = async (
   const res = await axios.get(
     `${API_URL}/family/tree?${params.toString()}`
   );
-  console.log("Family tree response from familyUtils:");
+  console.log("utitlies/Family/utils/fetchTree backend response, res.data.data");
   console.log(res.data.data)
   return res.data.data;
 };
@@ -143,11 +144,13 @@ export const updatePerson = async (
 
         if (!res.ok) {
             const errorText = await res.text();
+            console.error(`utilities/Family/utils/updatePerson Failed to update family person: ${errorText}`)
             throw new Error(`Failed to update family person: ${errorText}`);
         }
         return await res.json();
     } catch (err) {
-        throw new Error(`updatePerson error: ${err}`);
+      console.error(`utilities/Family/utils/updatePerson updatePerson error: ${err}`)  
+      throw new Error(`updatePerson error: ${err}`);
     }
 };
 
@@ -173,9 +176,17 @@ export const deletePerson = async (grampsId: string): Promise<void> => {
         throw new Error(`deletePerson error: ${err}`);
     }
 };
+
+export const outFormPhotoMarker = (url: string | undefined): string => {
+    // this routine takes in the url from the database and 
+    // if undefined returns "N", else it returns "Y" for display in the Maintain Entity List.
+        if (url) {return "Y" }
+        else { return "N"};
+}
 //  ----------------------------- Place -----------------------------------
 //
 export const getAllPlaces = async (): Promise<PlaceRecord[]> => {
+    const funcName  = "getAllPlaces";
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/place`;
 
     try {
@@ -185,7 +196,7 @@ export const getAllPlaces = async (): Promise<PlaceRecord[]> => {
         });
 
         const data = await res.json();
-        //console.log("utils getAllPlaces", data);
+        console.log(`${modName}${funcName}, data`, data);
         return res.ok ? (data as PlaceRecord[]) : [];
     } catch (err) {
         throw new Error(`getAllPlaces error: ${err}`);
@@ -218,8 +229,9 @@ export const createPlace = async (
 export const updatePlace = async (
     updatedRecord: PlaceRecord
 ): Promise<PlaceRecord> => {
+    console.log("utilities/Family/utils/updatePlace updatedRecord:", updatedRecord);
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${
-        updatedRecord.grampsId
+        updatedRecord.handle
     }`;
 
     try {
@@ -228,7 +240,6 @@ export const updatePlace = async (
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updatedRecord),
         });
-
         if (!res.ok) {
             const errorText = await res.text();
             throw new Error(`Failed to update place: ${errorText}`);
@@ -295,3 +306,37 @@ export const createSimpleFamilyPlace = async (
 
   return res.data.data;
 };
+
+export const getPlaceName = (
+  nameType: string,
+  handle: string,
+  places: PlaceRecord[],
+  ): string => {
+  
+  const place = places.find(
+    (item) => item.handle === handle
+  );
+  if (!place) { return "Not found"};
+  switch (nameType) {
+    case "short":
+      return place.shortName;
+      break;
+    case "name":
+      return place.name;
+      break
+    default:
+      return place.displayPlace;
+      break;
+  }
+};
+/*
+export const getPlaceName =
+    handle: string,
+    placeOptions: PlaceOptions
+  ): string | undefined => {
+  
+    return placeOptions.urbanAreas.find(
+      (place) => place.handle === handle
+    )?.displayPlace;
+};
+*/

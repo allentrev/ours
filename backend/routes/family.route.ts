@@ -14,6 +14,7 @@ import {
   getFamilyPlaceOptions,
   createSimpleFamilyPlace,
   getAllPlaces,
+  getPlaceName,
   createPlace,
   updatePlace,
   deletePlace,
@@ -32,24 +33,29 @@ router.get("/", getAllPersons);
 router.get("/search", searchFamilyPeople);
 router.get("/tree", getFamilyTree);
 
-router.post("/", createPerson);
-router.post("/:grampsId", updatePerson);
-router.delete("/:grampsId", deletePerson);
-
+// Place routes first
 router.get("/places/search", searchFamilyPlaces);
+router.get("/places/options", getFamilyPlaceOptions);
+router.get("/places/:placeId", getPlaceName);
+
 router.post("/places", createFamilyPlace);
 router.post("/places/simple", createSimpleFamilyPlace);
-router.get("/places/options", getFamilyPlaceOptions);
+
 router.get("/place", getAllPlaces);
 router.post("/place", createPlace);
-router.post("/place/:grampsId", updatePlace);
-router.delete("/place/:grampsId", deletePlace);
+router.post("/place/:placeId", updatePlace);
+router.delete("/place/:placeId", deletePlace);
 
 router.post(
   "/import/gramps",
   upload.single("grampsFile"),
   importGrampsFile
 );
+
+// Generic person routes last
+router.post("/", createPerson);
+router.post("/:grampsId", updatePerson);
+router.delete("/:grampsId", deletePerson);
 
 // Future:
 // router.get("/export/gramps", exportGrampsFile);

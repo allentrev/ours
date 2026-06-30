@@ -1,8 +1,11 @@
 import mongoose, { Schema, model } from "mongoose";
+import type { PlaceRecord } from "../../types/family.types.js";
 
-const placeSchema = new Schema(
+const placeSchema = new Schema<PlaceRecord>(
   {
     handle: { type: String, required: true, unique: true, index: true },
+    origin: { type: String, enum: ["gramps", "local"], required: true, default: "local"},
+    localId: {type: String, unique: true, sparse: true},
     grampsId: { type: String, required: true, unique: true, index: true },
     type: { type: String, required: true,  index: true },
     line1: { type: String},
@@ -26,4 +29,4 @@ const placeSchema = new Schema(
   { timestamps: true }
 );
 
-export const Place = model("Place", placeSchema);
+export const PlaceModel = model<PlaceRecord>("Place", placeSchema);
