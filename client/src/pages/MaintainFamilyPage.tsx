@@ -7,79 +7,85 @@ import { MaintainEntityManager } from "../components/MaintainEntityManager";
 import { Commands } from "../components/Commands";
 import backgroundImage from '../assets/green1.jpg';
 
-import { useAuth, useUser } from "@clerk/clerk-react";
-import { isAdminUser } from "../utilities/authRoles";
-
-import { getFamilyPersonColumns } from '../components/Family/PersonColumns';
-import EditFormArea from "../components/Family/PersonEditFormArea";
-import { createPerson, updatePerson, deletePerson, getAllPersons } from 'utilities'; // Adjust path as needed
+import { getFamilyColumns } from '../components/Family/FamilyColumns';
+import EditFormArea from "../components/Family/FamilyEditFormArea";
+import { createFamily, updateFamily, deleteFamily, getAllFamilies } from 'utilities'; // Adjust path as needed
 import FilterBar from '../components/FilterBar';
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
-import type { PersonRecord } from "../types/familyTypes";
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { isAdminUser } from "../utilities/authRoles"; 
 
-const MaintainFamilyPersonPage: React.FC = () => {
+import type { FamilyRecord } from "../types/familyTypes";
+
+const MaintainFamilyPage: React.FC = () => {
   const { confirm, dialog } = useConfirmDialog();
 
   const { user } = useUser();
   const isAdmin = isAdminUser(user);
   const { getToken } = useAuth();
 
-  const [person, setPerson] = useState<PersonRecord[]>([]);
+  const [families, setFamilies] = useState<FamilyRecord[]>([]);
   
-  const [selectedItems, setSelectedItems] = useState<PersonRecord[]>([]);
+  const [selectedItems, setSelectedItems] = useState<FamilyRecord[]>([]);
   const [isNewEdit, setIsNewEdit] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [itemBeingEdited, setItemBeingEdited] = useState<PersonRecord | null>(null);
+  const [itemBeingEdited, setItemBeingEdited] = useState<FamilyRecord | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const [filterKey, setFilterKey] = useState('');
   const [filterText, setFilterText] = useState('');
 
-  // Load all person data on mount
+  // Load all Places
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getAllPersons();
-        //console.log("Result of getAllPersons", data);
-        setPerson(data);
+        const data = await getAllFamilies();
+        //console.log("getAllFamilies", data);
+        setFamilies(data);
 
       } catch (error) {
-        console.error("Failed to load family person data:", error);
-        toast.error("Failed to load family person data");
+        console.error("Failed to load families:", error);
+        toast.error("Failed to load families");
       }
     };
     fetchData();
   }, []);
-  const modName = "/pages/MaintainFamilyPersonPage/";
-  const filterOptions = [{ key: '', label: "All fields"}];
+  
+  const modName = "/pages/MaintainFamilyPage/";
+  
+  const filterOptions = [
+    { key: '', label: 'All' },
+    { key: "married", label: "married" },
+    { key: "unknown", label: "unknown" },
+  ];
 
-  const PersonFilterFunction = (e: PersonRecord, filterText?: string, filterKey?: string): boolean => {
+  const FamilyFilterFunction = (e: FamilyRecord, filterText?: string, filterKey?: string): boolean => {
     const trimmed = filterText?.trim().toLowerCase() || '';
     const key = filterKey?.trim().toLowerCase() || '';
 
-    const matchesDisplayName = key === '' || e.displayName?.trim().toLowerCase() === key;
+    const matchesKey = key === '' || e.relationshipType?.trim().toLowerCase() === key;
 
     if (trimmed === '' && key === '') {
       return true;
     }
 
     if (trimmed === '') {
-      return matchesDisplayName;
+      return matchesKey;
     }
 
     const matchesText = Object.values(e).some(
       (val) => typeof val === 'string' && val.toLowerCase().includes(trimmed)
     );
 
-    return matchesDisplayName && matchesText;
+    return matchesKey && matchesText;
   };
 
-  const isSelected = (item: PersonRecord) =>
-    selectedItems.some(i => i.handle === item.handle);
+  const isSelected = (item: FamilyRecord) =>
+    selectedItems.some(i => i.handle=== item.handle);
 
-  const onSelectItem = (item: PersonRecord) => {
+  const onSelectItem = (item: FamilyRecord) => {
     setSelectedItems(prev =>
       prev.some(i => i.handle === item.handle)
         ? prev.filter(i => i.handle !== item.handle)
@@ -87,25 +93,36 @@ const MaintainFamilyPersonPage: React.FC = () => {
     );
   };
 
-  const newPerson: PersonRecord = {
+  interface ValidationResult {
+    valid: boolean;
+    error?: string;
+  }
 
+function validateFamily(family: FamilyRecord | null | undefined): ValidationResult {
+    if (!family) {
+      return { valid: false, error: "Family is missing." };
+    }
+    //if (!refData.webPage || refData.webPage.trim() === "") {
+    //  return { valid: false, error: "RefData webPage is required." };
+    //}
+    return { valid: true };
+  }
+
+  const newFamily: FamilyRecord = {
     handle: "",
-    grampsId: "",
-    gender: "M",
-    firstName: "",
-    surname: "",
-    displayName: "",
-    birthDate: "",
-    deathDate: "",
-    birthPlaceHandle: "",
-    deathPlaceHandle: "",
-    primaryPhotoUrl: "",
+    grampsId:  "",
+    fatherHandle:  "",
+    motherHandle:  "",
+    childHandles:  [],
+    relationshipType:  "",
+    relationshipDate:  "",
+    relationshipPlaceHandle: "",
     noteHandles: [],
   };
 
   const handleCreate = () => {
     if (!isAdmin) return;
-    setItemBeingEdited(newPerson);
+    setItemBeingEdited(newFamily);
     setIsNewEdit(true);
     setSelectedItems([]);
     setEditMode(true);
@@ -120,7 +137,7 @@ const MaintainFamilyPersonPage: React.FC = () => {
 
   const handleDeleteSelected = async (): Promise<void> => {
     const funcName = "handleDeleteSelected";
-
+    
     if (!isAdmin || selectedItems.length === 0) return;
 
     const shouldDelete = await confirm({
@@ -132,15 +149,14 @@ const MaintainFamilyPersonPage: React.FC = () => {
 
     if (!shouldDelete) return;
 
-    const wPersonId = selectedItems[0].handle;
-    if (!wPersonId) return;
+    const wFamilyId = selectedItems[0].handle;
+    if (!wFamilyId) return;
 
     try {
-
       const token = await getToken();
-      await deletePerson(wPersonId, token);
-      toast.success("Family Person deleted successfully");
-      setPerson(prev => prev.filter(e => e.handle !== wPersonId));
+      await deleteFamily(wFamilyId, token);
+      toast.success("Family deleted successfully");
+      setFamilies(prev => prev.filter(e => e.handle !== wFamilyId));
     } catch (error) {
       console.log(`${modName}${funcName} Delete failed: ${(error as Error).message}`);
       toast.error(`Delete failed: ${(error as Error).message}`);
@@ -159,10 +175,10 @@ const MaintainFamilyPersonPage: React.FC = () => {
   const handleSave = async () => {
     if (!itemBeingEdited) return;
     try {
-      let savedItem: PersonRecord;
-      const result = itemBeingEdited;
-      if (!result) {
-        toast.error("Person Not found", {
+      let savedItem: FamilyRecord;
+            const result = validateFamily(itemBeingEdited);
+      if (!result.valid) {
+        toast.error(result.error, {
           position: "top-right",
           autoClose: 5000,
           hideProgressBar: false,
@@ -174,15 +190,16 @@ const MaintainFamilyPersonPage: React.FC = () => {
       }
 
       const token = await getToken();
+      console.log(`${modName}handleSave token:`, token);
       if (isNewEdit) {
-        savedItem = await createPerson(itemBeingEdited, token);
-        toast.success("Person created successfully");
+        savedItem = await createFamily(itemBeingEdited, token);
+        toast.success("Place created successfully");
       } else {
-        savedItem = await updatePerson(itemBeingEdited, token);
-        toast.success("Person updated successfully");
+        savedItem = await updateFamily(itemBeingEdited, token);
+        toast.success("Place updated successfully");
       }
 
-      setPerson(prev => {
+      setFamilies(prev => {
         const updated = prev.some(e => e.handle === savedItem.handle)
           ? prev.map(e => (e.handle === savedItem.handle ? savedItem : e))
           : [...prev, savedItem];
@@ -195,7 +212,7 @@ const MaintainFamilyPersonPage: React.FC = () => {
       setSelectedItems([]);
     } catch (error) {
       console.error("Save error:", error);
-      toast.error((error as Error).message || "Failed to save data item");
+      toast.error((error as Error).message || "Failed to save Place");
     }
   };
 
@@ -211,13 +228,13 @@ const MaintainFamilyPersonPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <SEO
-        title="Maintain Family Person"
-        description="Admin interface for maintaining Family Persons"
+        title="Maintain Place"
+        description="Admin interface for editing place data"
       />
       <div>{dialog}</div>
       <MaintainPageLayout
         backgroundImage={backgroundImage as string}
-        title="Maintain Family Person"
+        title="Maintain Family"
         editMode={editMode}
         filter={
           <FilterBar
@@ -252,11 +269,11 @@ const MaintainFamilyPersonPage: React.FC = () => {
         }
         listPanel={
           <MaintainEntityManager
-            columns={getFamilyPersonColumns()}
-            entities={person}
+            columns={getFamilyColumns()}
+            entities={families}
             selectedItems={selectedItems}
             onSelectItem={onSelectItem}
-            onSelectAll={(checked) => setSelectedItems(checked ? [...person] : [])}
+            onSelectAll={(checked) => setSelectedItems(checked ? [...families] : [])}
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
             currentPage={currentPage}
@@ -264,7 +281,7 @@ const MaintainFamilyPersonPage: React.FC = () => {
             isSelected={isSelected}
             filterText={filterText}
             filterKey={filterKey}
-            filterFunction={ PersonFilterFunction }
+            filterFunction={FamilyFilterFunction}
           />
         }
       />
@@ -272,4 +289,4 @@ const MaintainFamilyPersonPage: React.FC = () => {
   );
 };
 
-export default MaintainFamilyPersonPage;
+export default MaintainFamilyPage;

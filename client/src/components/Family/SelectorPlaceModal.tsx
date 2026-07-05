@@ -103,7 +103,7 @@ export default function PlaceSelectorModal({
                   </div>
 
                   <div className="text-xs text-gray-500">
-                    {place.type} · {place.grampsId}
+                    {place.type} · {place.handle}
                   </div>
                 </button>
               ))}

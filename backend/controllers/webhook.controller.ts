@@ -6,6 +6,11 @@ import Image from "../models/image.model.js";
 import Comment from "../models/comment.model.js";
 import { createTypedWebhook } from "../lib/typedWebhook.js";
 
+const getRoleFromClerkUser = (data: any) =>
+  typeof data.public_metadata?.role === "string"
+    ? data.public_metadata.role
+    : "visitor";
+
 export const clerkWebHook = async (req: Request, res: Response) => {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
@@ -64,6 +69,7 @@ export const clerkWebHook = async (req: Request, res: Response) => {
             username,
             email: primaryEmail,
             img: evt.data.profile_image_url ?? "",
+            role: getRoleFromClerkUser(evt.data),
           },
         },
         { upsert: true }
@@ -94,6 +100,50 @@ export const clerkWebHook = async (req: Request, res: Response) => {
       return res.status(200).json({
         message: "User deleted",
       });
+    //
+    /******************** user updated   *******************************************88  */
+    } else if (evt.type === "user.updated") {
+      console.log("Processing user.updated event:", evt.data);
+      const primaryEmail =
+        evt.data.email_addresses?.find(
+          (email) => email.id === evt.data.primary_email_address_id
+        )?.email_address ?? null;
+
+      const username =
+        evt.data.username ||
+        [evt.data.first_name, evt.data.last_name].filter(Boolean).join(" ") ||
+        primaryEmail ||
+        evt.data.id;
+      
+      console.log("Role = ", getRoleFromClerkUser(evt.data));
+      try {
+        await User.updateOne(
+          { clerkUserId: evt.data.id },
+          {
+            $set: {
+              username,
+              email: primaryEmail,
+              img: evt.data.profile_image_url ?? "",
+              role: getRoleFromClerkUser(evt.data),
+            },
+          },
+          { upsert: true },
+        );
+      } catch (error) {
+          console.error("Error updating user:", error);
+          return res.status(500).json({
+            message: "Error updating user",
+            error: (error as Error).message,
+          });
+      } 
+
+      console.log("User updated:");
+      return res.status(200).json({
+        message: "User updated",
+      });
+
+
+
     //
     /******************** user other events *******************************************88  */
     } else {

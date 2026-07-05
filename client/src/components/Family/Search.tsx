@@ -56,7 +56,7 @@ const FamilySearch = ({ onSearch }: Props) => {
               key={person.handle}
               onClick={() => {
                 onSearch(person.handle);
-                setSearchText(person.displayName);
+                setSearchText("");
                 setResults([]);
                 setHasSelected(true);
               }}

@@ -1,23 +1,29 @@
 import React, { useEffect, useState } from "react";
 import SEO from "../components/SEO";
+import { toast } from "react-toastify";
+
 import MaintainPageLayout from "../layouts/MaintainPageLayout";
 import { MaintainEntityManager } from "../components/MaintainEntityManager";
 import { Commands } from "../components/Commands";
 import backgroundImage from "../assets/green1.jpg";
-import { useAuth } from "../auth/useAuth";
-import { toast } from "react-toastify";
 
 import type { GalleryRecord } from "../types/galleryTypes";
 import { getGalleryColumns } from "../components/Gallery/GalleryColumns";
 import EditFormArea from "../components/Gallery/GalleryEditFormArea";
 import { ThumbnailPanel } from "../components/Gallery/Thumbnail";
-import type { Image } from "../types/galleryTypes";
 import { createGallery, updateGallery, deleteGallery, getAllGallery, getGalleryImages, importFile, deleteImageFromCDN } from "../utilities";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
+import { useUser } from "@clerk/clerk-react";
+import { isAdminUser } from "../utilities/authRoles";
+
+import type { Image } from "../types/galleryTypes";
+
 const MaintainGalleryPage: React.FC = () => {
   const { confirm, dialog } = useConfirmDialog();
-  const { isAuthenticated } = useAuth();
+
+  const { user } = useUser();
+  const isAdmin = isAdminUser(user);
 
   const [gallery, setGallery] = useState<GalleryRecord[]>([]);
   const [selectedItems, setSelectedItems] = useState<GalleryRecord[]>([]);
@@ -177,7 +183,7 @@ const MaintainGalleryPage: React.FC = () => {
     } catch (error) { console.error("Set cover failed:", error); toast.error(`Failed to set cover: ${(error as Error).message}`); }
   };
 
-  if (!isAuthenticated) return (
+  if (!isAdmin) return (
     <div className="p-8 text-center">
       <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
       <p>Please log in to access this page.</p>
@@ -196,8 +202,8 @@ const MaintainGalleryPage: React.FC = () => {
           <Commands
             editMode={editMode}
             imageMode={imagesMode}
-            canEdit={selectedItems.length === 1 && isAuthenticated}
-            canDelete={selectedItems.length === 1 && isAuthenticated}
+            canEdit={selectedItems.length === 1 && isAdmin}
+            canDelete={selectedItems.length === 1 && isAdmin}
             canSetCover={selectedThumbnails.length === 1}
             canDeleteImages={selectedThumbnails.length > 0}
             onCreate={handleCreate}

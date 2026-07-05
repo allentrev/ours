@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from "react";
 import SEO from "../components/SEO";
+import { toast } from 'react-toastify';
+
 import MaintainPageLayout from "../layouts/MaintainPageLayout";
 import { MaintainEntityManager } from "../components/MaintainEntityManager";
 import { Commands } from "../components/Commands";
 import backgroundImage from '../assets/green1.jpg';
-import { useAuth } from '../auth/useAuth';
-import { toast } from 'react-toastify';
 
-import type { PlaceRecord } from "../types/familyTypes";
 import { getPlaceColumns } from '../components/Family/PlaceColumns';
 import EditFormArea from "../components/Family/PlaceEditFormArea";
 import { createPlace, updatePlace, deletePlace, getAllPlaces } from 'utilities'; // Adjust path as needed
 import FilterBar from '../components/FilterBar';
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { isAdminUser } from "../utilities/authRoles"; 
+
+import type { PlaceRecord } from "../types/familyTypes";
+
 const MaintainPlacePage: React.FC = () => {
   const { confirm, dialog } = useConfirmDialog();
-  const { isAuthenticated } = useAuth();
+
+  const { user } = useUser();
+  const isAdmin = isAdminUser(user);
+  const { getToken } = useAuth();
 
   const [places, setPlaces] = useState<PlaceRecord[]>([]);
   
@@ -79,12 +86,12 @@ const MaintainPlacePage: React.FC = () => {
   };
 
   const isSelected = (item: PlaceRecord) =>
-    selectedItems.some(i => i.grampsId === item.grampsId);
+    selectedItems.some(i => i.handle=== item.handle);
 
   const onSelectItem = (item: PlaceRecord) => {
     setSelectedItems(prev =>
-      prev.some(i => i.grampsId === item.grampsId)
-        ? prev.filter(i => i.grampsId !== item.grampsId)
+      prev.some(i => i.handle === item.handle)
+        ? prev.filter(i => i.handle !== item.handle)
         : [...prev, item]
     );
   };
@@ -123,7 +130,7 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
   };
 
   const handleCreate = () => {
-    if (!isAuthenticated) return;
+    if (!isAdmin) return;
     setItemBeingEdited(newRefData);
     setIsNewEdit(true);
     setSelectedItems([]);
@@ -131,7 +138,7 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
   };
 
   const handleEditSelected = () => {
-    if (!isAuthenticated || selectedItems.length !== 1) return;
+    if (!isAdmin || selectedItems.length !== 1) return;
     setItemBeingEdited(selectedItems[0]);
     setIsNewEdit(false);
     setEditMode(true);
@@ -139,7 +146,8 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
 
   const handleDeleteSelected = async (): Promise<void> => {
     const funcName = "handleDeleteSelected";
-    if (!isAuthenticated || selectedItems.length === 0) return;
+    
+    if (!isAdmin || selectedItems.length === 0) return;
 
     const shouldDelete = await confirm({
       title: "Delete Item",
@@ -150,13 +158,14 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
 
     if (!shouldDelete) return;
 
-    const wGrampsId = selectedItems[0].grampsId;
-    if (!wGrampsId) return;
+    const wPlaceId = selectedItems[0].handle;
+    if (!wPlaceId) return;
 
     try {
-      await deletePlace(wGrampsId);
+      const token = await getToken();
+      await deletePlace(wPlaceId, token);
       toast.success("Place deleted successfully");
-      setPlaces(prev => prev.filter(e => e.grampsId !== wGrampsId));
+      setPlaces(prev => prev.filter(e => e.handle !== wPlaceId));
     } catch (error) {
       console.log(`${modName}${funcName} Delete failed: ${(error as Error).message}`);
       toast.error(`Delete failed: ${(error as Error).message}`);
@@ -189,20 +198,22 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
         return; // Prevent update
       }
 
+      const token = await getToken();
+      console.log(`${modName}handleSave token:`, token);
       if (isNewEdit) {
-        savedItem = await createPlace(itemBeingEdited);
+        savedItem = await createPlace(itemBeingEdited, token);
         toast.success("Place created successfully");
       } else {
-        savedItem = await updatePlace(itemBeingEdited);
+        savedItem = await updatePlace(itemBeingEdited, token);
         toast.success("Place updated successfully");
       }
 
       setPlaces(prev => {
-        const updated = prev.some(e => e.grampsId === savedItem.grampsId)
-          ? prev.map(e => (e.grampsId === savedItem.grampsId ? savedItem : e))
+        const updated = prev.some(e => e.handle === savedItem.handle)
+          ? prev.map(e => (e.handle === savedItem.handle ? savedItem : e))
           : [...prev, savedItem];
 
-        return [...updated].sort((a, b) => a.grampsId.localeCompare(b.grampsId));
+        return [...updated].sort((a, b) => a.handle.localeCompare(b.handle));
       });
 
       setEditMode(false);
@@ -214,7 +225,7 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isAdmin) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
@@ -247,8 +258,8 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
           <Commands
             editMode={editMode}
             imageMode={false}
-            canEdit={selectedItems.length === 1 && isAuthenticated}
-            canDelete={selectedItems.length > 0 && isAuthenticated}
+            canEdit={selectedItems.length === 1 && isAdmin}
+            canDelete={selectedItems.length > 0 && isAdmin}
             onCreate={handleCreate}
             onEdit={handleEditSelected}
             onDelete={handleDeleteSelected}

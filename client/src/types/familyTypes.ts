@@ -101,6 +101,24 @@ export interface PlaceRecord {
   noteHandles?: string[];
 }
 
+export interface NoteRecord {
+  handle: string;
+  grampsId: string;
+  type?: string;
+  text: string;
+}
+export interface FamilyRecord {
+  handle: string;
+  grampsId: string;
+  fatherHandle?: string;
+  motherHandle?: string;
+  childHandles?: string[];
+  relationshipType: string;
+  relationshipDate?: string;
+  relationshipPlaceHandle?: string;
+  noteHandles?: string[];
+}
+
 export type NewPlaceKind = "country" | "county" | "urbanArea";
 
 export type UrbanPlaceType = "Village" | "Town" | "City";
@@ -128,4 +146,11 @@ export interface PlaceOptions {
   urbanAreas: PlaceOption[];
   counties: PlaceOption[];
   countries: PlaceOption[];
+}
+
+export interface NoteRecord {
+  handle: string;
+  grampsId: string;
+  type?: string;
+  text: string;
 }

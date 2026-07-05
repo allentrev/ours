@@ -6,6 +6,8 @@ import type {
   TreeResponseFamily,
   PersonRecord,
   PlaceRecord,
+  NoteRecord,
+  FamilyRecord,
   PlaceOptions,
   CreateSimplePlaceRequest,
   CreateSimplePlaceResponse,
@@ -89,7 +91,7 @@ export const importGrampsFile = async (file: File) => {
 //  ----------------------------- Person -----------------------------------
 //
 export const getAllPersons = async (): Promise<PersonRecord[]> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/`;
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
 
     try {
         const res = await fetch(url, {
@@ -106,14 +108,18 @@ export const getAllPersons = async (): Promise<PersonRecord[]> => {
 };
 
 export const createPerson = async (
-    item: PersonRecord
+    item: PersonRecord,
+    token: string | null,
 ): Promise<PersonRecord> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family`;
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
 
     try {
         const res = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
             body: JSON.stringify(item),
         });
 
@@ -128,17 +134,31 @@ export const createPerson = async (
     }
 };
 
+export const readPerson = async (
+  personId: string
+): Promise<PersonRecord> => {
+  const res = await axios.get(
+    `${API_URL}/family/person/${encodeURIComponent(personId)}`
+  );
+
+  return res.data.data;
+};
+
 export const updatePerson = async (
-    updatedRecord: PersonRecord
+    updatedRecord: PersonRecord,
+    token: string | null
 ): Promise<PersonRecord> => {
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/${   
-        updatedRecord.grampsId
+        updatedRecord.handle
     }`;
 
     try {
         const res = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
             body: JSON.stringify(updatedRecord),
         });
 
@@ -154,18 +174,21 @@ export const updatePerson = async (
     }
 };
 
-/**
- * Deletes a family person record by its grmapsId.
- */
-export const deletePerson = async (grampsId: string): Promise<void> => {
-    if (!grampsId) throw new Error("grampsId is required for deletion.");
+export const deletePerson = async (
+  personId: string,
+  token: string | null
+): Promise<void> => {
+    if (!personId) throw new Error("PersonId is required for deletion.");
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${grampsId}`;
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person/${encodeURIComponent(personId)}`;
 
     try {
         const res = await fetch(url, {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
         });
 
         if (!res.ok) {
@@ -183,6 +206,116 @@ export const outFormPhotoMarker = (url: string | undefined): string => {
         if (url) {return "Y" }
         else { return "N"};
 }
+//  ----------------------------- Family -----------------------------------
+//
+export const getAllFamilies = async (): Promise<FamilyRecord[]> => {
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family`;
+
+    try {
+        const res = await fetch(url, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+        console.log("utils getAllFamilies", data);
+        return res.ok ? (data as FamilyRecord[]) : [];
+    } catch (err) {
+        throw new Error(`getAllFamilies error: ${err}`);
+    }
+};
+
+export const createFamily = async (
+    item: FamilyRecord,
+    token: string | null,
+): Promise<FamilyRecord> => {
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family`;
+
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(item),
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to create family: ${errorText}`);
+        }
+
+        return await res.json();
+    } catch (err) {
+        throw new Error(`createFamily error: ${err}`);
+    }
+};
+
+export const readFamily = async (
+  handle: string
+): Promise<FamilyRecord> => {
+  const res = await axios.get(
+    `${API_URL}/family/family/${encodeURIComponent(handle)}`
+  );
+
+  return res.data.data;
+};
+
+export const updateFamily = async (
+    updatedRecord: FamilyRecord,
+    token: string | null,
+): Promise<FamilyRecord> => {
+    console.log("utilities/Family/utils/updateFamily updatedRecord:", updatedRecord);
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${
+        updatedRecord.handle
+    }`;
+
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(updatedRecord),
+        });
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to update family: ${errorText}`);
+        }
+        return await res.json();
+    } catch (err) {
+        throw new Error(`updateFamily error: ${err}`);
+    }
+};
+
+export const deleteFamily = async (
+  handle: string,
+  token: string | null
+): Promise<void> => {
+    if (!handle) throw new Error("Handle is required for deletion.");
+
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${encodeURIComponent(handle)}`;
+
+    try {
+        const res = await fetch(url, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to delete family: ${errorText}`);
+        }
+    } catch (err) {
+        throw new Error(`deleteFamily error: ${err}`);
+    }
+};
+
 //  ----------------------------- Place -----------------------------------
 //
 export const getAllPlaces = async (): Promise<PlaceRecord[]> => {
@@ -204,14 +337,18 @@ export const getAllPlaces = async (): Promise<PlaceRecord[]> => {
 };
 
 export const createPlace = async (
-    item: PlaceRecord
+    item: PlaceRecord,
+    token: string | null,
 ): Promise<PlaceRecord> => {
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/place`;
 
     try {
         const res = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
             body: JSON.stringify(item),
         });
 
@@ -227,7 +364,8 @@ export const createPlace = async (
 };
 
 export const updatePlace = async (
-    updatedRecord: PlaceRecord
+    updatedRecord: PlaceRecord,
+    token: string | null,
 ): Promise<PlaceRecord> => {
     console.log("utilities/Family/utils/updatePlace updatedRecord:", updatedRecord);
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${
@@ -237,7 +375,10 @@ export const updatePlace = async (
     try {
         const res = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
             body: JSON.stringify(updatedRecord),
         });
         if (!res.ok) {
@@ -250,15 +391,21 @@ export const updatePlace = async (
     }
 };
 
-export const deletePlace = async (grampsId: string): Promise<void> => {
-    if (!grampsId) throw new Error("grampsId is required for deletion.");
+export const deletePlace = async (
+  handle: string,
+  token: string | null
+): Promise<void> => {
+    if (!handle) throw new Error("Handle is required for deletion.");
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${grampsId}`;
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${encodeURIComponent(handle)}`;
 
     try {
         const res = await fetch(url, {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
         });
 
         if (!res.ok) {
@@ -340,3 +487,112 @@ export const getPlaceName =
     )?.displayPlace;
 };
 */
+//  ----------------------------- Note -----------------------------------
+//
+export const getAllNotes = async (): Promise<NoteRecord[]> => {
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note`;
+
+    try {
+        const res = await fetch(url, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+        //console.log("utils getAllNotes", data);
+        return res.ok ? (data as NoteRecord[]) : [];
+    } catch (err) {
+        throw new Error(`getAllNotes error: ${err}`);
+    }
+};
+
+export const createNote = async (
+    item: NoteRecord,
+    token: string | null,
+): Promise<NoteRecord> => {
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note`;
+
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(item),
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to create note: ${errorText}`);
+        }
+
+        return await res.json();
+    } catch (err) {
+        throw new Error(`createPlace note: ${err}`);
+    }
+};
+
+export const readNote = async (
+  handle: string
+): Promise<NoteRecord> => {
+  const res = await axios.get(
+    `${API_URL}/family/note/${encodeURIComponent(handle)}`
+  );
+
+  return res.data.data;
+};
+
+export const updateNote = async (
+    updatedRecord: NoteRecord,
+    token: string | null,
+): Promise<NoteRecord> => {
+    console.log("utilities/Family/utils/updateNote updatedRecord:", updatedRecord);
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note/${
+        updatedRecord.handle
+    }`;
+
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify(updatedRecord),
+        });
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to update note: ${errorText}`);
+        }
+        return await res.json();
+    } catch (err) {
+        throw new Error(`updateNote error: ${err}`);
+    }
+};
+
+export const deleteNote = async (
+  handle: string,
+  token: string | null
+): Promise<void> => {
+    if (!handle) throw new Error("Handle is required for deletion.");
+
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note/${encodeURIComponent(handle)}`;
+
+    try {
+        const res = await fetch(url, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Failed to delete note: ${errorText}`);
+        }
+    } catch (err) {
+        throw new Error(`deleteNote error: ${err}`);
+    }
+};

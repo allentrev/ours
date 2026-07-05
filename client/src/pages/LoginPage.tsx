@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 
 const LoginPage = () => {
   return (
-    <div className="flex items-center justify-center h-[calc(100vh-80px)]">
+    <div className="flex items-center justify-center h-[calc(100vh-80px)] gap-x-3.5">
       <Link
-        to="/blog"
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        to="/"
+        className="bg-black text-white px-4 py-2 rounded hover:bg-gray-400"
       >
         Home
       </Link>

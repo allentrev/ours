@@ -10,6 +10,8 @@ export { default as MaintainGalleryPage } from "./MaintainGalleryPage";
 export { default as MaintainRefDataPage } from "./MaintainRefDataPage";
 export { default as MaintainPlacePage } from "./MaintainPlacePage";
 export { default as MaintainFamilyPersonPage } from "./MaintainFamilyPersonPage";
+export { default as MaintainFamilyPage } from "./MaintainFamilyPage";
+export { default as MaintainNotePage } from "./MaintainNotePage";
 
 export { default as GalleryHomePage } from "./Gallery/GalleryHomePage";
 export { default as BlogHomePage } from "./Blog/BlogHomePage";

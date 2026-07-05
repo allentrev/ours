@@ -6,12 +6,25 @@ import type {} from "multer";
 
 import { PersonModel } from "../models/Family/person.model.js";
 import { PlaceModel } from "../models/Family/place.model.js";
+import { NoteModel } from "../models/Family/note.model.js";
+import { 
+  generateHandle,
+  generateLocalPersonId,
+  generateLocalFamilyId,
+  generateLocalPlaceId,
+  generateLocalNoteId,
+  generateLocalMediaId,
+} from "../lib/familyIdGenerator.js";
 
 import type {
   PersonDocument,
   PersonRecord,
+  FamilyRecord,
+  FamilyDocument,
   PlaceDocument,
   PlaceRecord,
+  NoteDocument,
+  NoteRecord,
 } from "../types/family.types.js"
 
 import { parseGrampsBuffer } from "../lib/grampsParser.js";
@@ -19,6 +32,9 @@ import { parseGrampsBuffer } from "../lib/grampsParser.js";
 import { geocodePlace } from "../lib/geocodePlace.js";
 import { buildFamilyTreeFromDb } from "../services/familyTreeDb.service.js";
 import { importFamilyDataToMongo } from "../services/familyImport.service.js";
+import { FamilyModel } from "../models/Family/index.js";
+
+const modName ="/controllers/family.controller/";
 
 const getDefaultFamilyPersonHandle = async (): Promise<string> => {
   const person = await PersonModel.findOne({})
@@ -153,14 +169,22 @@ export const getAllPersons = async (req: Request, res: Response) => {
     }
 };
 
-
 export const createPerson = async (
     req: Request<{}, {}, Partial<PersonDocument>>,
     res: Response
 ) => {
+    const funcName="createPerson";
+    const handle = generateHandle();
+    const localId = generateLocalPersonId();
+    const orign="local";
+
     try {
-        console.log("family.controller, createPerson", req.body);
+        console.log(`${modName}${funcName} body:`, req.body);
         const newPerson = new PersonModel(req.body);
+        newPerson.handle = handle;
+        newPerson.grampsId = localId;
+        newPerson.localId = localId;
+        newPerson.origin = orign;
         const savedPerson: PersonDocument = await newPerson.save();
         console.log("Person created");
         res.status(201).json(savedPerson);
@@ -170,17 +194,50 @@ export const createPerson = async (
     }
 };
 
+export const readPerson = async (
+  req: Request<{ personId: string }>,
+  res: Response
+) => {
+  const funcName="readPerson";
+  try {
+    const person = await PersonModel.findOne({
+      handle: req.params.personId,
+    }).lean<PersonRecord>();
+
+    if (!person) {
+      console.warn(`${modName}${funcName} Failed to find person`);
+      return res.status(404).json({
+        success: false,
+        message: "Person not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Person retrieved successfully",
+      data: person,
+    });
+  } catch (error) {
+    console.warn(`${modName}${funcName} Catch error Failed to retrieve person`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve person",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
 export const updatePerson = async (
-    req: Request<{ grampsId: string }, {}, Partial<PersonDocument>>,
+    req: Request<{ personId: string }, {}, Partial<PersonDocument>>,
     res: Response
 ) => {
     try {
-        const wGrampsId = req.params.grampsId;
+        const wPersonId = req.params.personId;
         const updateData = req.body;
-        console.log("family.controller, updatePerson", wGrampsId, updateData);
+        console.log("family.controller, updatePerson", wPersonId, updateData);
 
         const updatedPerson: PersonDocument | null =
-            await PersonModel.findOneAndUpdate({ grampsId: wGrampsId }, updateData, {
+            await PersonModel.findOneAndUpdate({ handle: wPersonId }, updateData, {
                 new: true,
             });
 
@@ -194,14 +251,14 @@ export const updatePerson = async (
 };
 
 export const deletePerson = async (
-    req: Request<{ grampsId: string }>,
+    req: Request<{ personId: string }>,
     res: Response
 ) => {
     try {
         console.log("family.controller, deletePerson");
-        const wGrampsId = req.params.grampsId;
+        const wPersonId = req.params.personId;
 
-        const deletedPerson = await PersonModel.findOneAndDelete({ grampsId: wGrampsId });
+        const deletedPerson = await PersonModel.findOneAndDelete({ handle: wPersonId });
 
         if (!deletedPerson) {
             return res
@@ -253,6 +310,7 @@ export const createFamilyPlace = async (
   req: Request,
   res: Response
 ) => {
+  
   try {
     const geocodeName =
       typeof req.body.geocodeName === "string"
@@ -478,18 +536,6 @@ const buildFamilyPlaceOptions = async () => {
   };
 };
 
-export const getAllPlaces = async (req: Request, res: Response) => {
-    try {
-        //console.log("family.controller, getAllPlaces");
-        const places = await PlaceModel.find().sort({
-            name: 1,
-        }).lean<PlaceRecord[]>();
-        res.status(200).json(places);
-    } catch (error) {
-        res.status(500).json({ message: "Failed to fetch places", error });
-    }
-};
-
 export const getPlaceName = async (handle: string) => {
   try {
     const place = await PlaceModel.findOne( {handle});
@@ -503,13 +549,33 @@ export const getPlaceName = async (handle: string) => {
   }
 }
 
+export const getAllPlaces = async (req: Request, res: Response) => {
+    try {
+        //console.log("family.controller, getAllPlaces");
+        const places = await PlaceModel.find().sort({
+            name: 1,
+        }).lean<PlaceRecord[]>();
+        res.status(200).json(places);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch places", error });
+    }
+};
+
 export const createPlace = async (
     req: Request<{}, {}, Partial<PlaceDocument>>,
     res: Response
 ) => {
+    const handle = generateHandle();
+    const localId = generateLocalPlaceId();
+    const orign="local";
+
     try {
         console.log("family.controller, createPlace", req.body);
         const newPlace = new PlaceModel(req.body);
+        newPlace.handle = handle;
+        newPlace.grampsId = localId;
+        newPlace.localId = localId;
+        newPlace.origin = orign;
         const savedPlace = await newPlace.save();
         console.log("Place created");
         res.status(201).json(savedPlace);
@@ -517,6 +583,39 @@ export const createPlace = async (
         console.error("Place Save Failed:", error);
         res.status(500).json({ message: "Error creating Place", error });
     }
+};
+
+export const readPlace = async (
+  req: Request<{ placeId: string }>,
+  res: Response
+) => {
+  const funcName="readPlace";
+  try {
+    const place = await PlaceModel.findOne({
+      handle: req.params.placeId,
+    }).lean<PlaceRecord>();
+
+    if (!place) {
+      console.warn(`${modName}${funcName} Failed to find place ${req.params.placeId}`);
+      return res.status(404).json({
+        success: false,
+        message: "Place not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Place retrieved successfully",
+      data: place,
+    });
+  } catch (error) {
+    console.warn(`${modName}${funcName} Catch error Failed to retrieve place`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve place",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
 };
 
 export const updatePlace = async (
@@ -561,6 +660,237 @@ export const deletePlace = async (
         res.status(200).json({ message: "Place has been deleted" });
     } catch (error) {
         console.error("Error deleting Place:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+//  ---------------------------------- Note -----------------------------------
+//
+
+export const getAllNotes = async (req: Request, res: Response) => {
+    try {
+        //console.log("family.controller, getAllNotes");
+        const notes = await NoteModel.find().lean<NoteRecord[]>();
+        res.status(200).json(notes);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch notes", error });
+    }
+};
+
+export const createNote = async (
+    req: Request<{}, {}, Partial<NoteDocument>>,
+    res: Response
+) => {
+    const handle = generateHandle();
+    const localId = generateLocalNoteId();
+    const orign="local";
+
+    try {
+        console.log("family.controller, createNote", req.body);
+        const newNote = new NoteModel(req.body);
+        newNote.handle = handle;
+        newNote.grampsId = localId;
+        newNote.localId = localId;
+        newNote.origin = orign;
+        const savedNote = await newNote.save();
+        console.log("Note created");
+        res.status(201).json(savedNote);
+    } catch (error) {
+        console.error("Note Save Failed:", error);
+        res.status(500).json({ message: "Error creating Note", error });
+    }
+};
+
+export const readNote = async (
+  req: Request<{ noteId: string }>,
+  res: Response
+) => {
+  const funcName="readNote";
+  try {
+    const note = await NoteModel.findOne({
+      handle: req.params.noteId,
+    }).lean<NoteRecord>();
+
+    if (!note) {
+      console.warn(`${modName}${funcName} Failed to find note ${req.params.noteId}`);
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Note retrieved successfully",
+      data: note,
+    });
+  } catch (error) {
+    console.warn(`${modName}${funcName} Catch error Failed to retrieve note`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve note",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+export const updateNote = async (
+    req: Request<{ noteId: string }, {}, Partial<NoteDocument>>,
+    res: Response
+) => {
+    try {
+        const wNoteId = req.params.noteId;
+        const updateData = req.body;
+        console.log("family.controller, updateNote", wNoteId, updateData);
+
+        const updatedNote: NoteDocument | null =
+            await NoteModel.findOneAndUpdate({ handle: wNoteId }, updateData, {
+                new: true,
+            });
+
+        if (!updatedNote)
+            return res.status(404).json({ message: "Note not found" });
+        res.status(200).json(updatedNote);
+    } catch (error) {
+        console.error("Error updating Note:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+export const deleteNote = async (
+    req: Request<{ grampsId: string }>,
+    res: Response
+) => {
+    try {
+        console.log("family.controller, deleteNote");
+        const wGrampsId = req.params.grampsId;
+
+        const deletedNote = await NoteModel.findOneAndDelete({ wGrampsId });
+
+        if (!deletedNote) {
+            return res
+                .status(404)
+                .json({ message: "Note not found or already deleted" });
+        }
+
+        res.status(200).json({ message: "Note has been deleted" });
+    } catch (error) {
+        console.error("Error deleting Note:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+//  ---------------------------------- Family -----------------------------------
+//
+export const getAllFamilies = async (req: Request, res: Response) => {
+    try {
+        //console.log("family.controller, getAllFamilies");
+        const families = await FamilyModel.find().lean<FamilyRecord[]>();
+        res.status(200).json(families);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch families", error });
+    }
+};
+
+export const createFamily = async (
+    req: Request<{}, {}, Partial<FamilyDocument>>,
+    res: Response
+) => {
+    const handle = generateHandle();
+    const localId = generateLocalFamilyId();
+    const orign="local";
+
+    try {
+        console.log("family.controller, createFamily", req.body);
+        const newFamily = new FamilyModel(req.body);
+        newFamily.handle = handle;
+        newFamily.grampsId = localId;
+        newFamily.localId = localId;
+        newFamily.origin = orign;
+        const savedFamily = await newFamily.save();
+        console.log("Family created");
+        res.status(201).json(savedFamily);
+    } catch (error) {
+        console.error("Family Save Failed:", error);
+        res.status(500).json({ message: "Error creating Family", error });
+    }
+};
+
+export const readFamily = async (
+  req: Request<{ familyId: string }>,
+  res: Response
+) => {
+  const funcName="readFamily";
+  try {
+    const family = await FamilyModel.findOne({
+      handle: req.params.familyId,
+    }).lean<FamilyRecord>();
+
+    if (!family) {
+      console.warn(`${modName}${funcName} Failed to find family ${req.params.familyId}`);
+      return res.status(404).json({
+        success: false,
+        message: "Family not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Family retrieved successfully",
+      data: family,
+    });
+  } catch (error) {
+    console.warn(`${modName}${funcName} Catch error Failed to retrieve family`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve family",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+export const updateFamily = async (
+    req: Request<{ familyId: string }, {}, Partial<FamilyDocument>>,
+    res: Response
+) => {
+    try {
+        const wFamilyId = req.params.familyId;
+        const updateData = req.body;
+        console.log("family.controller, updateFamily", wFamilyId, updateData);
+
+        const updatedFamily: FamilyDocument | null =
+            await FamilyModel.findOneAndUpdate({ handle: wFamilyId }, updateData, {
+                new: true,
+            });
+
+        if (!updatedFamily)
+            return res.status(404).json({ message: "Family not found" });
+        res.status(200).json(updatedFamily);
+    } catch (error) {
+        console.error("Error updating Family:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+
+export const deleteFamily = async (
+    req: Request<{ familyId: string }>,
+    res: Response
+) => {
+    try {
+        console.log("family.controller, deleteFamily");
+        const wFamilyId = req.params.familyId;
+
+        const deletedFamily = await FamilyModel.findOneAndDelete({ handle: wFamilyId });
+
+        if (!deletedFamily) {
+            return res
+                .status(404)
+                .json({ message: "Family not found or already deleted" });
+        }
+
+        res.status(200).json({ message: "Family has been deleted" });
+    } catch (error) {
+        console.error("Error deleting Family:", error);
         res.status(500).json({ message: "Server error", error });
     }
 };

@@ -7,79 +7,88 @@ import { MaintainEntityManager } from "../components/MaintainEntityManager";
 import { Commands } from "../components/Commands";
 import backgroundImage from '../assets/green1.jpg';
 
-import { useAuth, useUser } from "@clerk/clerk-react";
-import { isAdminUser } from "../utilities/authRoles";
-
-import { getFamilyPersonColumns } from '../components/Family/PersonColumns';
-import EditFormArea from "../components/Family/PersonEditFormArea";
-import { createPerson, updatePerson, deletePerson, getAllPersons } from 'utilities'; // Adjust path as needed
+import { getNoteColumns } from '../components/Family/NoteColumns';
+import EditFormArea from "../components/Family/NoteEditFormArea";
+import { createNote, updateNote, deleteNote, getAllNotes } from 'utilities'; // Adjust path as needed
 import FilterBar from '../components/FilterBar';
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
-import type { PersonRecord } from "../types/familyTypes";
+import { useUser, useAuth } from "@clerk/clerk-react";
+import { isAdminUser } from "../utilities/authRoles"; 
 
-const MaintainFamilyPersonPage: React.FC = () => {
+import type { NoteRecord } from "../types/familyTypes";
+
+const MaintainNotePage: React.FC = () => {
   const { confirm, dialog } = useConfirmDialog();
 
   const { user } = useUser();
   const isAdmin = isAdminUser(user);
   const { getToken } = useAuth();
 
-  const [person, setPerson] = useState<PersonRecord[]>([]);
+  const [notes, setNotes] = useState<NoteRecord[]>([]);
   
-  const [selectedItems, setSelectedItems] = useState<PersonRecord[]>([]);
+  const [selectedItems, setSelectedItems] = useState<NoteRecord[]>([]);
   const [isNewEdit, setIsNewEdit] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [itemBeingEdited, setItemBeingEdited] = useState<PersonRecord | null>(null);
+  const [itemBeingEdited, setItemBeingEdited] = useState<NoteRecord | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const [filterKey, setFilterKey] = useState('');
   const [filterText, setFilterText] = useState('');
 
-  // Load all person data on mount
+  // Load all Notes
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getAllPersons();
-        //console.log("Result of getAllPersons", data);
-        setPerson(data);
+        const data = await getAllNotes();
+        //console.log("getAllNotes", data);
+        setNotes(data);
 
       } catch (error) {
-        console.error("Failed to load family person data:", error);
-        toast.error("Failed to load family person data");
+        console.error("Failed to load notes:", error);
+        toast.error("Failed to load notes");
       }
     };
     fetchData();
   }, []);
-  const modName = "/pages/MaintainFamilyPersonPage/";
-  const filterOptions = [{ key: '', label: "All fields"}];
+  
+  const modName = "/pages/MaintainNotePage/";
+  
+  const filterOptions = [
+    { key: '', label: 'All' },
+    { key: "village", label: "Village" },
+    { key: "town", label: "Town" },
+    { key: "city", label: "City" },
+    { key: "county", label: "County" },
+    { key: "country", label: "Country" },
+  ];
 
-  const PersonFilterFunction = (e: PersonRecord, filterText?: string, filterKey?: string): boolean => {
+  const NoteFilterFunction = (e: NoteRecord, filterText?: string, filterKey?: string): boolean => {
     const trimmed = filterText?.trim().toLowerCase() || '';
     const key = filterKey?.trim().toLowerCase() || '';
 
-    const matchesDisplayName = key === '' || e.displayName?.trim().toLowerCase() === key;
+    const matchesKey = key === '' || e.type?.trim().toLowerCase() === key;
 
     if (trimmed === '' && key === '') {
       return true;
     }
 
     if (trimmed === '') {
-      return matchesDisplayName;
+      return matchesKey;
     }
 
     const matchesText = Object.values(e).some(
       (val) => typeof val === 'string' && val.toLowerCase().includes(trimmed)
     );
 
-    return matchesDisplayName && matchesText;
+    return matchesKey && matchesText;
   };
 
-  const isSelected = (item: PersonRecord) =>
-    selectedItems.some(i => i.handle === item.handle);
+  const isSelected = (item: NoteRecord) =>
+    selectedItems.some(i => i.handle=== item.handle);
 
-  const onSelectItem = (item: PersonRecord) => {
+  const onSelectItem = (item: NoteRecord) => {
     setSelectedItems(prev =>
       prev.some(i => i.handle === item.handle)
         ? prev.filter(i => i.handle !== item.handle)
@@ -87,25 +96,28 @@ const MaintainFamilyPersonPage: React.FC = () => {
     );
   };
 
-  const newPerson: PersonRecord = {
+  interface ValidationResult {
+    valid: boolean;
+    error?: string;
+  }
 
+function validateNote(note: NoteRecord | null | undefined): ValidationResult {
+    if (!note) {
+      return { valid: false, error: "Note is missing." };
+    }
+    return { valid: true };
+  }
+
+  const newNoteData: NoteRecord = {
     handle: "",
-    grampsId: "",
-    gender: "M",
-    firstName: "",
-    surname: "",
-    displayName: "",
-    birthDate: "",
-    deathDate: "",
-    birthPlaceHandle: "",
-    deathPlaceHandle: "",
-    primaryPhotoUrl: "",
-    noteHandles: [],
+    grampsId:  "",
+    type:  "",
+    text:  "",
   };
 
   const handleCreate = () => {
     if (!isAdmin) return;
-    setItemBeingEdited(newPerson);
+    setItemBeingEdited(newNoteData);
     setIsNewEdit(true);
     setSelectedItems([]);
     setEditMode(true);
@@ -120,7 +132,7 @@ const MaintainFamilyPersonPage: React.FC = () => {
 
   const handleDeleteSelected = async (): Promise<void> => {
     const funcName = "handleDeleteSelected";
-
+    
     if (!isAdmin || selectedItems.length === 0) return;
 
     const shouldDelete = await confirm({
@@ -132,15 +144,14 @@ const MaintainFamilyPersonPage: React.FC = () => {
 
     if (!shouldDelete) return;
 
-    const wPersonId = selectedItems[0].handle;
-    if (!wPersonId) return;
+    const wNoteId = selectedItems[0].handle;
+    if (!wNoteId) return;
 
     try {
-
       const token = await getToken();
-      await deletePerson(wPersonId, token);
-      toast.success("Family Person deleted successfully");
-      setPerson(prev => prev.filter(e => e.handle !== wPersonId));
+      await deleteNote(wNoteId, token);
+      toast.success("Note deleted successfully");
+      setNotes(prev => prev.filter(e => e.handle !== wNoteId));
     } catch (error) {
       console.log(`${modName}${funcName} Delete failed: ${(error as Error).message}`);
       toast.error(`Delete failed: ${(error as Error).message}`);
@@ -159,10 +170,10 @@ const MaintainFamilyPersonPage: React.FC = () => {
   const handleSave = async () => {
     if (!itemBeingEdited) return;
     try {
-      let savedItem: PersonRecord;
-      const result = itemBeingEdited;
-      if (!result) {
-        toast.error("Person Not found", {
+      let savedItem: NoteRecord;
+            const result = validateNote(itemBeingEdited);
+      if (!result.valid) {
+        toast.error(result.error, {
           position: "top-right",
           autoClose: 5000,
           hideProgressBar: false,
@@ -174,15 +185,16 @@ const MaintainFamilyPersonPage: React.FC = () => {
       }
 
       const token = await getToken();
+      console.log(`${modName}handleSave token:`, token);
       if (isNewEdit) {
-        savedItem = await createPerson(itemBeingEdited, token);
-        toast.success("Person created successfully");
+        savedItem = await createNote(itemBeingEdited, token);
+        toast.success("Note created successfully");
       } else {
-        savedItem = await updatePerson(itemBeingEdited, token);
-        toast.success("Person updated successfully");
+        savedItem = await updateNote(itemBeingEdited, token);
+        toast.success("Note updated successfully");
       }
 
-      setPerson(prev => {
+      setNotes(prev => {
         const updated = prev.some(e => e.handle === savedItem.handle)
           ? prev.map(e => (e.handle === savedItem.handle ? savedItem : e))
           : [...prev, savedItem];
@@ -195,7 +207,7 @@ const MaintainFamilyPersonPage: React.FC = () => {
       setSelectedItems([]);
     } catch (error) {
       console.error("Save error:", error);
-      toast.error((error as Error).message || "Failed to save data item");
+      toast.error((error as Error).message || "Failed to save Note");
     }
   };
 
@@ -211,13 +223,13 @@ const MaintainFamilyPersonPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <SEO
-        title="Maintain Family Person"
-        description="Admin interface for maintaining Family Persons"
+        title="Maintain Note"
+        description="Admin interface for editing Note data"
       />
       <div>{dialog}</div>
       <MaintainPageLayout
         backgroundImage={backgroundImage as string}
-        title="Maintain Family Person"
+        title="Maintain Note"
         editMode={editMode}
         filter={
           <FilterBar
@@ -252,11 +264,11 @@ const MaintainFamilyPersonPage: React.FC = () => {
         }
         listPanel={
           <MaintainEntityManager
-            columns={getFamilyPersonColumns()}
-            entities={person}
+            columns={getNoteColumns()}
+            entities={notes}
             selectedItems={selectedItems}
             onSelectItem={onSelectItem}
-            onSelectAll={(checked) => setSelectedItems(checked ? [...person] : [])}
+            onSelectAll={(checked) => setSelectedItems(checked ? [...notes] : [])}
             itemsPerPage={itemsPerPage}
             onItemsPerPageChange={setItemsPerPage}
             currentPage={currentPage}
@@ -264,7 +276,7 @@ const MaintainFamilyPersonPage: React.FC = () => {
             isSelected={isSelected}
             filterText={filterText}
             filterKey={filterKey}
-            filterFunction={ PersonFilterFunction }
+            filterFunction={NoteFilterFunction}
           />
         }
       />
@@ -272,4 +284,4 @@ const MaintainFamilyPersonPage: React.FC = () => {
   );
 };
 
-export default MaintainFamilyPersonPage;
+export default MaintainNotePage;

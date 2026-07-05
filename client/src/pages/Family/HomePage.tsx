@@ -40,12 +40,26 @@ export default function FamilyHome() {
 
             <p className="text-gray-600 text-center md:text-left">
               This section is dedicated to family stories, milestones, and
-              shared memories. Over time, it will grow into a collection of
-              moments worth remembering.
+              shared memories. I grew up thinking our family was small, well, the family tree
+              shows otherwise.
             </p>
           </div>
           {/* ---------- Family Tree CTA ---------- */}
-          <div className="mt-10 flex justify-center">
+          <div className="mt-10 flex flex-col lg:flex-row justify-center gap-3">
+            <p className="text-gray-600 text-sm text-center md:text-left">
+              The family tree displays the tree from a selected person. Initially, a person is chosen
+              at random from the family. Thereafter, double clicking a person node makes that person become the 
+              focus of the tree, and their basic details will be shown in the attached panel. Use the buttons
+              in the toolbar to change the direction of the tree i.e. either show the descendants of the selected
+              person, or their ancestors. Selecting an edge between nodes will highlight/clear it so that family 
+              connections are easier to identify. There are links in the details panel that allow the user to see
+              more extensive information about each family member, and if registered, to amend that information.
+              There is also a key sensitive search bar where by typing a persons name, you will be given a list 
+              of persons meeting that criteria. The person chosen from that list becomes the selected person.
+              The details of living persons are limited to protect their privacy, and
+               the details of deceased persons are more extensive.
+              
+            </p>
             <button
               onClick={() => navigate("/family/tree")}
               className="px-6 py-3 rounded-xl bg-green-700 text-white font-medium shadow hover:bg-green-900 transition"

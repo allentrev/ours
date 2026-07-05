@@ -3,3 +3,4 @@ export { default as SEO } from "./SEO";
 export { default as Footer } from "./Blog/Footer";
 export { default as RouteError } from "./RouteError";
 export { default as ErrorBoundary } from "./ErrorBoundary";
+export { default as AdminRoute } from "./AdminRoute";

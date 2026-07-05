@@ -1,20 +1,20 @@
 import type { ColumnDescriptor } from "../MaintainEntityManager";
-import type { PlaceRecord } from "../../types/familyTypes";
+import type { FamilyRecord } from "../../types/familyTypes";
 
-export function getPlaceColumns(): ColumnDescriptor<PlaceRecord>[] {
+export function getFamilyColumns(): ColumnDescriptor<FamilyRecord>[] {
     return [
         {
             key: "handle",
-            label: "Place Id",
+            label: "Family Id",
             align: "center",
             optional: false,
             render: (value: string) => value.slice(-4), 
         },
         {
-            key: "shortName",
-            label: "Village/Town/City/Country",
+            key: "fatherHandle",
+            label: "Father",
             align: "center",
-            optional: true,
+            optional: false,
         },
     ];
 }

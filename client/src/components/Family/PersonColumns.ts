@@ -5,10 +5,11 @@ import { outFormPhotoMarker } from "../../utilities/Family/utils";
 export function getFamilyPersonColumns(): ColumnDescriptor<PersonRecord>[] {
     return [
         {
-            key: "grampsId",
-            label: "Gramps Id",
+            key: "handle",
+            label: "Person Id",
             align: "center",
             optional: false,
+            render: (value: string) => value.slice(-4), 
         },
         {
             key: "displayName",

@@ -18,7 +18,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClerkProvider } from '@clerk/clerk-react';
-import { AuthProvider } from "./auth/AuthProvider";
 
 import './index.css';
 import AppLoader from "./components/AppLoader";
@@ -27,6 +26,8 @@ import BlogLayout from './layouts/BlogLayout';
 
 import { ErrorBoundary } from "./components";
 import { RouteError } from "./components";
+
+import  AdminRoute  from "./components/AdminRoute";
 
 import {
   HomePage,
@@ -46,6 +47,8 @@ import {
   MaintainGalleryPage,
   MaintainFamilyPersonPage,
   MaintainPlacePage,
+  MaintainFamilyPage,
+  MaintainNotePage,
   NotFoundPage,
 } from "./pages";
 
@@ -67,11 +70,13 @@ const router = createBrowserRouter([
       { path: "/login/*", element: <LoginPage/> },
       { path: "/register/*", element: <RegisterPage/> },
 
-      { path: "/admin", element: <AdminPage/> },
-      { path: "/maintainRefData", element: <MaintainRefDataPage/> },
-      { path: "/maintainGallery", element: <MaintainGalleryPage/> },
-      { path: "/maintainFamilyPerson", element: <MaintainFamilyPersonPage/> },
-      { path: "/maintainPlace", element: <MaintainPlacePage/> },
+      { path: "/admin", element: (<AdminRoute><AdminPage/></AdminRoute>)},
+      { path: "/maintainRefData", element: (<AdminRoute><MaintainRefDataPage/></AdminRoute>) },
+      { path: "/maintainGallery", element: (<AdminRoute><MaintainGalleryPage/> </AdminRoute>)},
+      { path: "/maintainFamilyPerson", element: (<AdminRoute><MaintainFamilyPersonPage/></AdminRoute>) },
+      { path: "/maintainPlace", element: (<AdminRoute><MaintainPlacePage/></AdminRoute>) },
+      { path: "/maintainFamily", element: (<AdminRoute><MaintainFamilyPage/></AdminRoute>) },
+      { path: "/maintainNote", element: (<AdminRoute><MaintainNotePage/></AdminRoute>) },
       
 
 
@@ -114,12 +119,10 @@ createRoot(rootElement).render(
       <QueryClientProvider client={queryClient}>
         <AppLoader>
           <HelmetProvider>
-            <AuthProvider>
-              <ErrorBoundary>
-                <RouterProvider router={router}/>
-                <ToastContainer position='bottom-right' autoClose={3000} />
-              </ErrorBoundary>
-            </AuthProvider>
+            <ErrorBoundary>
+              <RouterProvider router={router}/>
+              <ToastContainer position='bottom-right' autoClose={3000} />
+            </ErrorBoundary>
           </HelmetProvider>
         </AppLoader>
       </QueryClientProvider>

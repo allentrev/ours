@@ -10,6 +10,16 @@ export interface LocalRecordFields {
 export interface ImportBatchRef {
   importBatchId?: mongoose.Types.ObjectId;
 }
+
+// Project has 3 distint layers:
+// 1. RawGramps (parser layer) that represents exactly what comes from Grmaps
+// 2. Document interfaces (Mongo layer) represents whats stored in Mongo
+// 3. Mappi ng layer that when we do an import, we do the translation RawGrampsPerson to PersonDocument
+//
+// SomethingRecord = stored Mongo shape
+// SomethingDocument = HydratedDocument<SomethingRecord>
+// RawGrampsSomething = parsed import shape
+
 //  ------------------------------------- Person -----------------------------
 //
 export interface RawGrampsPerson {

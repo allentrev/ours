@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from "react";
 import SEO from "../components/SEO";
+import { toast } from 'react-toastify';
+
 import MaintainPageLayout from "../layouts/MaintainPageLayout";
 import { MaintainEntityManager } from "../components/MaintainEntityManager";
 import { Commands } from "../components/Commands";
 import backgroundImage from '../assets/green1.jpg';
-import { useAuth } from '../auth/useAuth';
-import { toast } from 'react-toastify';
 
-import type { RefDataRecord } from "../types/refDataTypes";
 import { getRefDataColumns } from '../components/RefData/RefDataColumns';
 import EditFormArea from "../components/RefData/RefDataEditFormArea";
 import { createRefData, updateRefData, deleteRefData, getAllRefData } from 'utilities'; // Adjust path as needed
 import FilterBar from '../components/FilterBar';
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
+import { useUser } from "@clerk/clerk-react";
+import { isAdminUser } from "../utilities/authRoles";
+
+import type { RefDataRecord } from "../types/refDataTypes";
+
 const MaintainRefDataPage: React.FC = () => {
+
+  const { user } = useUser();
+  const isAdmin = isAdminUser(user);
+
   const { confirm, dialog } = useConfirmDialog();
-  const { isAuthenticated } = useAuth();
 
   const [refData, setRefData] = useState<RefDataRecord[]>([]);
   const [websiteOptions, setWebsiteOptions] = useState<string[]>([]);
@@ -30,7 +37,7 @@ const MaintainRefDataPage: React.FC = () => {
 
   const [filterKey, setFilterKey] = useState('');
   const [filterText, setFilterText] = useState('');
-
+ 
   // Load all reference data on mount
   useEffect(() => {
     const fetchData = async () => {
@@ -126,7 +133,7 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
   };
 
   const handleCreate = () => {
-    if (!isAuthenticated) return;
+    if (!isAdmin) return;
     setItemBeingEdited(newRefData);
     setIsNewEdit(true);
     setSelectedItems([]);
@@ -134,7 +141,7 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
   };
 
   const handleEditSelected = () => {
-    if (!isAuthenticated || selectedItems.length !== 1) return;
+    if (!isAdmin || selectedItems.length !== 1) return;
     setItemBeingEdited(selectedItems[0]);
     setIsNewEdit(false);
     setEditMode(true);
@@ -143,7 +150,7 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
   const handleDeleteSelected = async (): Promise<void> => {
     const funcName = "handleDeleteSelected";
     
-    if (!isAuthenticated || selectedItems.length === 0) return;
+    if (!isAdmin || selectedItems.length === 0) return;
 
     const shouldDelete = await confirm({
       title: "Delete Item",
@@ -218,7 +225,7 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
     }
   };
 
-  if (!isAuthenticated) {
+  if (!isAdmin) {
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
@@ -251,8 +258,8 @@ function validateRefData(refData: RefDataRecord | null | undefined): ValidationR
           <Commands
             editMode={editMode}
             imageMode={false}
-            canEdit={selectedItems.length === 1 && isAuthenticated}
-            canDelete={selectedItems.length > 0 && isAuthenticated}
+            canEdit={selectedItems.length === 1 && isAdmin}
+            canDelete={selectedItems.length > 0 && isAdmin}
             onCreate={handleCreate}
             onEdit={handleEditSelected}
             onDelete={handleDeleteSelected}

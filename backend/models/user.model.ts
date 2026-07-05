@@ -13,6 +13,11 @@ const userSchema = new Schema<UserDocument>(
       required: true,
       unique: true,
     },
+    role: {
+      type: String,
+      required: true,
+      default: "visitor",
+    },
     email: {
       type: String,
       required: true,

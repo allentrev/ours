@@ -1,10 +1,12 @@
 import { Handle, Position } from "@xyflow/react";
+import { isAdminUser } from "@/utilities/authRoles";
 
 import {
   formatPersonDate,
   calculateAge,
   isPersonProbablyLiving,
 } from "../../utilities/Family/formatters";
+import { useUser } from "@clerk/clerk-react";
 
 interface PersonNodeData {
   label: string;
@@ -20,6 +22,10 @@ interface Props {
 }
 
 const PersonNode = ({ data }: Props) => {
+  
+  const { user } = useUser(); 
+  const isAdmin = isAdminUser(user);
+  
   const isLiving = isPersonProbablyLiving(
     data.birthDate,
     data.deathDate
@@ -49,9 +55,11 @@ const PersonNode = ({ data }: Props) => {
         <h3 className="text-sm font-semibold text-white truncate">
           {data.label || "Unknown"}
         </h3>
-          <div className="text-xs text-blue-100">
-            {data.shortId}
-        </div>
+          {(isAdmin && (
+            <div className="text-xs text-blue-100">
+              {data.shortId}
+            </div>
+          ))}
       </div>
 
       <div className="p-3 text-sm text-gray-700 space-y-1">
