@@ -8,6 +8,10 @@ const router = express.Router();
 router.post(
   "/clerk",
   bodyParser.raw({ type: "application/json" }),
+  (req, res, next) => {
+    console.log("Webhook route hit");
+    next();
+  },
   clerkWebHook
 );
 
