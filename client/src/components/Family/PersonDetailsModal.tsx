@@ -62,7 +62,7 @@ const FamilyPersonDetailsModal = ({
     }
 
     const noteHandles = person.noteHandles ?? [];
-    console.log("No of Notes found = ", noteHandles.length);
+    //console.log("No of Notes found = ", noteHandles.length);
 
     const loadNotes = async () => {
       try {
@@ -103,12 +103,12 @@ const FamilyPersonDetailsModal = ({
       setLoadingEdit(true);
 
       const fullPerson = await readPerson(person.handle);
-      console.log(`${modName}${funcName} Full Person`, fullPerson);
+      //console.log(`${modName}${funcName} Full Person`, fullPerson);
 
       setEditItem(fullPerson);
       setEditModalOpen(true);
     } catch (error) {
-      console.error("Failed to load person for editing", error);
+      console.error(`${modName}${funcName} Failed to load person for editing`, error);
     } finally {
       setLoadingEdit(false);
     }

@@ -21,15 +21,15 @@ export const clerkWebHook = async (req: Request, res: Response) => {
   const payload = req.body.toString("utf-8");
   const headers = req.headers as Record<string, string>;
 
-  console.log("content-type:", req.headers["content-type"]);
-  console.log("isBuffer:", Buffer.isBuffer(req.body));
-  console.log("body length:", req.body?.length);
-  console.log("svix-id:", req.headers["svix-id"]);
-  console.log(
-    "svix-signature:",
-    req.headers["svix-signature"] ? "present" : "missing"
-  );
-  console.log("svix-timestamp:", req.headers["svix-timestamp"]);
+  //console.log("content-type:", req.headers["content-type"]);
+  //console.log("isBuffer:", Buffer.isBuffer(req.body));
+  //console.log("body length:", req.body?.length);
+  //console.log("svix-id:", req.headers["svix-id"]);
+  //console.log(
+  //  "svix-signature:",
+  //  req.headers["svix-signature"] ? "present" : "missing"
+  //);
+  //console.log("svix-timestamp:", req.headers["svix-timestamp"]);
 
   const { verify } = createTypedWebhook(WEBHOOK_SECRET);
 

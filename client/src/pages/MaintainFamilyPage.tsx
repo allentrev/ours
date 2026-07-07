@@ -190,7 +190,7 @@ function validateFamily(family: FamilyRecord | null | undefined): ValidationResu
       }
 
       const token = await getToken();
-      console.log(`${modName}handleSave token:`, token);
+      //console.log(`${modName}handleSave token:`, token);
       if (isNewEdit) {
         savedItem = await createFamily(itemBeingEdited, token);
         toast.success("Place created successfully");

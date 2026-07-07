@@ -9,7 +9,8 @@ const envFile =
     : ".env";
 
 dotenv.config({ path: envFile });
-
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("Clerk key exists:", !!process.env.CLERK_SECRET_KEY);
 /* -------------------- Imports -------------------- */
 
 import express, { Request, Response, NextFunction } from "express";
@@ -82,16 +83,18 @@ app.use("/webhooks", webhookRouter);
 
 app.use(cors(corsOptions));
 app.use(express.json());
-app.use(
-  clerkMiddleware({
-    authorizedParties: [
-      "https://oursingapore.co.uk",
-      "https://www.oursingapore.co.uk",
-      "https://backend.oursingapore.co.uk",
-      "http://localhost:5173",
-    ],
-  })
-);
+if (process.env.NODE_ENV === "production") {
+  app.use(
+    clerkMiddleware({
+      authorizedParties: [
+        "https://oursingapore.co.uk",
+        "https://www.oursingapore.co.uk",
+      ],
+    })
+  );
+} else {
+  app.use(clerkMiddleware());
+}
 
 console.log("Node Env = ", process.env.NODE_ENV);
 

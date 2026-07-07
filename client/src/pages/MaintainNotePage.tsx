@@ -185,7 +185,7 @@ function validateNote(note: NoteRecord | null | undefined): ValidationResult {
       }
 
       const token = await getToken();
-      console.log(`${modName}handleSave token:`, token);
+      //console.log(`${modName}handleSave token:`, token);
       if (isNewEdit) {
         savedItem = await createNote(itemBeingEdited, token);
         toast.success("Note created successfully");

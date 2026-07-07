@@ -186,7 +186,7 @@ export const createPerson = async (
         newPerson.localId = localId;
         newPerson.origin = orign;
         const savedPerson: PersonDocument = await newPerson.save();
-        console.log("Person created");
+        //console.log("Person created");
         res.status(201).json(savedPerson);
     } catch (error) {
         console.error("Person Save Failed:", error);

@@ -31,7 +31,7 @@ export const getRefDataValuesByPage = async (
     const url = `${
         import.meta.env.VITE_BACKEND_URL
     }/refData/webPage/${webPage}`;
-    console.log("getRefDataValuesByPage", webPage);
+    //console.log("getRefDataValuesByPage", webPage);
     try {
         const res = await fetch(url, {
             method: "GET",

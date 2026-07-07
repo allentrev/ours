@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
 
 import {
   PlusIcon,
@@ -12,17 +13,20 @@ import type {
   PersonRecord,
   PlaceRecord,
   PlaceOptions,
+  NoteRecord,
 } from "../../types/familyTypes";
 
+import NewNoteModal from "./NewNoteModal";
 import PlaceSelectorModal from "./SelectorPlaceModal";
 import GenealogyDatePickerModal from "./GenealogyDatePickerModal";
 import PhotoSelectorModal from "./PhotoSelectorModal";
 
 
-import { fetchFamilyPlaceOptions , getPlaceName } from "../../utilities/Family/utils";
+import { fetchFamilyPlaceOptions , getPlaceName, readNote } from "../../utilities/Family/utils";
 
 import manOutline from "../../assets/man_outline.jpg";
 import womanOutline from "../../assets/woman_outline.jpg";
+
 
 interface FamilyPersonEditFormAreaProps {
   item: PersonRecord;
@@ -36,7 +40,11 @@ const iconButtonClass =
 const FamilyPersonEditFormArea: React.FC<
   FamilyPersonEditFormAreaProps
 > = ({ item, setItem, isNew }) => {
+  const { getToken } = useAuth();
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
+  const [newNoteModalOpen, setNewNoteModalOpen] = useState(false);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [notes, setNotes] = useState<NoteRecord[]>([]);
   const [selectPlaceModal, setSelectPlaceModal] = useState<{
     open: boolean;
     field: "birthPlaceHandle" | "deathPlaceHandle";
@@ -66,6 +74,35 @@ const FamilyPersonEditFormArea: React.FC<
       .then(setPlaceOptions)
       .catch(console.error)
   }, []);
+
+  useEffect(() => {
+    if (!item?.noteHandles?.length) {
+      setNotes([]);
+      return;
+    }
+
+    const noteHandles = item.noteHandles ?? [];
+    //console.log("No of Notes found = ", noteHandles.length);
+
+    const loadNotes = async () => {
+      try {
+        setLoadingNotes(true);
+
+        const loadedNotes = await Promise.all(
+          noteHandles.map((handle) => readNote(handle))
+        );
+
+        setNotes(loadedNotes);
+      } catch (error) {
+        console.error("Failed to load notes", error);
+        setNotes([]);
+      } finally {
+        setLoadingNotes(false);
+      }
+    };
+
+    loadNotes();
+  }, [item]);
 
   const displayName = [item.firstName, item.surname]
     .filter(Boolean)
@@ -121,7 +158,17 @@ const FamilyPersonEditFormArea: React.FC<
 
   setPhotoModalOpen(false);
 };
-    return (
+
+const handleNewNoteSaved = (note: NoteRecord) => {
+  setNotes((currentNotes) => [...currentNotes, note]);
+
+  setItem({
+    ...item,
+    noteHandles: [...(item.noteHandles ?? []), note.handle],
+  });
+};
+    
+return (
     <form
       id="edit-form"
       className="bg-white shadow-md rounded p-4 my-4 space-y-4"
@@ -342,39 +389,45 @@ const FamilyPersonEditFormArea: React.FC<
         </div>
       </fieldset>
 
-      {/* Other */}
-      <fieldset className="border border-gray-300 rounded p-4">
+      {/* Notes */}
+      <fieldset className="mt-4 rounded border border-gray-300 p-4">
         <legend className="px-2 font-semibold text-gray-700">
-          Other
+          Notes
         </legend>
 
-        <div className="flex items-end gap-2">
-          <label className="flex flex-col w-24">
-            Notes:
-            <input
-              type="text"
-              value={item.noteHandles?.length ?? 0}
-              readOnly
-              className="border border-gray-300 rounded px-2 py-1 bg-gray-100"
-            />
-          </label>
-
-          <button
-            type="button"
-            className={iconButtonClass}
-            title="New note"
-          >
-            <PlusIcon className="h-5 w-5" />
-          </button>
-
-          <button
-            type="button"
-            className={iconButtonClass}
-            title="Select note"
-          >
-            <MagnifyingGlassIcon className="h-5 w-5" />
-          </button>
-        </div>
+        {loadingNotes ? (
+          <div className="text-sm text-gray-500">
+            Loading notes...
+          </div>
+        ) : notes.length === 0 ? (
+          <div className="text-sm text-gray-500">
+            No Notes found
+          </div>
+        ) : (
+          <div className="max-h-48 space-y-1 overflow-y-auto pr-2 text-sm text-gray-700">
+            {notes.map((note,index) => (
+              <div
+                key={note.handle}
+                className="flex flex-row gap-2 rounded border border-gray-200 bg-gray-50 p-1"
+              >
+                <div className="whitespace-pre-wrap">
+                  {index+1}
+                </div>
+                <div className="whitespace-pre-wrap">
+                  {note.text}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          className={iconButtonClass}
+          title="Add Note"
+          onClick={() => setNewNoteModalOpen(true)}
+        >
+          <PlusIcon className="h-5 w-5" />
+        </button>
       </fieldset>
 
       {/* Ids */}
@@ -443,6 +496,12 @@ const FamilyPersonEditFormArea: React.FC<
         currentPhotoUrl={item.primaryPhotoUrl}
         onClose={() => setPhotoModalOpen(false)}
         onSelectPhoto={handlePhotoSelected}
+      />
+      <NewNoteModal
+        open={newNoteModalOpen}
+        getToken={getToken}
+        onClose={() => setNewNoteModalOpen(false)}
+        onSave={handleNewNoteSaved}
       />
     </form>
   );

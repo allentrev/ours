@@ -9,17 +9,21 @@ const modName="/middlewares/auth/"
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const funcName = "requireAuth";
   const auth = getAuth(req);
-  auth.debug();
+  // TODO: Remove this for production, it's just for debugging purposes
+  //auth.debug();
 
-  console.log(`${modName}${funcName}  req.headers:`, req.headers);
-  console.log("Authorization header:", req.headers.authorization);
+  //console.log(`${modName}${funcName}  req.headers:`, req.headers);
+  //console.log("Authorization header:", req.headers.authorization);
   console.log("Clerk auth:", auth);
+console.log("auth.userId:", auth.userId);
+console.log("auth.sessionId:", auth.sessionId);
+console.log("auth claims:", auth.sessionClaims);
 
-  console.log("Origin:", req.headers.origin);
-  console.log("Referer:", req.headers.referer);
-  console.log("Host:", req.headers.host);
-  console.log("X-Forwarded-Host:", req.headers["x-forwarded-host"]);
-  console.log("X-Forwarded-Proto:", req.headers["x-forwarded-proto"]);
+  //console.log("Origin:", req.headers.origin);
+  //console.log("Referer:", req.headers.referer);
+  //console.log("Host:", req.headers.host);
+  //console.log("X-Forwarded-Host:", req.headers["x-forwarded-host"]);
+  //console.log("X-Forwarded-Proto:", req.headers["x-forwarded-proto"]);
 
   const clerkUserId = auth.userId;
   if (!clerkUserId) {

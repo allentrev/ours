@@ -199,7 +199,7 @@ function validatePlace(place: PlaceRecord | null | undefined): ValidationResult 
       }
 
       const token = await getToken();
-      console.log(`${modName}handleSave token:`, token);
+      //console.log(`${modName}handleSave token:`, token);
       if (isNewEdit) {
         savedItem = await createPlace(itemBeingEdited, token);
         toast.success("Place created successfully");

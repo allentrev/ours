@@ -14,7 +14,7 @@ import type {
 } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
-const modName = "/utilities/Family/utils/";
+//const modName = "/utilities/Family/utils/";
 
 export const searchFamilyPeople = async (
   query: string
@@ -41,8 +41,8 @@ export const fetchTree = async (
   const res = await axios.get(
     `${API_URL}/family/tree?${params.toString()}`
   );
-  console.log("utitlies/Family/utils/fetchTree backend response, res.data.data");
-  console.log(res.data.data)
+  //console.log("utitlies/Family/utils/fetchTree backend response, res.data.data");
+  //console.log(res.data.data)
   return res.data.data;
 };
 
@@ -218,7 +218,7 @@ export const getAllFamilies = async (): Promise<FamilyRecord[]> => {
         });
 
         const data = await res.json();
-        console.log("utils getAllFamilies", data);
+        //console.log("utils getAllFamilies", data);
         return res.ok ? (data as FamilyRecord[]) : [];
     } catch (err) {
         throw new Error(`getAllFamilies error: ${err}`);
@@ -319,7 +319,7 @@ export const deleteFamily = async (
 //  ----------------------------- Place -----------------------------------
 //
 export const getAllPlaces = async (): Promise<PlaceRecord[]> => {
-    const funcName  = "getAllPlaces";
+    //const funcName  = "getAllPlaces";
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/place`;
 
     try {
@@ -329,7 +329,7 @@ export const getAllPlaces = async (): Promise<PlaceRecord[]> => {
         });
 
         const data = await res.json();
-        console.log(`${modName}${funcName}, data`, data);
+        //console.log(`${modName}${funcName}, data`, data);
         return res.ok ? (data as PlaceRecord[]) : [];
     } catch (err) {
         throw new Error(`getAllPlaces error: ${err}`);
@@ -510,8 +510,12 @@ export const createNote = async (
     item: NoteRecord,
     token: string | null,
 ): Promise<NoteRecord> => {
+    const funcName = "/utilities/Family/utils/createNote";
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/note`;
-
+    if (!token) {
+        throw new Error("Token is required to create a note.");
+    }
+    console.log("util", token);
     try {
         const res = await fetch(url, {
             method: "POST",
@@ -529,7 +533,7 @@ export const createNote = async (
 
         return await res.json();
     } catch (err) {
-        throw new Error(`createPlace note: ${err}`);
+        throw new Error(`${funcName} catch error: ${err}`);
     }
 };
 
@@ -547,7 +551,7 @@ export const updateNote = async (
     updatedRecord: NoteRecord,
     token: string | null,
 ): Promise<NoteRecord> => {
-    console.log("utilities/Family/utils/updateNote updatedRecord:", updatedRecord);
+    //console.log("utilities/Family/utils/updateNote updatedRecord:", updatedRecord);
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/note/${
         updatedRecord.handle
     }`;
