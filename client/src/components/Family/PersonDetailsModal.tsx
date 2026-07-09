@@ -43,7 +43,6 @@ const PersonDetailsModal = ({
   const { getToken } = useAuth();
 
   const [loadingEdit, setLoadingEdit] = useState(false);
-  const [savingEdit, setSavingEdit] = useState(false);
   const [loadingNotes, setLoadingNotes] = useState(false);
 
   const [notes, setNotes] = useState<NoteRecord[]>([]);
@@ -157,7 +156,7 @@ const PersonDetailsModal = ({
               type="button"
               title="Edit person"
               onClick={handleEdit}
-              disabled={loadingEdit || savingEdit}
+              disabled={loadingEdit }
               className="rounded p-2 hover:bg-gray-100 disabled:opacity-50"
             >
               <PencilSquareIcon className="h-6 w-6 text-blue-600" />
