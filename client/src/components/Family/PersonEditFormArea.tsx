@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@clerk/clerk-react";
 
 import {
   PlusIcon,
@@ -14,6 +13,7 @@ import type {
   PlaceRecord,
   PlaceOptions,
   NoteRecord,
+  NewNoteInput,
 } from "../../types/familyTypes";
 
 import NewNoteModal from "./NewNoteModal";
@@ -27,22 +27,28 @@ import { fetchFamilyPlaceOptions , getPlaceName, readNote } from "../../utilitie
 import manOutline from "../../assets/man_outline.jpg";
 import womanOutline from "../../assets/woman_outline.jpg";
 
-
-interface FamilyPersonEditFormAreaProps {
-  item: PersonRecord;
-  setItem: (item: PersonRecord) => void;
+interface PersonEditFormAreaProps {
+  person: Partial<PersonRecord>;
   isNew: boolean;
+  draftNotes: NewNoteInput[];
+  onChange: (person: Partial<PersonRecord>) => void;
+  onDraftNotesChange: (notes: NewNoteInput[]) => void;
 }
 
 const iconButtonClass =
   "h-9 w-9 rounded border border-gray-300 bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center justify-center";
 
-const FamilyPersonEditFormArea: React.FC<
-  FamilyPersonEditFormAreaProps
-> = ({ item, setItem, isNew }) => {
-  const { getToken } = useAuth();
-  const [photoModalOpen, setPhotoModalOpen] = useState(false);
+const PersonEditFormArea: React.FC<
+  PersonEditFormAreaProps
+> = ({
+  person,
+  isNew,
+  draftNotes,
+  onChange,
+  onDraftNotesChange,
+}) => {
   const [newNoteModalOpen, setNewNoteModalOpen] = useState(false);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [loadingNotes, setLoadingNotes] = useState(false);
   const [notes, setNotes] = useState<NoteRecord[]>([]);
   const [selectPlaceModal, setSelectPlaceModal] = useState<{
@@ -76,12 +82,12 @@ const FamilyPersonEditFormArea: React.FC<
   }, []);
 
   useEffect(() => {
-    if (!item?.noteHandles?.length) {
+    if (!person?.noteHandles?.length) {
       setNotes([]);
       return;
     }
 
-    const noteHandles = item.noteHandles ?? [];
+    const noteHandles = person.noteHandles ?? [];
     //console.log("No of Notes found = ", noteHandles.length);
 
     const loadNotes = async () => {
@@ -102,72 +108,78 @@ const FamilyPersonEditFormArea: React.FC<
     };
 
     loadNotes();
-  }, [item]);
+  }, [person]);
 
-  const displayName = [item.firstName, item.surname]
+  const displayName = [person.firstName, person.surname]
     .filter(Boolean)
     .join(" ")
     .trim();
 
   const photoUrl =
-    item.primaryPhotoUrl ||
-    (item.gender?.toLowerCase() === "male"
+    person.primaryPhotoUrl ||
+    (person.gender?.toLowerCase() === "male"
       ? manOutline
       : womanOutline);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
+const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
 
-    const updatedItem: PersonRecord = {
-      ...item,
-      [name]: value,
-    };
-
-    if (name === "firstName" || name === "surname") {
-      updatedItem.displayName = [
-        name === "firstName" ? value : item.firstName,
-        name === "surname" ? value : item.surname,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .trim();
-    }
-
-    setItem(updatedItem);
+  const updatedPerson: Partial<PersonRecord> = {
+    ...person,
+    [name]: value,
   };
 
-  const handlePlaceSelected = (place: PlaceRecord) => {
-    setItem({
-      ...item,
-      [selectPlaceModal.field]: place.handle,
-    });
+  if (name === "firstName" || name === "surname") {
+    updatedPerson.displayName = [
+      name === "firstName" ? value : person.firstName,
+      name === "surname" ? value : person.surname,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+  }
 
-    setSelectPlaceModal((current) => ({
-      ...current,
-      open: false,
-    }));
-  };
+  onChange(updatedPerson);
+};
 
-  const handlePhotoSelected = (image: Image) => {
-  setItem({
-    ...item,
+const handlePlaceSelected = (place: PlaceRecord) => {
+  onChange({
+    ...person,
+    [selectPlaceModal.field]: place.handle,
+  });
+
+  setSelectPlaceModal((current) => ({
+    ...current,
+    open: false,
+  }));
+};
+
+const handlePhotoSelected = (image: Image) => {
+  onChange({
+    ...person,
     primaryPhotoUrl: image.url,
   });
 
   setPhotoModalOpen(false);
 };
 
-const handleNewNoteSaved = (note: NoteRecord) => {
-  setNotes((currentNotes) => [...currentNotes, note]);
-
-  setItem({
-    ...item,
-    noteHandles: [...(item.noteHandles ?? []), note.handle],
-  });
+const handleAddDraftNote = (text: string) => {
+  onDraftNotesChange([
+    ...draftNotes,
+    { text },
+  ]);
 };
-    
+  
+const displayedNotes = [
+  ...notes,
+  ...draftNotes.map((note, index) => ({
+    handle: `draft-${index}`,
+    text: note.text,
+  })),
+];
+
 return (
     <form
       id="edit-form"
@@ -189,7 +201,7 @@ return (
             <input
               type="text"
               name="firstName"
-              value={item.firstName ?? ""}
+              value={person.firstName ?? ""}
               onChange={handleChange}
               className="border border-gray-300 rounded px-2 py-1"
             />
@@ -200,7 +212,7 @@ return (
             <input
               type="text"
               name="surname"
-              value={item.surname ?? ""}
+              value={person.surname ?? ""}
               onChange={handleChange}
               className="border border-gray-300 rounded px-2 py-1"
             />
@@ -220,7 +232,7 @@ return (
             Gender:
             <select
               name="gender"
-              value={item.gender ?? "Unknown"}
+              value={person.gender ?? "Unknown"}
               onChange={handleChange}
               className="border border-gray-300 rounded px-2 py-1 bg-white"
             >
@@ -251,7 +263,7 @@ return (
               <input
                 type="text"
                 name="birthDate"
-                value={item.birthDate ?? ""}
+                value={person.birthDate ?? ""}
                 onChange={handleChange}
                 className="w-full min-w-0 border border-gray-300 rounded px-2 py-1"
               />
@@ -272,7 +284,7 @@ return (
             <input
               type="text"
               name="birthPlaceHandle"
-              value={(item.birthPlaceHandle) ? getPlaceName("short", item.birthPlaceHandle, placeOptions.places) : ""}
+              value={(person.birthPlaceHandle) ? getPlaceName("short", person.birthPlaceHandle, placeOptions.places) : ""}
               onChange={handleChange}
               className="border border-gray-300 rounded px-2 py-1"
             />
@@ -299,7 +311,7 @@ return (
               <input
                 type="text"
                 name="deathDate"
-                value={item.deathDate ?? ""}
+                value={person.deathDate ?? ""}
                 onChange={handleChange}
                 className="w-full min-w-0 border border-gray-300 rounded px-2 py-1"
               />
@@ -320,7 +332,7 @@ return (
             <input
               type="text"
               name="deathPlaceHandle"
-              value={(item.deathPlaceHandle) ? getPlaceName("short", item.deathPlaceHandle, placeOptions.places) : ""}
+              value={(person.deathPlaceHandle) ? getPlaceName("short", person.deathPlaceHandle, placeOptions.places) : ""}
               onChange={handleChange}
               className="border border-gray-300 rounded px-2 py-1"
             />
@@ -351,7 +363,7 @@ return (
           <label className="flex flex-col flex-1 w-full">
             <input
               type="text"
-              value={item.primaryPhotoUrl ?? ""}
+              value={person.primaryPhotoUrl ?? ""}
               readOnly
               className="border border-gray-300 rounded px-2 py-1 bg-gray-100"
             />
@@ -371,8 +383,8 @@ return (
               className={iconButtonClass}
               title="Remove photo"
               onClick={() =>
-                setItem({
-                  ...item,
+                onChange({
+                  ...person,
                   primaryPhotoUrl: "",
                 })
               }
@@ -383,7 +395,7 @@ return (
 
           <img
             src={photoUrl}
-            alt={item.displayName || "Person thumbnail"}
+            alt={person.displayName || "Person thumbnail"}
             className="h-24 w-24 rounded object-cover border border-gray-300"
           />
         </div>
@@ -399,25 +411,38 @@ return (
           <div className="text-sm text-gray-500">
             Loading notes...
           </div>
-        ) : notes.length === 0 ? (
+        ) : displayedNotes.length === 0 ? (
           <div className="text-sm text-gray-500">
             No Notes found
           </div>
         ) : (
           <div className="max-h-48 space-y-1 overflow-y-auto pr-2 text-sm text-gray-700">
-            {notes.map((note,index) => (
-              <div
-                key={note.handle}
-                className="flex flex-row gap-2 rounded border border-gray-200 bg-gray-50 p-1"
-              >
-                <div className="whitespace-pre-wrap">
-                  {index+1}
+            {displayedNotes.map((note, index) => {
+              const isDraft = note.handle.startsWith("draft-");
+
+              return (
+                <div 
+                  key={note.handle}
+                  className={`flex flex-row gap-2 rounded border p-1 ${
+                    isDraft
+                      ? "border-blue-300 bg-blue-50"
+                      : "border-gray-200 bg-gray-50"
+                  }`}
+                >
+                  <div className="whitespace-pre-wrap">
+                    {index + 1}
+                  </div>
+                  <div className="whitespace-pre-wrap">
+                    {note.text}
+                    {isDraft && (
+                      <span className="ml-2 text-xs text-blue-600">
+                        unsaved
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="whitespace-pre-wrap">
-                  {note.text}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         <button
@@ -441,7 +466,7 @@ return (
             Handle:
             <input
               type="text"
-              value={item.handle}
+              value={person.handle}
               readOnly
               className="border border-gray-300 rounded px-2 py-1 bg-gray-100"
             />
@@ -451,7 +476,7 @@ return (
             Gramps Id:
             <input
               type="text"
-              value={item.grampsId}
+              value={person.grampsId}
               readOnly
               className="border border-gray-300 rounded px-2 py-1 bg-gray-100"
             />
@@ -472,7 +497,7 @@ return (
 
       <GenealogyDatePickerModal
         open={dateModal.open}
-        value={item[dateModal.field] ?? ""}
+        value={person[dateModal.field] ?? ""}
         onClose={() =>
           setDateModal((current) => ({
             ...current,
@@ -480,8 +505,8 @@ return (
           }))
         }
         onSelect={(date) => {
-          setItem({
-            ...item,
+          onChange({
+            ...person,
             [dateModal.field]: date,
           });
 
@@ -493,18 +518,17 @@ return (
       />
       <PhotoSelectorModal
         open={photoModalOpen}
-        currentPhotoUrl={item.primaryPhotoUrl}
+        currentPhotoUrl={person.primaryPhotoUrl}
         onClose={() => setPhotoModalOpen(false)}
         onSelectPhoto={handlePhotoSelected}
       />
       <NewNoteModal
         open={newNoteModalOpen}
-        getToken={getToken}
         onClose={() => setNewNoteModalOpen(false)}
-        onSave={handleNewNoteSaved}
+        onSave={handleAddDraftNote}
       />
     </form>
   );
 };
 
-export default FamilyPersonEditFormArea;
+export default PersonEditFormArea;

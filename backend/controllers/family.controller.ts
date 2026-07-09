@@ -1,5 +1,6 @@
 // backend/controllers/family.controller.ts
 import crypto from "crypto";
+import mongoose from "mongoose";
 
 import type { Request, Response } from "express";
 import type {} from "multer";
@@ -25,6 +26,7 @@ import type {
   PlaceRecord,
   NoteDocument,
   NoteRecord,
+  NewNoteInput,
 } from "../types/family.types.js"
 
 import { parseGrampsBuffer } from "../lib/grampsParser.js";
@@ -33,6 +35,10 @@ import { geocodePlace } from "../lib/geocodePlace.js";
 import { buildFamilyTreeFromDb } from "../services/familyTreeDb.service.js";
 import { importFamilyDataToMongo } from "../services/familyImport.service.js";
 import { FamilyModel } from "../models/Family/index.js";
+import { withTransaction } from "../lib/withTransaction.js";
+import {
+  resolveNoteHandles,
+} from "../services/noteResolver.js";
 
 const modName ="/controllers/family.controller/";
 
@@ -170,28 +176,62 @@ export const getAllPersons = async (req: Request, res: Response) => {
 };
 
 export const createPerson = async (
-    req: Request<{}, {}, Partial<PersonDocument>>,
-    res: Response
-) => {
-    const funcName="createPerson";
-    const handle = generateHandle();
-    const localId = generateLocalPersonId();
-    const orign="local";
-
-    try {
-        console.log(`${modName}${funcName} body:`, req.body);
-        const newPerson = new PersonModel(req.body);
-        newPerson.handle = handle;
-        newPerson.grampsId = localId;
-        newPerson.localId = localId;
-        newPerson.origin = orign;
-        const savedPerson: PersonDocument = await newPerson.save();
-        //console.log("Person created");
-        res.status(201).json(savedPerson);
-    } catch (error) {
-        console.error("Person Save Failed:", error);
-        res.status(500).json({ message: "Error creating Person", error });
+  req: Request<
+    {},
+    {},
+    {
+      person: Partial<PersonDocument>;
+      newNotes?: NewNoteInput[];
     }
+  >,
+  res: Response
+) => {
+  try {
+    const { person, newNotes = [] } = req.body;
+
+    if (!person) {
+      return res.status(400).json({
+        message: "Person data is required",
+      });
+    }
+
+    const savedPerson = await withTransaction(async (session) => {
+      const handle = generateHandle();
+      const localId = generateLocalPersonId();
+      const origin = "local";
+
+      const noteHandles = await resolveNoteHandles(
+        person.noteHandles ?? [],
+        newNotes,
+        session
+      );
+
+      const createdPeople = await PersonModel.create(
+        [
+          {
+            ...person,
+            handle,
+            grampsId: localId,
+            localId,
+            origin,
+            noteHandles,
+          },
+        ],
+        { session }
+      );
+
+      return createdPeople[0];
+    });
+
+    return res.status(201).json(savedPerson);
+  } catch (error) {
+    console.error("Person Save Failed:", error);
+
+    return res.status(500).json({
+      message: "Error creating Person",
+      error,
+    });
+  }
 };
 
 export const readPerson = async (
@@ -228,26 +268,70 @@ export const readPerson = async (
 };
 
 export const updatePerson = async (
-    req: Request<{ personId: string }, {}, Partial<PersonDocument>>,
-    res: Response
-) => {
-    try {
-        const wPersonId = req.params.personId;
-        const updateData = req.body;
-        console.log("family.controller, updatePerson", wPersonId, updateData);
-
-        const updatedPerson: PersonDocument | null =
-            await PersonModel.findOneAndUpdate({ handle: wPersonId }, updateData, {
-                new: true,
-            });
-
-        if (!updatedPerson)
-            return res.status(404).json({ message: "Person not found" });
-        res.status(200).json(updatedPerson);
-    } catch (error) {
-        console.error("Error updating Person:", error);
-        res.status(500).json({ message: "Server error", error });
+  req: Request<
+    { personId: string },
+    {},
+    {
+      person: Partial<PersonDocument>;
+      newNotes?: NewNoteInput[];
     }
+  >,
+  res: Response
+) => {
+  const funcName="updatePerson";
+  try {
+    const personId = req.params.personId;
+    const { person, newNotes = [] } = req.body;
+    console.log(`${modName}${funcName} person, newNotes`, person, newNotes);
+    if (!person) {
+      return res.status(400).json({
+        message: "Person data is required",
+      });
+    }
+
+    const updatedPerson = await withTransaction(async (session) => {
+      const existingPerson = await PersonModel.findOne({
+        handle: personId,
+      }).session(session);
+
+      if (!existingPerson) {
+        return null;
+      }
+
+      const noteHandles = await resolveNoteHandles(
+        person.noteHandles ?? existingPerson.noteHandles ?? [],
+        newNotes,
+        session
+      );
+
+      return await PersonModel.findOneAndUpdate(
+        { handle: personId },
+        {
+          ...person,
+          noteHandles,
+        },
+        {
+          new: true,
+          session,
+        }
+      );
+    });
+
+    if (!updatedPerson) {
+      return res.status(404).json({
+        message: "Person not found",
+      });
+    }
+
+    return res.status(200).json(updatedPerson);
+  } catch (error) {
+    console.error("Error updating Person:", error);
+
+    return res.status(500).json({
+      message: "Server error",
+      error,
+    });
+  }
 };
 
 export const deletePerson = async (

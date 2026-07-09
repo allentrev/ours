@@ -107,6 +107,11 @@ export interface NoteRecord {
   type?: string;
   text: string;
 }
+
+export interface NewNoteInput {
+  text: string;
+}
+
 export interface FamilyRecord {
   handle: string;
   grampsId: string;

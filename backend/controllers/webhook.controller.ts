@@ -38,7 +38,7 @@ export const clerkWebHook = async (req: Request, res: Response) => {
 
     console.log("Received event type:", evt.type);
     //
-    /******************** user created *******************************************88  */
+    // ******************** user created *******************************************
     if (evt.type === "user.created") {
       const primaryEmail =
         evt.data.email_addresses?.find(
@@ -60,7 +60,7 @@ export const clerkWebHook = async (req: Request, res: Response) => {
         evt.data.username ||
         [evt.data.first_name, evt.data.last_name].filter(Boolean).join(" ") ||
         primaryEmail;
-
+      //console.log("clerkwebhook evt.data", evt.data);
       await User.updateOne(
         { clerkUserId: evt.data.id },
         {
@@ -69,18 +69,20 @@ export const clerkWebHook = async (req: Request, res: Response) => {
             username,
             email: primaryEmail,
             img: evt.data.profile_image_url ?? "",
-            role: getRoleFromClerkUser(evt.data),
           },
+          $setOnInsert: {
+            role: "applicant",
+          }
         },
         { upsert: true }
       );
-      console.log("User created/updated:", {
+      console.log("User created:", {
         clerkUserId: evt.data.id,
         username,
         email: primaryEmail,
       });
       return res.status(200).json({
-        message: "User created or updated",
+        message: "User created",
       });
     //
     /******************** user deleted *******************************************88  */
@@ -103,7 +105,7 @@ export const clerkWebHook = async (req: Request, res: Response) => {
     //
     /******************** user updated   *******************************************88  */
     } else if (evt.type === "user.updated") {
-      console.log("Processing user.updated event:", evt.data);
+      //console.log("Processing user.updated event:", evt.data);
       const primaryEmail =
         evt.data.email_addresses?.find(
           (email) => email.id === evt.data.primary_email_address_id
@@ -115,7 +117,7 @@ export const clerkWebHook = async (req: Request, res: Response) => {
         primaryEmail ||
         evt.data.id;
       
-      console.log("Role = ", getRoleFromClerkUser(evt.data));
+      //console.log("Role = ", getRoleFromClerkUser(evt.data));
       try {
         await User.updateOne(
           { clerkUserId: evt.data.id },
@@ -137,7 +139,11 @@ export const clerkWebHook = async (req: Request, res: Response) => {
           });
       } 
 
-      console.log("User updated:");
+      console.log("User updated:", {
+        clerkUserId: evt.data.id,
+        username,
+        email: primaryEmail,
+      });
       return res.status(200).json({
         message: "User updated",
       });

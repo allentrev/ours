@@ -1,55 +1,28 @@
 import { useState } from "react";
 
-import type { NoteRecord } from "../../types/familyTypes";
-import { createNote } from "../../utilities/Family/utils";
-
 interface NewNoteModalProps {
   open: boolean;
-  getToken: () => Promise<string | null>;
   onClose: () => void;
-  onSave: (note: NoteRecord) => void;
+  onSave: (text: string) => void;
 }
 
 const NewNoteModal = ({
   open,
-  getToken,
   onClose,
   onSave,
 }: NewNoteModalProps) => {
   const [text, setText] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   if (!open) return null;
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const trimmedText = text.trim();
 
     if (!trimmedText) return;
 
-    const token = await getToken();
-    console.log("Token in NewNoteModal:", token);
-
-    try {
-      setSaving(true);
-      setError("");
-
-      const savedNote = await createNote(
-        {
-          text: trimmedText,
-        } as NoteRecord,
-        token
-      );
-
-      onSave(savedNote);
-      setText("");
-      onClose();
-    } catch (err) {
-      console.error("Failed to create note", err);
-      setError("Failed to create note");
-    } finally {
-      setSaving(false);
-    }
+    onSave(trimmedText);
+    setText("");
+    onClose();
   };
 
   return (
@@ -67,18 +40,11 @@ const NewNoteModal = ({
           placeholder="Enter note text..."
         />
 
-        {error && (
-          <div className="mt-2 text-sm text-red-600">
-            {error}
-          </div>
-        )}
-
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"
             onClick={onClose}
-            disabled={saving}
-            className="rounded border px-4 py-2 hover:bg-gray-100 disabled:opacity-50"
+            className="rounded border px-4 py-2 hover:bg-gray-100"
           >
             Cancel
           </button>
@@ -86,10 +52,10 @@ const NewNoteModal = ({
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving || !text.trim()}
+            disabled={!text.trim()}
             className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save Note"}
+            Add Note
           </button>
         </div>
       </div>

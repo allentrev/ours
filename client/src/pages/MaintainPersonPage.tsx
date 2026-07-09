@@ -16,14 +16,16 @@ import { createPerson, updatePerson, deletePerson, getAllPersons } from 'utiliti
 import FilterBar from '../components/FilterBar';
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 
-import type { PersonRecord } from "../types/familyTypes";
+import type { PersonRecord,  NewNoteInput, } from "../types/familyTypes";
 
-const MaintainFamilyPersonPage: React.FC = () => {
+const MaintainPersonPage: React.FC = () => {
   const { confirm, dialog } = useConfirmDialog();
 
   const { user } = useUser();
   const isAdmin = isAdminUser(user);
   const { getToken } = useAuth();
+  
+  const [draftNotes, setDraftNotes] = useState<NewNoteInput[]>([]);
 
   const [person, setPerson] = useState<PersonRecord[]>([]);
   
@@ -52,7 +54,14 @@ const MaintainFamilyPersonPage: React.FC = () => {
     };
     fetchData();
   }, []);
-  const modName = "/pages/MaintainFamilyPersonPage/";
+
+    useEffect(() => {
+    if (person) {
+      setDraftNotes([]);
+    }
+  }, [ person]);
+
+  const modName = "/pages/MaintainPersonPage/";
   const filterOptions = [{ key: '', label: "All fields"}];
 
   const PersonFilterFunction = (e: PersonRecord, filterText?: string, filterKey?: string): boolean => {
@@ -175,10 +184,10 @@ const MaintainFamilyPersonPage: React.FC = () => {
 
       const token = await getToken();
       if (isNewEdit) {
-        savedItem = await createPerson(itemBeingEdited, token);
+        savedItem = await createPerson(itemBeingEdited, draftNotes, token);
         toast.success("Person created successfully");
       } else {
-        savedItem = await updatePerson(itemBeingEdited, token);
+        savedItem = await updatePerson(itemBeingEdited, draftNotes, token);
         toast.success("Person updated successfully");
       }
 
@@ -244,9 +253,13 @@ const MaintainFamilyPersonPage: React.FC = () => {
         editPanel={
           editMode && itemBeingEdited  ? (
             <EditFormArea
-              item={itemBeingEdited}
-              setItem={setItemBeingEdited}
+              person={itemBeingEdited}
+              onChange={(updatedPerson) =>
+                setItemBeingEdited(updatedPerson as PersonRecord)
+              }
               isNew={isNewEdit}
+              draftNotes={draftNotes}
+              onDraftNotesChange={setDraftNotes}
             />
           ) : null
         }
@@ -272,4 +285,4 @@ const MaintainFamilyPersonPage: React.FC = () => {
   );
 };
 
-export default MaintainFamilyPersonPage;
+export default MaintainPersonPage;

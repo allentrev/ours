@@ -6,14 +6,17 @@ import { getAuth } from "@clerk/express";
 
 const modName="/middlewares/auth/"
 
-export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
-  const funcName = "requireAuth";
+async function getCurrentUser(req: Request): Promise<{
+  auth: ReturnType<typeof getAuth>;
+  user: UserDocument | null;
+}> {
   const auth = getAuth(req);
-  // TODO: Remove this for production, it's just for debugging purposes
-  //auth.debug();
+
+// TODO: Remove this for production, it's just for debugging purposes
+  auth.debug();
 
   //console.log(`${modName}${funcName}  req.headers:`, req.headers);
-  //console.log("Authorization header:", req.headers.authorization);
+  console.log("Authorization header:", req.headers.authorization);
   console.log("Clerk auth:", auth);
 console.log("auth.userId:", auth.userId);
 console.log("auth.sessionId:", auth.sessionId);
@@ -25,15 +28,29 @@ console.log("auth claims:", auth.sessionClaims);
   //console.log("X-Forwarded-Host:", req.headers["x-forwarded-host"]);
   //console.log("X-Forwarded-Proto:", req.headers["x-forwarded-proto"]);
 
-  const clerkUserId = auth.userId;
-  if (!clerkUserId) {
-    console.log("No Clerk user ID found in request");
-    return res.status(401).json("Not authenticated!");
+  if (!auth.userId) {
+    return {auth, user: null};
   }
 
-  const user = await User.findOne({ clerkUserId }) as UserDocument | null;
+  const user = await User.findOne({
+    clerkUserId: auth.userId,
+  }) as UserDocument | null;
+
+  return { auth, user };
+}
+
+export const requireAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const funcName= "/middlewares/auth/requireAuth";
+  console.log(`${funcName} entry`);
+  const { user } = await getCurrentUser(req);
+  console.log(`${funcName} user`, user);
+
   if (!user) {
-    return res.status(404).json("User not found!");
+    return res.status(401).json("Not authenticated!");
   }
 
   req.currentUser = user;
@@ -46,18 +63,10 @@ export const requireAdmin = async (
   res: Response,
   next: NextFunction
 ) => {
-  const auth = getAuth(req);
-
-  const clerkUserId = auth.userId;
-
-  if (!clerkUserId) {
-    return res.status(401).json("Not authenticated!");
-  }
-
-  const user = await User.findOne({ clerkUserId }) as UserDocument | null;
+  const { user } = await getCurrentUser(req);
 
   if (!user) {
-    return res.status(404).json("User not found!");
+    return res.status(401).json("Not authenticated!");
   }
 
   if (user.role !== "admin") {
@@ -75,18 +84,10 @@ export const requireAdmin = async (
 export const requireRole =
   (...roles: string[]) =>
   async (req: Request, res: Response, next: NextFunction) => {
-    const auth = getAuth(req);
-
-    if (!auth.userId) {
-      return res.status(401).json("Not authenticated");
-    }
-
-    const user = await User.findOne({
-      clerkUserId: auth.userId,
-    });
+    const { user } = await getCurrentUser(req);
 
     if (!user) {
-      return res.status(404).json("User not found");
+      return res.status(401).json("Not authenticated!");
     }
 
     if (!roles.includes(user.role)) {
@@ -94,5 +95,6 @@ export const requireRole =
     }
 
     req.currentUser = user;
+
     next();
   };

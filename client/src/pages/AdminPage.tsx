@@ -21,7 +21,7 @@ const AdminPage: React.FC = () => {
         </Link>
 
         <Link
-          to="/maintainFamilyPerson"
+          to="/maintainPerson"
           className="block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
         >
           Maintain Person

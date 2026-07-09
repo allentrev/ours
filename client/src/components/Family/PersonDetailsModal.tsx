@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 import type {
@@ -6,33 +7,43 @@ import type {
   PersonRecord,
   PlaceOptions,
   NoteRecord,
+  NewNoteInput,
 } from "../../types/familyTypes";
 
 import {
   fetchFamilyPlaceOptions,
   readPerson,
+
+
+
   getPlaceName,
   readNote,
+  updatePerson,
 } from "../../utilities/Family/utils";
 
 import { formatPersonDate } from "../../utilities/Family/formatters";
 
-import FamilyPersonEditModal from "./PersonEditModal";
+import PersonEditModal from "./PersonEditModal";
 
-interface FamilyPersonDetailsModalProps {
+interface PersonDetailsModalProps {
   open: boolean;
   person: TreePerson | null;
   onClose: () => void;
+  onPersonUpdated?: (person: PersonRecord) => void;
 }
 
-const modName = "/components/Family/FamilyPersonDetailsModal/";
+const modName = "/components/Family/PersonDetailsModal/";
 
-const FamilyPersonDetailsModal = ({
+const PersonDetailsModal = ({
   open,
   person,
   onClose,
-}: FamilyPersonDetailsModalProps) => {
+  onPersonUpdated,
+}: PersonDetailsModalProps) => {
+  const { getToken } = useAuth();
+
   const [loadingEdit, setLoadingEdit] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [loadingNotes, setLoadingNotes] = useState(false);
 
   const [notes, setNotes] = useState<NoteRecord[]>([]);
@@ -62,7 +73,6 @@ const FamilyPersonDetailsModal = ({
     }
 
     const noteHandles = person.noteHandles ?? [];
-    //console.log("No of Notes found = ", noteHandles.length);
 
     const loadNotes = async () => {
       try {
@@ -103,22 +113,41 @@ const FamilyPersonDetailsModal = ({
       setLoadingEdit(true);
 
       const fullPerson = await readPerson(person.handle);
-      //console.log(`${modName}${funcName} Full Person`, fullPerson);
 
       setEditItem(fullPerson);
       setEditModalOpen(true);
     } catch (error) {
-      console.error(`${modName}${funcName} Failed to load person for editing`, error);
+      console.error(
+        `${modName}${funcName} Failed to load person for editing`,
+        error
+      );
     } finally {
       setLoadingEdit(false);
     }
+  };
+
+  const handleSaveEdit = async (
+    updatedPerson: PersonRecord,
+    draftNotes: NewNoteInput[]
+  ): Promise<PersonRecord> => {
+    const token = await getToken();
+
+    const savedPerson = await updatePerson(
+      updatedPerson,
+      draftNotes,
+      token,
+    );
+
+    setEditItem(savedPerson);
+    onPersonUpdated?.(savedPerson);
+
+    return savedPerson;
   };
 
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
         <div className="flex max-h-[85vh] w-[700px] max-w-[95vw] flex-col rounded-lg bg-white p-6 shadow-lg">
-          {/* Header */}
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-800">
               {person.displayName}
@@ -128,14 +157,13 @@ const FamilyPersonDetailsModal = ({
               type="button"
               title="Edit person"
               onClick={handleEdit}
-              disabled={loadingEdit}
+              disabled={loadingEdit || savingEdit}
               className="rounded p-2 hover:bg-gray-100 disabled:opacity-50"
             >
               <PencilSquareIcon className="h-6 w-6 text-blue-600" />
             </button>
           </div>
 
-          {/* Body */}
           <div className="flex-1 overflow-auto">
             <div className="mb-4 flex justify-center">
               {hasPhoto ? (
@@ -163,15 +191,22 @@ const FamilyPersonDetailsModal = ({
               ) : (
                 <div className="grid grid-cols-[auto_1fr_2fr] gap-x-4 gap-y-2 text-sm">
                   <div />
-                  <div className="font-semibold text-gray-700">Date</div>
-                  <div className="font-semibold text-gray-700">Place</div>
+                  <div className="font-semibold text-gray-700">
+                    Date
+                  </div>
+                  <div className="font-semibold text-gray-700">
+                    Place
+                  </div>
 
                   {(person.birthDate || person.birthPlaceHandle) && (
                     <>
                       <div className="font-medium">Birth</div>
                       <div>
                         {person.birthDate
-                          ? formatPersonDate(person.birthDate, isLiving)
+                          ? formatPersonDate(
+                              person.birthDate,
+                              isLiving
+                            )
                           : "-"}
                       </div>
                       <div>
@@ -224,13 +259,13 @@ const FamilyPersonDetailsModal = ({
                 </div>
               ) : (
                 <div className="max-h-48 space-y-1 overflow-y-auto pr-2 text-sm text-gray-700">
-                  {notes.map((note,index) => (
+                  {notes.map((note, index) => (
                     <div
                       key={note.handle}
                       className="flex flex-row gap-2 rounded border border-gray-200 bg-gray-50 p-1"
                     >
                       <div className="whitespace-pre-wrap">
-                        {index+1}
+                        {index + 1}
                       </div>
                       <div className="whitespace-pre-wrap">
                         {note.text}
@@ -242,7 +277,6 @@ const FamilyPersonDetailsModal = ({
             </fieldset>
           </div>
 
-          {/* Footer */}
           <div className="mt-4 border-t pt-4">
             <div className="grid grid-cols-[1fr_auto] items-end gap-4">
               <div className="space-y-1 text-xs text-gray-500">
@@ -265,20 +299,14 @@ const FamilyPersonDetailsModal = ({
         </div>
       </div>
 
-      <FamilyPersonEditModal
+      <PersonEditModal
         open={editModalOpen}
-        item={editItem}
-        setItem={setEditItem}
+        person={editItem}
         onClose={() => setEditModalOpen(false)}
-        onSave={() => {
-          if (!editItem) return;
-
-          // TODO: call updatePerson(editItem)
-          setEditModalOpen(false);
-        }}
+        onSave={handleSaveEdit}
       />
     </>
   );
 };
 
-export default FamilyPersonDetailsModal;
+export default PersonDetailsModal;

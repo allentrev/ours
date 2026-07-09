@@ -11,6 +11,10 @@ export interface ImportBatchRef {
   importBatchId?: mongoose.Types.ObjectId;
 }
 
+export interface NewNoteInput {
+  text: string;
+}
+
 // Project has 3 distint layers:
 // 1. RawGramps (parser layer) that represents exactly what comes from Grmaps
 // 2. Document interfaces (Mongo layer) represents whats stored in Mongo

@@ -11,6 +11,7 @@ import type {
   PlaceOptions,
   CreateSimplePlaceRequest,
   CreateSimplePlaceResponse,
+  NewNoteInput,
 } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -108,7 +109,8 @@ export const getAllPersons = async (): Promise<PersonRecord[]> => {
 };
 
 export const createPerson = async (
-    item: PersonRecord,
+    person: Partial<PersonRecord>,
+    newNotes: NewNoteInput[] = [],
     token: string | null,
 ): Promise<PersonRecord> => {
     const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
@@ -120,7 +122,7 @@ export const createPerson = async (
               "Content-Type": "application/json",
               "Authorization": `Bearer ${token}`,
             },
-            body: JSON.stringify(item),
+            body: JSON.stringify({ person, newNotes }),
         });
 
         if (!res.ok) {
@@ -145,13 +147,15 @@ export const readPerson = async (
 };
 
 export const updatePerson = async (
-    updatedRecord: PersonRecord,
-    token: string | null
+    person: Partial<PersonRecord>,
+    newNotes: NewNoteInput[] = [],
+    token: string | null,
 ): Promise<PersonRecord> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/${   
-        updatedRecord.handle
-    }`;
+    const funcName = "/utilities/Family/utils/updatePerson";
+    const personId= person.handle || "";
 
+    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person/${encodeURIComponent(personId)}`;
+    console.log(`${funcName} person,newnotes, token` ,person, newNotes, token);
     try {
         const res = await fetch(url, {
             method: "POST",
@@ -159,7 +163,7 @@ export const updatePerson = async (
               "Content-Type": "application/json",
               "Authorization": `Bearer ${token}`,
             },
-            body: JSON.stringify(updatedRecord),
+            body: JSON.stringify({ person, newNotes }),
         });
 
         if (!res.ok) {
@@ -173,7 +177,7 @@ export const updatePerson = async (
       throw new Error(`updatePerson error: ${err}`);
     }
 };
-
+   
 export const deletePerson = async (
   personId: string,
   token: string | null
