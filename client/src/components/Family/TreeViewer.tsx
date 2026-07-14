@@ -16,6 +16,7 @@ import "@xyflow/react/dist/style.css";
 
 import PersonNode from "./PersonNode";
 import RelationshipNode from "./RelationshipNode";
+import RelationshipEdge from "./RelationshipEdge";
 import MultiplePartnerNode from "./MultiplePartnerNode";
 import FamilyChildEdge from "./FamilyChildEdge";
 
@@ -43,6 +44,7 @@ const nodeTypes = {
 
 const edgeTypes = {
   familyChild: FamilyChildEdge,
+  relationship: RelationshipEdge,
 };
 
 interface Props {

@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-import type { TreePerson } from "../../types/familyTypes";
+import type { TreePerson, ActorEventType } from "../../types/familyTypes";
 import { formatPersonDate } from "../../utilities/Family/formatters";
 
 import PersonDetailsModal from "./PersonDetailsModal";
-import PersonRelationshipModal from "./PersonRelationshipModal";
+import PersonRelationshipsModal from "./PersonRelationshipsModal";
 
 interface Props {
   person: TreePerson | null;
@@ -14,6 +14,23 @@ const DetailsPanel = ({ person }: Props) => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [relationshipsModalOpen, setRelationshipsModalOpen] = useState(false);
   const isLiving = !person?.deathDate;
+  //---------------
+  
+  const handleOpenPersonDetails = (
+    personHandle: string
+  ) => {
+    console.log("handleOpenPersonDetails, personHandle", personHandle);
+  };
+
+  const handleAddActor = (
+    eventType: ActorEventType,
+    personHandle: string
+  ) => {
+    console.log("handleAddActor, eventType, personHanle", {
+      eventType,
+      personHandle,
+    });
+  };
 
   if (!person) {
     return (
@@ -72,7 +89,7 @@ const DetailsPanel = ({ person }: Props) => {
               </button>
               <button
                 type="button"
-                onClick={() => setRelationshipsModalOpen(true)}
+                onClick={() =>   setRelationshipsModalOpen(true) }
                 className="mt-4 rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
               >
                 Relationships
@@ -95,10 +112,12 @@ const DetailsPanel = ({ person }: Props) => {
         person={person}
         onClose={() => setDetailsModalOpen(false)}
       />
-      <PersonRelationshipModal 
+      <PersonRelationshipsModal
         open={relationshipsModalOpen}
         person={person}
         onClose={() => setRelationshipsModalOpen(false)}
+        onOpenPersonDetails={handleOpenPersonDetails}
+        onAddActor={handleAddActor}
       />
     </>
   );

@@ -1,4 +1,6 @@
 
+import type { Node } from "@xyflow/react";
+
 export type TreeMode = "ancestors" | "descendants";
 
 export interface TreeNodeData {
@@ -153,9 +155,57 @@ export interface PlaceOptions {
   countries: PlaceOption[];
 }
 
-export interface NoteRecord {
+//  -------------------------------- Relationship Diagram --------------------
+//
+export type ActorEventType =
+  | "addChild"
+  | "addPartner"
+  | "addSibling"
+  | "addFamily";
+
+export type ActorNodeKind =
+  | "selected"
+  | "person"
+  | "family"
+  | "add";
+
+export interface ActorPerson {
   handle: string;
-  grampsId: string;
-  type?: string;
-  text: string;
+  displayName: string;
 }
+
+export interface ActorFamily {
+  handle: string;
+  displayName: string;
+}
+
+export interface PersonActorData {
+  selectedPerson: ActorPerson;
+  children: ActorPerson[];
+  siblings: ActorPerson[];
+  partners: ActorPerson[];
+  families: ActorFamily[];
+}
+
+export interface ActorNodeData
+  extends Record<string, unknown> {
+  label: string;
+  kind: ActorNodeKind;
+
+  personHandle?: string;
+  eventType?: ActorEventType;
+
+  onOpenPersonDetails: (personHandle: string) => void;
+
+  onAddActor: (
+    eventType: ActorEventType,
+    personHandle: string
+  ) => void;
+
+  selectedPersonHandle: string;
+}
+
+export type ActorFlowNode = Node<
+  ActorNodeData,
+  "actor"
+>;

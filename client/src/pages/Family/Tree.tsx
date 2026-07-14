@@ -72,7 +72,7 @@ const Tree = () => {
     if (!isDragging) return;
 
     const handleMouseMove = (event: MouseEvent) => {
-      const isDesktop = window.innerWidth >= 1024;
+      const isDesktop = window.innerWidth >= 768;
 
       if (isDesktop) {
         const newWidth = window.innerWidth - event.clientX;
@@ -181,6 +181,8 @@ const Tree = () => {
     }
   };
 
+  console.log("Viewport width:", window.innerWidth);
+
   return (
     <TreeLayout>
       <div className="w-full h-full flex flex-col">
@@ -208,8 +210,8 @@ const Tree = () => {
           }
           onClose={handleCloseStatusModal}
         />
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-y-auto lg:overflow-hidden">
-          <div className="w-full lg:flex-1 h-[50vh] lg:h-full min-h-[300px] lg:min-h-0 shrink-0">
+        <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
+          <div className="w-full md:flex-1 h-[50vh] md:h-full min-h-[300px] md:min-h-0 shrink-0">
             <TreeViewer
               refreshKey={refreshKey}
               selectedPersonHandle={selectedPersonHandle}
@@ -225,11 +227,11 @@ const Tree = () => {
                 onMouseDown={() => setIsDragging(true)}
                 className="
                   shrink-0
-                  h-3 lg:h-full
-                  w-full lg:w-3
+                  h-3 md:h-full
+                  w-full md:w-3
                   bg-gray-300 hover:bg-gray-400
                   flex items-center justify-center
-                  cursor-row-resize lg:cursor-col-resize
+                  cursor-row-resize md:cursor-col-resize
                 "
               >
                 <button
@@ -243,10 +245,10 @@ const Tree = () => {
                     hover:text-blue-600
                   "
                 >
-                  <span className="hidden lg:inline">
+                  <span className="hidden md:inline">
                     <ChevronRightIcon className="h-5 w-5" />
                   </span>
-                  <span className="lg:hidden">
+                  <span className="md:hidden">
                     <ChevronDownIcon className="h-5 w-5" />
                   </span>
                 </button>
@@ -256,24 +258,24 @@ const Tree = () => {
                 className="
                   shrink-0
                   bg-white
-                  border-t lg:border-t-0 lg:border-l
+                  border-t md:border-t-0 md:border-l
                   overflow-hidden
-                  w-full lg:w-auto
-                  lg:h-full
+                  w-full md:w-auto
+                  md:h-full
                 "
                 style={{
                   width:
-                    window.innerWidth >= 1024
+                    window.innerWidth >= 768
                       ? `${detailsSize}px`
                       : undefined,
                   height:
-                    window.innerWidth < 1024
+                    window.innerWidth < 768
                       ? `${detailsSize}px`
                       : undefined,
                 }}
               >
                 <div className="h-full w-full overflow-auto">
-                  <div className="min-h-full w-full lg:h-full">
+                  <div className="min-h-full w-full md:h-full">
                     <DetailsPanel person={selectedPerson} />
                   </div>
                 </div>
@@ -285,8 +287,8 @@ const Tree = () => {
                 shrink-0
                 bg-gray-300 hover:bg-gray-400
                 flex items-center justify-center
-                h-8 lg:h-full
-                w-full lg:w-6
+                h-8 md:h-full
+                w-full md:w-6
               "
             >
               <button
@@ -306,7 +308,7 @@ const Tree = () => {
                   className="
                     pointer-events-none
                     absolute
-                    hidden lg:group-hover:block
+                    hidden md:group-hover:block
                     whitespace-nowrap
                     rounded
                     bg-gray-800
@@ -323,11 +325,11 @@ const Tree = () => {
                   Show Detail Panel
                 </span>
 
-                <span className="hidden lg:inline">
+                <span className="hidden md:inline">
                   <ChevronLeftIcon className="h-5 w-5" />
                 </span>
 
-                <span className="lg:hidden">
+                <span className="md:hidden">
                   <ChevronUpIcon className="h-5 w-5" />
                 </span>
               </button>
