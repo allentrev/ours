@@ -1,21 +1,24 @@
 import axios from "axios";
 
-import type { 
+import type {
   TreeMode,
   TreeResponse,
   TreeResponseFamily,
   PersonRecord,
   PlaceRecord,
+  PersonActorData,
   NoteRecord,
   FamilyRecord,
   PlaceOptions,
   CreateSimplePlaceRequest,
   CreateSimplePlaceResponse,
+  CreateRelatedPersonRequest,
+  CreateRelatedPersonResponse,
   NewNoteInput,
 } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
-//const modName = "/utilities/Family/utils/";
+const modName = "/utilities/Family/utils/";
 
 export const searchFamilyPeople = async (
   query: string
@@ -71,10 +74,10 @@ export const getFamilyId = (
   personHandle: string,
   selectedFamilies: TreeResponseFamily[] | undefined
 ) => {
-  const result = selectedFamilies?.find( item =>
-     (item.fatherHandle === personHandle || item.motherHandle === personHandle) )?.id;
+  const result = selectedFamilies?.find(item =>
+    (item.fatherHandle === personHandle || item.motherHandle === personHandle))?.id;
 
-  return result ? result : "";   
+  return result ? result : "";
 };
 
 export const importGrampsFile = async (file: File) => {
@@ -92,48 +95,82 @@ export const importGrampsFile = async (file: File) => {
 //  ----------------------------- Person -----------------------------------
 //
 export const getAllPersons = async (): Promise<PersonRecord[]> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
 
-    try {
-        const res = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
 
-        const data = await res.json();
-        //console.log("utils getAllPersons", data);
-        return res.ok ? (data as PersonRecord[]) : [];
-    } catch (err) {
-        throw new Error(`getAllPersons error: ${err}`);
+    const data = await res.json();
+    //console.log("utils getAllPersons", data);
+    return res.ok ? (data as PersonRecord[]) : [];
+  } catch (err) {
+    throw new Error(`getAllPersons error: ${err}`);
+  }
+};
+
+export const readPersonRelationships = async (
+  personId: string
+): Promise<PersonActorData> => {
+  const funcName = "readPersonRelationships";
+
+  const url =
+    `${import.meta.env.VITE_BACKEND_URL}` +
+    `/family/person/${encodeURIComponent(personId)}/relationships`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        result.message ??
+        `Request failed with status ${res.status}`
+      );
     }
+
+    return result.data as PersonActorData;
+  } catch (err) {
+    throw new Error(
+      `${modName}${funcName} catch error: ${err instanceof Error
+        ? err.message
+        : String(err)
+      }`
+    );
+  }
 };
 
 export const createPerson = async (
-    person: Partial<PersonRecord>,
-    newNotes: NewNoteInput[] = [],
-    token: string | null,
+  person: Partial<PersonRecord>,
+  newNotes: NewNoteInput[] = [],
+  token: string | null,
 ): Promise<PersonRecord> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
 
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify({ person, newNotes }),
-        });
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ person, newNotes }),
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to create family person: ${errorText}`);
-        }
-
-        return await res.json();
-    } catch (err) {
-        throw new Error(`createPerson error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create family person: ${errorText}`);
     }
+
+    return await res.json();
+  } catch (err) {
+    throw new Error(`createPerson error: ${err}`);
+  }
 };
 
 export const readPerson = async (
@@ -147,113 +184,151 @@ export const readPerson = async (
 };
 
 export const updatePerson = async (
-    person: Partial<PersonRecord>,
-    newNotes: NewNoteInput[] = [],
-    token: string | null,
+  person: Partial<PersonRecord>,
+  newNotes: NewNoteInput[] = [],
+  token: string | null,
 ): Promise<PersonRecord> => {
-    const funcName = "/utilities/Family/utils/updatePerson";
-    const personId= person.handle || "";
+  const funcName = "/utilities/Family/utils/updatePerson";
+  const personId = person.handle || "";
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person/${encodeURIComponent(personId)}`;
-    console.log(`${funcName} person,newnotes, token` ,person, newNotes, token);
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify({ person, newNotes }),
-        });
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/person/${encodeURIComponent(personId)}`;
+  console.log(`${funcName} person,newnotes, token`, person, newNotes, token);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({ person, newNotes }),
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error(`utilities/Family/utils/updatePerson Failed to update family person: ${errorText}`)
-            throw new Error(`Failed to update family person: ${errorText}`);
-        }
-        return await res.json();
-    } catch (err) {
-      console.error(`utilities/Family/utils/updatePerson updatePerson error: ${err}`)  
-      throw new Error(`updatePerson error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`utilities/Family/utils/updatePerson Failed to update family person: ${errorText}`)
+      throw new Error(`Failed to update family person: ${errorText}`);
     }
+    return await res.json();
+  } catch (err) {
+    console.error(`utilities/Family/utils/updatePerson updatePerson error: ${err}`)
+    throw new Error(`updatePerson error: ${err}`);
+  }
 };
-   
+
 export const deletePerson = async (
   personId: string,
   token: string | null
 ): Promise<void> => {
-    if (!personId) throw new Error("PersonId is required for deletion.");
+  if (!personId) throw new Error("PersonId is required for deletion.");
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/person/${encodeURIComponent(personId)}`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/person/${encodeURIComponent(personId)}`;
 
-    try {
-        const res = await fetch(url, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to delete family person: ${errorText}`);
-        }
-    } catch (err) {
-        throw new Error(`deletePerson error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to delete family person: ${errorText}`);
     }
+  } catch (err) {
+    throw new Error(`deletePerson error: ${err}`);
+  }
+};
+
+export const createRelatedPerson = async (
+  request: CreateRelatedPersonRequest
+): Promise<CreateRelatedPersonResponse> => {
+  const funcName = "createRelatedPerson";
+  const modName = "/utilities/Family/utils/";
+  console.log(`${modName}${funcName}`);
+  const url =
+    `${import.meta.env.VITE_BACKEND_URL}` +
+    "/family/person/relationship";
+
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    });
+
+    const data = await response.json();
+    console.log(`${modName}${funcName} data is ${data}`);
+
+    if (!response.ok) {
+      throw new Error(
+        data.message ??
+        `Request failed with status ${response.status}`
+      );
+    }
+
+    return data as CreateRelatedPersonResponse;
+  } catch (error) {
+    throw new Error(
+      `${modName}${funcName} catch error: ${error}`
+    );
+  }
 };
 
 export const outFormPhotoMarker = (url: string | undefined): string => {
-    // this routine takes in the url from the database and 
-    // if undefined returns "N", else it returns "Y" for display in the Maintain Entity List.
-        if (url) {return "Y" }
-        else { return "N"};
+  // this routine takes in the url from the database and 
+  // if undefined returns "N", else it returns "Y" for display in the Maintain Entity List.
+  if (url) { return "Y" }
+  else { return "N" };
 }
 //  ----------------------------- Family -----------------------------------
 //
 export const getAllFamilies = async (): Promise<FamilyRecord[]> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/family`;
 
-    try {
-        const res = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
 
-        const data = await res.json();
-        //console.log("utils getAllFamilies", data);
-        return res.ok ? (data as FamilyRecord[]) : [];
-    } catch (err) {
-        throw new Error(`getAllFamilies error: ${err}`);
-    }
+    const data = await res.json();
+    //console.log("utils getAllFamilies", data);
+    return res.ok ? (data as FamilyRecord[]) : [];
+  } catch (err) {
+    throw new Error(`getAllFamilies error: ${err}`);
+  }
 };
 
 export const createFamily = async (
-    item: FamilyRecord,
-    token: string | null,
+  item: FamilyRecord,
+  token: string | null,
 ): Promise<FamilyRecord> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/family`;
 
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(item),
-        });
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(item),
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to create family: ${errorText}`);
-        }
-
-        return await res.json();
-    } catch (err) {
-        throw new Error(`createFamily error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create family: ${errorText}`);
     }
+
+    return await res.json();
+  } catch (err) {
+    throw new Error(`createFamily error: ${err}`);
+  }
 };
 
 export const readFamily = async (
@@ -267,158 +342,156 @@ export const readFamily = async (
 };
 
 export const updateFamily = async (
-    updatedRecord: FamilyRecord,
-    token: string | null,
+  updatedRecord: FamilyRecord,
+  token: string | null,
 ): Promise<FamilyRecord> => {
-    console.log("utilities/Family/utils/updateFamily updatedRecord:", updatedRecord);
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${
-        updatedRecord.handle
+  console.log("utilities/Family/utils/updateFamily updatedRecord:", updatedRecord);
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${updatedRecord.handle
     }`;
 
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(updatedRecord),
-        });
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to update family: ${errorText}`);
-        }
-        return await res.json();
-    } catch (err) {
-        throw new Error(`updateFamily error: ${err}`);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(updatedRecord),
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to update family: ${errorText}`);
     }
+    return await res.json();
+  } catch (err) {
+    throw new Error(`updateFamily error: ${err}`);
+  }
 };
 
 export const deleteFamily = async (
   handle: string,
   token: string | null
 ): Promise<void> => {
-    if (!handle) throw new Error("Handle is required for deletion.");
+  if (!handle) throw new Error("Handle is required for deletion.");
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${encodeURIComponent(handle)}`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${encodeURIComponent(handle)}`;
 
-    try {
-        const res = await fetch(url, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to delete family: ${errorText}`);
-        }
-    } catch (err) {
-        throw new Error(`deleteFamily error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to delete family: ${errorText}`);
     }
+  } catch (err) {
+    throw new Error(`deleteFamily error: ${err}`);
+  }
 };
 
 //  ----------------------------- Place -----------------------------------
 //
 export const getAllPlaces = async (): Promise<PlaceRecord[]> => {
-    //const funcName  = "getAllPlaces";
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/place`;
+  //const funcName  = "getAllPlaces";
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/place`;
 
-    try {
-        const res = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
 
-        const data = await res.json();
-        //console.log(`${modName}${funcName}, data`, data);
-        return res.ok ? (data as PlaceRecord[]) : [];
-    } catch (err) {
-        throw new Error(`getAllPlaces error: ${err}`);
-    }
+    const data = await res.json();
+    //console.log(`${modName}${funcName}, data`, data);
+    return res.ok ? (data as PlaceRecord[]) : [];
+  } catch (err) {
+    throw new Error(`getAllPlaces error: ${err}`);
+  }
 };
 
 export const createPlace = async (
-    item: PlaceRecord,
-    token: string | null,
+  item: PlaceRecord,
+  token: string | null,
 ): Promise<PlaceRecord> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/place`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/place`;
 
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(item),
-        });
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(item),
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to create place: ${errorText}`);
-        }
-
-        return await res.json();
-    } catch (err) {
-        throw new Error(`createPlace error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create place: ${errorText}`);
     }
+
+    return await res.json();
+  } catch (err) {
+    throw new Error(`createPlace error: ${err}`);
+  }
 };
 
 export const updatePlace = async (
-    updatedRecord: PlaceRecord,
-    token: string | null,
+  updatedRecord: PlaceRecord,
+  token: string | null,
 ): Promise<PlaceRecord> => {
-    console.log("utilities/Family/utils/updatePlace updatedRecord:", updatedRecord);
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${
-        updatedRecord.handle
+  console.log("utilities/Family/utils/updatePlace updatedRecord:", updatedRecord);
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${updatedRecord.handle
     }`;
 
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(updatedRecord),
-        });
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to update place: ${errorText}`);
-        }
-        return await res.json();
-    } catch (err) {
-        throw new Error(`updatePlace error: ${err}`);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(updatedRecord),
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to update place: ${errorText}`);
     }
+    return await res.json();
+  } catch (err) {
+    throw new Error(`updatePlace error: ${err}`);
+  }
 };
 
 export const deletePlace = async (
   handle: string,
   token: string | null
 ): Promise<void> => {
-    if (!handle) throw new Error("Handle is required for deletion.");
+  if (!handle) throw new Error("Handle is required for deletion.");
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${encodeURIComponent(handle)}`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/place/${encodeURIComponent(handle)}`;
 
-    try {
-        const res = await fetch(url, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to delete place: ${errorText}`);
-        }
-    } catch (err) {
-        throw new Error(`deletePlace error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to delete place: ${errorText}`);
     }
+  } catch (err) {
+    throw new Error(`deletePlace error: ${err}`);
+  }
 };
 
 
@@ -462,12 +535,12 @@ export const getPlaceName = (
   nameType: string,
   handle: string,
   places: PlaceRecord[],
-  ): string => {
-  
+): string => {
+
   const place = places.find(
     (item) => item.handle === handle
   );
-  if (!place) { return "Not found"};
+  if (!place) { return "Not found" };
   switch (nameType) {
     case "short":
       return place.shortName;
@@ -494,51 +567,51 @@ export const getPlaceName =
 //  ----------------------------- Note -----------------------------------
 //
 export const getAllNotes = async (): Promise<NoteRecord[]> => {
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/note`;
 
-    try {
-        const res = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
 
-        const data = await res.json();
-        //console.log("utils getAllNotes", data);
-        return res.ok ? (data as NoteRecord[]) : [];
-    } catch (err) {
-        throw new Error(`getAllNotes error: ${err}`);
-    }
+    const data = await res.json();
+    //console.log("utils getAllNotes", data);
+    return res.ok ? (data as NoteRecord[]) : [];
+  } catch (err) {
+    throw new Error(`getAllNotes error: ${err}`);
+  }
 };
 
 export const createNote = async (
-    item: NoteRecord,
-    token: string | null,
+  item: NoteRecord,
+  token: string | null,
 ): Promise<NoteRecord> => {
-    const funcName = "/utilities/Family/utils/createNote";
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note`;
-    if (!token) {
-        throw new Error("Token is required to create a note.");
-    }
-    console.log("util", token);
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(item),
-        });
+  const funcName = "/utilities/Family/utils/createNote";
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/note`;
+  if (!token) {
+    throw new Error("Token is required to create a note.");
+  }
+  console.log("util", token);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(item),
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to create note: ${errorText}`);
-        }
-
-        return await res.json();
-    } catch (err) {
-        throw new Error(`${funcName} catch error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create note: ${errorText}`);
     }
+
+    return await res.json();
+  } catch (err) {
+    throw new Error(`${funcName} catch error: ${err}`);
+  }
 };
 
 export const readNote = async (
@@ -552,55 +625,54 @@ export const readNote = async (
 };
 
 export const updateNote = async (
-    updatedRecord: NoteRecord,
-    token: string | null,
+  updatedRecord: NoteRecord,
+  token: string | null,
 ): Promise<NoteRecord> => {
-    //console.log("utilities/Family/utils/updateNote updatedRecord:", updatedRecord);
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note/${
-        updatedRecord.handle
+  //console.log("utilities/Family/utils/updateNote updatedRecord:", updatedRecord);
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/note/${updatedRecord.handle
     }`;
 
-    try {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify(updatedRecord),
-        });
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to update note: ${errorText}`);
-        }
-        return await res.json();
-    } catch (err) {
-        throw new Error(`updateNote error: ${err}`);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(updatedRecord),
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to update note: ${errorText}`);
     }
+    return await res.json();
+  } catch (err) {
+    throw new Error(`updateNote error: ${err}`);
+  }
 };
 
 export const deleteNote = async (
   handle: string,
   token: string | null
 ): Promise<void> => {
-    if (!handle) throw new Error("Handle is required for deletion.");
+  if (!handle) throw new Error("Handle is required for deletion.");
 
-    const url = `${import.meta.env.VITE_BACKEND_URL}/family/note/${encodeURIComponent(handle)}`;
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/note/${encodeURIComponent(handle)}`;
 
-    try {
-        const res = await fetch(url, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`,
-            },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
 
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Failed to delete note: ${errorText}`);
-        }
-    } catch (err) {
-        throw new Error(`deleteNote error: ${err}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to delete note: ${errorText}`);
     }
+  } catch (err) {
+    throw new Error(`deleteNote error: ${err}`);
+  }
 };

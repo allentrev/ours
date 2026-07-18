@@ -47,10 +47,33 @@ export interface PersonRecord
     LocalRecordFields,
     ImportBatchRef {
       deceased: boolean;
-      thumbnailUrl?: string;
     }
 
 export type PersonDocument = HydratedDocument<PersonRecord>;
+
+export type PersonRelationshipType =
+  | "addChild"
+  | "addPartner"
+  | "addSibling";
+
+export interface CreateRelatedPersonBody {
+  sourcePersonHandle: string;
+  relationshipType: PersonRelationshipType;
+  familyHandle: string;
+
+  person: {
+    gender?: string;
+    firstName?: string;
+    surname?: string;
+    displayName?: string;
+    birthDate?: string;
+    deathDate?: string;
+    birthPlaceHandle?: string;
+    deathPlaceHandle?: string;
+    primaryPhotoUrl?: string;
+  };
+}
+
 //  ------------------------------------- Family -----------------------------
 //
 export interface RawGrampsFamily {
@@ -98,6 +121,17 @@ export interface PlaceRecord
 
 export type PlaceDocument = HydratedDocument<PlaceRecord>;
 
+export interface PlaceOption {
+  handle: string;
+  name: string;
+}
+
+export interface PlaceOptions {
+  places: PlaceRecord[];
+  urbanAreas: PlaceOption[];
+  counties: PlaceOption[];
+  countries: PlaceOption[];
+}
 //  ------------------------------------- Note -----------------------------
 //
 export interface RawGrampsNote {
@@ -129,7 +163,6 @@ export interface MediaRecord
     LocalRecordFields,
     ImportBatchRef {
       grampsId: string;
-      thumbnailUrl?: string;
       noteHandles?: string[];
     }
 
@@ -199,4 +232,25 @@ export interface FamilyGroup {
   fatherHandle?: string;
   motherHandle?: string;
   childHandles: string[];
+}
+//-----------------------
+export interface PersonActor {
+  handle: string;
+  displayName: string;
+}
+
+export interface ActorChildFamily {
+  handle: string;
+  displayName: string;
+  fatherHandle?: string;
+  motherHandle?: string;
+}
+
+export interface PersonActorData {
+  selectedPerson: PersonActor;
+  families: PersonActor[];
+  childFamilies: ActorChildFamily[];
+  siblings: PersonActor[];
+  partners: PersonActor[];
+  children: PersonActor[];
 }

@@ -24,6 +24,10 @@ interface BuildRelationshipDiagramOptions {
     personHandle: string
   ) => void;
 
+  onSelectPerson: (
+    personHandle: string
+  ) => void;
+  
   onAddActor: (
     eventType: ActorEventType,
     personHandle: string
@@ -75,6 +79,9 @@ const createNodeData = (
 
   onOpenPersonDetails:
     options.onOpenPersonDetails,
+  
+  onSelectPerson:
+    options.onSelectPerson,
 
   onAddActor:
     options.onAddActor,

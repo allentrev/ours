@@ -276,7 +276,10 @@ const Tree = () => {
               >
                 <div className="h-full w-full overflow-auto">
                   <div className="min-h-full w-full md:h-full">
-                    <DetailsPanel person={selectedPerson} />
+                    <DetailsPanel
+                      person={selectedPerson}
+                      onSelectPerson={setSelectedPersonHandle}
+                    />
                   </div>
                 </div>
               </aside>

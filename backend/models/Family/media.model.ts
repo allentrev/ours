@@ -11,8 +11,6 @@ const mediaSchema = new Schema<MediaRecord>(
     path: { type: String },
     mimeType: { type: String },
 
-    thumbnailUrl: { type: String },
-
     noteHandles: [{ type: String }],
 
     importBatchId: { type: mongoose.Schema.Types.ObjectId, ref: "ImportBatch" },

@@ -21,8 +21,7 @@ const personSchema = new Schema<PersonRecord>(
     deathPlaceHandle: { type: String, index: true },
 
     primaryPhotoUrl: { type: String },
-    thumbnailUrl: { type: String },
-
+    
     mediaHandles: [{ type: String }],
     noteHandles: [{ type: String }],
 

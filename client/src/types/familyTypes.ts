@@ -48,7 +48,7 @@ export interface TreeResponseNode {
   birthDate?: string;
   deathDate?: string;
   depth: number;
-  noPartners:number
+  noPartners: number
 };
 export interface TreeResponseEdge {
   source: string;
@@ -157,6 +157,11 @@ export interface PlaceOptions {
 
 //  -------------------------------- Relationship Diagram --------------------
 //
+export type PersonAddType =
+  | "addChild"
+  | "addPartner"
+  | "addSibling";
+
 export type ActorEventType =
   | "addChild"
   | "addPartner"
@@ -197,6 +202,10 @@ export interface ActorNodeData
 
   onOpenPersonDetails: (personHandle: string) => void;
 
+  onSelectPerson: (
+    personHandle: string
+  ) => void;
+
   onAddActor: (
     eventType: ActorEventType,
     personHandle: string
@@ -209,3 +218,44 @@ export type ActorFlowNode = Node<
   ActorNodeData,
   "actor"
 >;
+
+export interface CreateRelatedPersonRequest {
+  sourcePersonHandle: string;
+  relationshipType: PersonAddType;
+  familyHandle?: string;
+  person: Partial<PersonRecord>;
+}
+
+export interface CreateRelatedPersonResponse {
+  person: PersonRecord;
+}
+export interface ActorFamily {
+  handle: string;
+  displayName: string;
+}
+
+export interface ActorChildFamily {
+  handle: string;
+  displayName: string;
+  fatherHandle?: string;
+  motherHandle?: string;
+}
+
+export interface PersonActorData {
+  selectedPerson: ActorPerson;
+  children: ActorPerson[];
+  siblings: ActorPerson[];
+  partners: ActorPerson[];
+
+  /*
+   * Families in which the selected person is a child.
+   * These are displayed above the selected person.
+   */
+  families: ActorFamily[];
+
+  /*
+   * Families in which the selected person is a parent.
+   * These are possible destinations when adding a child.
+   */
+  childFamilies: ActorChildFamily[];
+}
