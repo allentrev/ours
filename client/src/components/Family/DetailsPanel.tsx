@@ -1,6 +1,7 @@
 // components/Family/DetailsPanel.tsx
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@clerk/clerk-react";
 
 import type {
   ActorEventType,
@@ -26,6 +27,7 @@ interface Props {
     personHandle: string
   ) => void;
 }
+//const modName = "/components/Family/DetailsPanel";
 
 const DetailsPanel = ({
   person,
@@ -33,7 +35,7 @@ const DetailsPanel = ({
 }: Props) => {
   //const { user } = useUser();
   //const isAdmin = isAdminUser(user);
-
+  const { getToken } = useAuth();
   const [detailsModalOpen, setDetailsModalOpen,] = useState(false);
   const [relationshipsModalOpen, setRelationshipsModalOpen, ] = useState(false);
   const [pendingDetailsHandle, setPendingDetailsHandle,] = useState<string | null>(null);
@@ -268,17 +270,30 @@ const DetailsPanel = ({
             );
           }
 
-          await createRelatedPerson({
-            sourcePersonHandle:
-              personAddSourceHandle,
+          const token = await getToken(
+               {skipCache: true,}
+          );
+          //console.log(`${modName}<PersonAddModal>, ${token}`)
+          if (!token) {
+            throw new Error(
+              "Authentication token is unavailable."
+            );
+          }
 
-            relationshipType:
-              personAddType,
+          await createRelatedPerson(
+            {
+              sourcePersonHandle:
+                personAddSourceHandle,
 
-            familyHandle,
+              relationshipType:
+                personAddType,
 
-            person: personDraft,
-          });
+              familyHandle,
+
+              person: personDraft,
+            },
+            token,
+          );
 
           setPersonAddType(null);
           setPersonAddSourceHandle(null);

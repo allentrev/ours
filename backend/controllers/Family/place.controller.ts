@@ -80,6 +80,7 @@ export const createFamilyPlace = async (
       latitude: geo.latitude,
       longitude: geo.longitude,
       noteHandles: [],
+      
     });
 
     return res.status(201).json({

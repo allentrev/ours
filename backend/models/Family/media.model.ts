@@ -14,6 +14,10 @@ const mediaSchema = new Schema<MediaRecord>(
     noteHandles: [{ type: String }],
 
     importBatchId: { type: mongoose.Schema.Types.ObjectId, ref: "ImportBatch" },
+
+    createdByUserId: { type: String, required: false, index: true, },
+    updatedByUserId: { type: String, required: false, index: true, },
+
   },
   { timestamps: true }
 );

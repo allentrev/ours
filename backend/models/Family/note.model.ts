@@ -12,6 +12,10 @@ const noteSchema = new Schema<NoteRecord>(
     type: { type: String },
 
     importBatchId: { type: mongoose.Schema.Types.ObjectId, ref: "ImportBatch" },
+
+    createdByUserId: { type: String, required: false, index: true, },
+    updatedByUserId: { type: String, required: false, index: true, },
+
   },
   { timestamps: true }
 );

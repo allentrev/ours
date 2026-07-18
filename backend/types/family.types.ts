@@ -15,6 +15,10 @@ export interface NewNoteInput {
   text: string;
 }
 
+export interface AuditFields {
+  createdByUserId?: string;
+  updatedByUserId?: string;
+}
 // Project has 3 distint layers:
 // 1. RawGramps (parser layer) that represents exactly what comes from Grmaps
 // 2. Document interfaces (Mongo layer) represents whats stored in Mongo
@@ -45,7 +49,9 @@ export interface RawGrampsPerson {
 export interface PersonRecord
   extends RawGrampsPerson,
     LocalRecordFields,
-    ImportBatchRef {
+    ImportBatchRef,
+    AuditFields
+    {
       deceased: boolean;
     }
 
@@ -91,7 +97,11 @@ export interface RawGrampsFamily {
 export interface FamilyRecord
   extends RawGrampsFamily,
     LocalRecordFields,
-    ImportBatchRef {grampsId: string}
+    ImportBatchRef,
+    AuditFields
+    {
+      grampsId: string
+    }
 
 export type FamilyDocument = HydratedDocument<FamilyRecord>;
 //  ------------------------------------- Place -----------------------------
@@ -117,7 +127,11 @@ export interface RawGrampsPlace {
 export interface PlaceRecord
   extends RawGrampsPlace,
     LocalRecordFields,
-    ImportBatchRef {grampsId: string}
+    ImportBatchRef,
+    AuditFields
+    { 
+      grampsId: string
+    }
 
 export type PlaceDocument = HydratedDocument<PlaceRecord>;
 
@@ -143,7 +157,11 @@ export interface RawGrampsNote {
 export interface NoteRecord
   extends RawGrampsNote,
     LocalRecordFields,
-    ImportBatchRef {grampsId: string}
+    ImportBatchRef,
+    AuditFields
+    {
+      grampsId: string
+    }
 
 export type NoteDocument = HydratedDocument<NoteRecord>;
 
@@ -161,7 +179,9 @@ export interface RawGrampsMedia {
 export interface MediaRecord
   extends RawGrampsMedia,
     LocalRecordFields,
-    ImportBatchRef {
+    ImportBatchRef,
+    AuditFields
+     {
       grampsId: string;
       noteHandles?: string[];
     }

@@ -17,7 +17,8 @@ import type {
 const modName ="/services/relatedPerson.service/";
 
 export const useCreateRelatedPerson = async (
-  input: CreateRelatedPersonBody
+  input: CreateRelatedPersonBody,
+  clerkUserId: string
 ) => {
   const {
     sourcePersonHandle,
@@ -63,56 +64,28 @@ export const useCreateRelatedPerson = async (
       await PersonModel.create(
         [
           {
-            handle:
-              newPersonHandle,
-
+            handle: newPersonHandle,
             origin: "local",
+            localId: newPersonLocalId,
+            grampsId: newPersonLocalId,
 
-            localId:
-              newPersonLocalId,
-
-            grampsId:
-              newPersonLocalId,
-
-            firstName:
-              firstName || undefined,
-
-            surname:
-              surname || undefined,
-
+            firstName: firstName || undefined,
+            surname: surname || undefined,
             displayName,
-
-            gender:
-              person.gender ||
-              "Unknown",
-
-            birthDate:
-              person.birthDate ||
-              undefined,
-
-            deathDate:
-              person.deathDate ||
-              undefined,
-
-            deceased:
-              Boolean(
-                person.deathDate
-              ),
-
-            birthPlaceHandle:
-              person.birthPlaceHandle ||
-              undefined,
-
-            deathPlaceHandle:
-              person.deathPlaceHandle ||
-              undefined,
-
-            primaryPhotoUrl:
-              person.primaryPhotoUrl ||
-              undefined,
+            gender: person.gender || "Unknown",
+            birthDate: person.birthDate || undefined,
+            deathDate: person.deathDate || undefined,
+            deceased:Boolean( person.deathDate ),
+            birthPlaceHandle: person.birthPlaceHandle || undefined,
+            deathPlaceHandle: person.deathPlaceHandle || undefined,
+            primaryPhotoUrl: person.primaryPhotoUrl || undefined,
 
             mediaHandles: [],
             noteHandles: [],
+
+            createdByUserId: clerkUserId,
+            updatedByUserId: clerkUserId,
+
           },
         ],
         {
@@ -205,16 +178,10 @@ export const useCreateRelatedPerson = async (
         await FamilyModel.create(
           [
             {
-              handle:
-                newPartnerFamilyHandle,
-
+              handle: newPartnerFamilyHandle,
               origin: "local",
-
-              localId:
-                newPartnerFamilyLocalId,
-
-              grampsId:
-                newPartnerFamilyLocalId,
+              localId: newPartnerFamilyLocalId,
+              grampsId: newPartnerFamilyLocalId,
 
               fatherHandle,
               motherHandle,
@@ -226,6 +193,10 @@ export const useCreateRelatedPerson = async (
 
               mediaHandles: [],
               noteHandles: [],
+
+              createdByUserId: clerkUserId,
+              updatedByUserId: clerkUserId,
+
             },
           ],
           {
@@ -284,7 +255,10 @@ export const useCreateRelatedPerson = async (
             createdPerson.handle
           );
         }
-
+        
+        existingFamily.updatedByUserId =
+          clerkUserId;
+        
         await existingFamily.save({
           session,
         });
@@ -325,16 +299,10 @@ export const useCreateRelatedPerson = async (
         await FamilyModel.create(
           [
             {
-              handle:
-                newChildFamilyHandle,
-
+              handle: newChildFamilyHandle,
               origin: "local",
-
-              localId:
-                newChildFamilyLocalId,
-
-              grampsId:
-                newChildFamilyLocalId,
+              localId: newChildFamilyLocalId,
+              grampsId: newChildFamilyLocalId,
 
               fatherHandle,
               motherHandle,
@@ -348,6 +316,9 @@ export const useCreateRelatedPerson = async (
 
               mediaHandles: [],
               noteHandles: [],
+
+              createdByUserId: clerkUserId,
+              updatedByUserId: clerkUserId,
             },
           ],
           {
@@ -387,7 +358,9 @@ export const useCreateRelatedPerson = async (
           createdPerson.handle
         );
       }
-
+      parentFamily.updatedByUserId =
+        clerkUserId;
+      
       await parentFamily.save({
         session,
       });
@@ -416,16 +389,10 @@ export const useCreateRelatedPerson = async (
       await FamilyModel.create(
         [
           {
-            handle:
-              newSiblingFamilyHandle,
-
+            handle: newSiblingFamilyHandle,
             origin: "local",
-
-            localId:
-              newSiblingFamilyLocalId,
-
-            grampsId:
-              newSiblingFamilyLocalId,
+            localId: newSiblingFamilyLocalId,
+            grampsId: newSiblingFamilyLocalId,
 
             fatherHandle:
               undefined,
@@ -443,6 +410,9 @@ export const useCreateRelatedPerson = async (
 
             mediaHandles: [],
             noteHandles: [],
+
+            createdByUserId: clerkUserId,
+            updatedByUserId: clerkUserId,
           },
         ],
         {

@@ -1,16 +1,31 @@
-// index.ts
-import dotenv from "dotenv";
-
 /* -------------------- Env setup -------------------- */
+const clerkPublishableKey =
+  process.env.CLERK_PUBLISHABLE_KEY;
 
-const envFile =
+const clerkSecretKey =
+  process.env.CLERK_SECRET_KEY;
+
+if (!clerkPublishableKey) {
+  throw new Error(
+    "CLERK_PUBLISHABLE_KEY is missing"
+  );
+}
+if (!clerkSecretKey) {
+  throw new Error(
+    "CLERK_SECRET_KEY is missing"
+  );
+}
+
+const authorizedParties =
   process.env.NODE_ENV === "production"
-    ? ".env.production"
-    : ".env";
+    ? [
+        "https://oursingapore.co.uk",
+        "https://www.oursingapore.co.uk",
+      ]
+    : [
+        "http://localhost:5173",
+      ];
 
-dotenv.config({ path: envFile });
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("Clerk key exists:", !!process.env.CLERK_SECRET_KEY);
 /* -------------------- Imports -------------------- */
 
 import express, { Request, Response, NextFunction } from "express";
@@ -93,14 +108,23 @@ if (process.env.NODE_ENV === "production") {
     })
   );
 } else {
-  app.use(clerkMiddleware());
+  app.use(
+    clerkMiddleware({
+      publishableKey:
+        clerkPublishableKey,
+
+      secretKey:
+        clerkSecretKey,
+
+      authorizedParties,
+    })
+  );
 }
 
 console.log("Node Env = ", process.env.NODE_ENV);
 
 /* -------------------- Trace Route -------------------- */
 
-//if (process.env.NODE_ENV !== "testing, should be production") {
 app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.url !== "/health") {
     console.log(`Incoming request: [${req.method}] ${req.url}`);

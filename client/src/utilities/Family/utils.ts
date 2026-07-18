@@ -242,11 +242,11 @@ export const deletePerson = async (
 };
 
 export const createRelatedPerson = async (
-  request: CreateRelatedPersonRequest
+  input: CreateRelatedPersonRequest,
+  token: string
 ): Promise<CreateRelatedPersonResponse> => {
   const funcName = "createRelatedPerson";
-  const modName = "/utilities/Family/utils/";
-  console.log(`${modName}${funcName}`);
+  console.log(`${modName}${funcName}`, token);
   const url =
     `${import.meta.env.VITE_BACKEND_URL}` +
     "/family/person/relationship";
@@ -257,12 +257,13 @@ export const createRelatedPerson = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(input),
     });
 
     const data = await response.json();
-    console.log(`${modName}${funcName} data is ${data}`);
+    console.log(`${modName}${funcName} data from fetch is ${data}`);
 
     if (!response.ok) {
       throw new Error(

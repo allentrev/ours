@@ -229,6 +229,7 @@ export interface CreateRelatedPersonRequest {
 export interface CreateRelatedPersonResponse {
   person: PersonRecord;
 }
+
 export interface ActorFamily {
   handle: string;
   displayName: string;

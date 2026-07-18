@@ -70,7 +70,7 @@ router.post(
 router.get("/person/:personId/relationships", PersonController.getPersonRelationships);
 router.get("/person", PersonController.getAllPersons);
 router.post("/person", requireAuth, PersonController.createPerson);
-router.post( "/person/relationship", PersonController.createRelatedPerson);
+router.post( "/person/relationship", requireAuth, PersonController.createRelatedPerson);
 router.get("/person/:personId", PersonController.readPerson);
 router.post("/person/:personId", requireAuth, PersonController.updatePerson);
 router.delete("/person/:personId", requireAuth, PersonController.deletePerson);

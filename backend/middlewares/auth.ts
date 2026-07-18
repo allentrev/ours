@@ -12,22 +12,46 @@ async function getCurrentUser(req: Request): Promise<{
 }> {
   const auth = getAuth(req);
 
-// TODO: Remove this for production, it's just for debugging purposes
-  auth.debug();
+  // TODO: Remove this for production, it's just for debugging purposes
+  //auth.debug();
 
-  //console.log(`${modName}${funcName}  req.headers:`, req.headers);
-  console.log("Authorization header:", req.headers.authorization);
-  console.log("Clerk auth:", auth);
-console.log("auth.userId:", auth.userId);
-console.log("auth.sessionId:", auth.sessionId);
-console.log("auth claims:", auth.sessionClaims);
+  const authorization =
+    req.headers.authorization;
 
-  //console.log("Origin:", req.headers.origin);
-  //console.log("Referer:", req.headers.referer);
-  //console.log("Host:", req.headers.host);
-  //console.log("X-Forwarded-Host:", req.headers["x-forwarded-host"]);
-  //console.log("X-Forwarded-Proto:", req.headers["x-forwarded-proto"]);
+  if (
+    authorization?.startsWith(
+      "Bearer "
+    )
+  ) {
+    const token =
+      authorization.slice(7);
 
+    const [, payload] =
+      token.split(".");
+
+    if (payload) {
+      const decoded =
+        JSON.parse(
+          Buffer.from(
+            payload,
+            "base64url"
+          ).toString("utf8")
+        );
+
+    /*
+    console.log("Clerk token diagnostics:", {
+      sub: decoded.sub,
+      sid: decoded.sid,
+      iss: decoded.iss,
+      azp: decoded.azp,
+      iat: decoded.iat,
+      nbf: decoded.nbf,
+      exp: decoded.exp,
+      now: Math.floor(Date.now() / 1000),
+    });
+    */
+  }
+}
   if (!auth.userId) {
     return {auth, user: null};
   }
@@ -45,7 +69,7 @@ export const requireAuth = async (
   next: NextFunction
 ) => {
   const funcName= "/middlewares/auth/requireAuth";
-  console.log(`${funcName} entry`);
+  //console.log(`${funcName} entry`);
   const { user } = await getCurrentUser(req);
   console.log(`${funcName} user`, user);
 

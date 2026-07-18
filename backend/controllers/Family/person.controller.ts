@@ -149,9 +149,17 @@ export const createRelatedPerson = async (
   }
 
   try {
+    if (!req.currentUser?.clerkUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authenticated user is unavailable.",
+      });
+    }
+
     const result =
       await useCreateRelatedPerson(
-        req.body
+        req.body,
+        req.currentUser.clerkUserId
       );
 
     return res.status(201).json({
