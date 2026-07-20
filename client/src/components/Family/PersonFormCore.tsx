@@ -24,6 +24,7 @@ import {
   getPlaceName,
 } from "../../utilities/Family/utils";
 
+import NewPlaceModal from "./NewPlaceModal";
 import PlaceSelectorModal from "./SelectorPlaceModal";
 import GenealogyDatePickerModal from "./GenealogyDatePickerModal";
 import PhotoSelectorModal from "./PhotoSelectorModal";
@@ -44,10 +45,12 @@ const iconButtonClass =
   "border border-gray-300 bg-gray-100 text-gray-700 " +
   "hover:bg-gray-200";
 
+
 const PersonFormCore = ({
   person,
   onChange,
 }: PersonFormCoreProps) => {
+  
   const [
     photoModalOpen,
     setPhotoModalOpen,
@@ -56,6 +59,19 @@ const PersonFormCore = ({
   const [
     selectPlaceModal,
     setSelectPlaceModal,
+  ] = useState<{
+    open: boolean;
+    field:
+      | "birthPlaceHandle"
+      | "deathPlaceHandle";
+  }>({
+    open: false,
+    field: "birthPlaceHandle",
+  });
+
+  const [
+    newPlaceModal,
+    setNewPlaceModal,
   ] = useState<{
     open: boolean;
     field:
@@ -158,6 +174,36 @@ const PersonFormCore = ({
     });
 
     setSelectPlaceModal((current) => ({
+      ...current,
+      open: false,
+    }));
+  };
+
+  const openNewPlaceModal = (
+    field: "birth" | "death"
+  ) => {
+    setNewPlaceModal({
+      open: true,
+      field:
+        field === "birth"
+          ? "birthPlaceHandle"
+          : "deathPlaceHandle",
+    });
+  };
+
+  const handlePlaceCreated = async (
+    place: PlaceRecord
+  ) => {
+    onChange({
+      ...person,
+      [newPlaceModal.field]: place.handle,
+    });
+
+    setPlaceOptions(
+      await fetchFamilyPlaceOptions()
+    );
+
+    setNewPlaceModal((current) => ({
       ...current,
       open: false,
     }));
@@ -315,20 +361,32 @@ const PersonFormCore = ({
             className="rounded border border-gray-300 bg-gray-100 px-2 py-1"
           />
 
-          <button
-            type="button"
-            title="Select birth place"
-            onClick={() =>
-              setSelectPlaceModal({
-                open: true,
-                field:
-                  "birthPlaceHandle",
-              })
-            }
-            className={iconButtonClass}
-          >
-            <MagnifyingGlassIcon className="h-5 w-5" />
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              title="Select existing birth place"
+              onClick={() =>
+                setSelectPlaceModal({
+                  open: true,
+                  field: "birthPlaceHandle",
+                })
+              }
+              className={iconButtonClass}
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </button>
+
+            <button
+              type="button"
+              title="Create new birth place"
+              onClick={() =>
+                openNewPlaceModal("birth")
+              }
+              className={iconButtonClass}
+            >
+              +
+            </button>
+          </div>
 
           {/* Death */}
           <div className="font-semibold text-gray-700">
@@ -366,20 +424,32 @@ const PersonFormCore = ({
             className="rounded border border-gray-300 bg-gray-100 px-2 py-1"
           />
 
-          <button
-            type="button"
-            title="Select death place"
-            onClick={() =>
-              setSelectPlaceModal({
-                open: true,
-                field:
-                  "deathPlaceHandle",
-              })
-            }
-            className={iconButtonClass}
-          >
-            <MagnifyingGlassIcon className="h-5 w-5" />
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              title="Select existing death place"
+              onClick={() =>
+                setSelectPlaceModal({
+                  open: true,
+                  field: "deathPlaceHandle",
+                })
+              }
+              className={iconButtonClass}
+            >
+              <MagnifyingGlassIcon className="h-5 w-5" />
+            </button>
+
+            <button
+              type="button"
+              title="Create new death place"
+              onClick={() =>
+                openNewPlaceModal("death")
+              }
+              className={iconButtonClass}
+            >
+              +
+            </button>
+          </div>
         </div>
       </fieldset>
 
@@ -455,12 +525,21 @@ const PersonFormCore = ({
         }
       />
 
+      <NewPlaceModal
+        open={newPlaceModal.open}
+        placeOptions={placeOptions}
+        onClose={() =>
+          setNewPlaceModal((current) => ({
+            ...current,
+            open: false,
+          }))
+        }
+        onPlaceCreated={handlePlaceCreated}
+      />
+
       <GenealogyDatePickerModal
         open={dateModal.open}
-        value={
-          person[dateModal.field] ??
-          ""
-        }
+        value={person[dateModal.field] ?? ""}
         onClose={() =>
           setDateModal((current) => ({
             ...current,

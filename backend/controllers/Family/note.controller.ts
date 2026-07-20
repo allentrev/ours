@@ -33,12 +33,23 @@ export const createNote = async (
     const orign="local";
 
     try {
+      const clerkUserId = req.currentUser?.clerkUserId;
+      if (!clerkUserId) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Authenticated user is unavailable.",
+        });
+      }
+
         console.log("family.controller, createNote", req.body);
         const newNote = new NoteModel(req.body);
         newNote.handle = handle;
         newNote.grampsId = localId;
         newNote.localId = localId;
         newNote.origin = orign;
+        newNote.createdByUserId = clerkUserId;
+        newNote.updatedByUserId = clerkUserId;
         const savedNote = await newNote.save();
         console.log("Note created");
         res.status(201).json(savedNote);
@@ -86,18 +97,27 @@ export const updateNote = async (
     res: Response
 ) => {
     try {
-        const wNoteId = req.params.noteId;
-        const updateData = req.body;
-        console.log("family.controller, updateNote", wNoteId, updateData);
+      const clerkUserId = req.currentUser?.clerkUserId;
+      if (!clerkUserId) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Authenticated user is unavailable.",
+        });
+      }
+      const wNoteId = req.params.noteId;
+      const updateData = req.body;
+      updateData.updatedByUserId = clerkUserId;
+      console.log("family.controller, updateNote", wNoteId, updateData);
 
-        const updatedNote: NoteDocument | null =
-            await NoteModel.findOneAndUpdate({ handle: wNoteId }, updateData, {
-                new: true,
-            });
+      const updatedNote: NoteDocument | null =
+          await NoteModel.findOneAndUpdate({ handle: wNoteId }, updateData, {
+              new: true,
+          });
 
-        if (!updatedNote)
-            return res.status(404).json({ message: "Note not found" });
-        res.status(200).json(updatedNote);
+      if (!updatedNote)
+          return res.status(404).json({ message: "Note not found" });
+      res.status(200).json(updatedNote);
     } catch (error) {
         console.error("Error updating Note:", error);
         res.status(500).json({ message: "Server error", error });

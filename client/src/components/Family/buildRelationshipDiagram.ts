@@ -24,6 +24,10 @@ interface BuildRelationshipDiagramOptions {
     personHandle: string
   ) => void;
 
+  onOpenFamilyDetails: (
+    familyHandle: string
+  ) => void;
+
   onSelectPerson: (
     personHandle: string
   ) => void;
@@ -69,6 +73,7 @@ const createNodeData = (
     | "label"
     | "kind"
     | "personHandle"
+    | "familyHandle"
     | "eventType"
   >
 ): ActorNodeData => ({
@@ -79,7 +84,10 @@ const createNodeData = (
 
   onOpenPersonDetails:
     options.onOpenPersonDetails,
-  
+
+  onOpenFamilyDetails:
+    options.onOpenFamilyDetails,
+
   onSelectPerson:
     options.onSelectPerson,
 
@@ -290,6 +298,7 @@ export const buildRelationshipDiagram = (
       label: family.displayName,
       kind: "family" as const,
       personHandle: undefined,
+      familyHandle: family.handle,
       eventType: undefined,
     })),
 
@@ -298,6 +307,7 @@ export const buildRelationshipDiagram = (
       label: "Add Family",
       kind: "add" as const,
       personHandle: undefined,
+      familyHandle: undefined,
       eventType:
         "addFamily" as ActorEventType,
     },
@@ -323,6 +333,7 @@ export const buildRelationshipDiagram = (
           label: `${item.label}\n${familyPositions[index].x},${familyPositions[index].y}`,
           kind: item.kind,
           personHandle: item.personHandle,
+          familyHandle: item.familyHandle,
           eventType: item.eventType,
         })
       )
@@ -348,6 +359,7 @@ export const buildRelationshipDiagram = (
       label: child.displayName,
       kind: "person" as const,
       personHandle: child.handle,
+      familyHandle: undefined,
       eventType: undefined,
     })),
 
@@ -356,6 +368,7 @@ export const buildRelationshipDiagram = (
       label: "Add Child",
       kind: "add" as const,
       personHandle: undefined,
+      familyHandle: undefined,
       eventType:
         "addChild" as ActorEventType,
     },
@@ -381,6 +394,7 @@ export const buildRelationshipDiagram = (
           label: `${item.label}\n${childPositions[index].x},${childPositions[index].y}`,
           kind: item.kind,
           personHandle: item.personHandle,
+          familyHandle: item.familyHandle,
           eventType: item.eventType,
         })
       )
@@ -406,6 +420,7 @@ export const buildRelationshipDiagram = (
       label: sibling.displayName,
       kind: "person" as const,
       personHandle: sibling.handle,
+      familyHandle: undefined,
       eventType: undefined,
     })),
 
@@ -414,6 +429,7 @@ export const buildRelationshipDiagram = (
       label: "Add Sibling",
       kind: "add" as const,
       personHandle: undefined,
+      familyHandle: undefined,
       eventType:
         "addSibling" as ActorEventType,
     },
@@ -450,6 +466,7 @@ export const buildRelationshipDiagram = (
           label: `${item.label}\n${siblingPositions[index].x},${siblingPositions[index].y}`,
           kind: item.kind,
           personHandle: item.personHandle,
+          familyHandle: item.familyHandle,
           eventType: item.eventType,
         })
       )
@@ -479,6 +496,7 @@ console.log("Sibling edges end", edges);
       label: partner.displayName,
       kind: "person" as const,
       personHandle: partner.handle,
+      familyHandle: undefined,
       eventType: undefined,
     })),
 
@@ -487,6 +505,7 @@ console.log("Sibling edges end", edges);
       label: "Add Partner",
       kind: "add" as const,
       personHandle: undefined,
+      familyHandle: undefined,
       eventType:
         "addPartner" as ActorEventType,
     },
@@ -523,6 +542,7 @@ console.log("Sibling edges end", edges);
           label: `${item.label}\n${partnerPositions[index].x},${partnerPositions[index].y}`,
           kind: item.kind,
           personHandle: item.personHandle,
+          familyHandle: item.familyHandle,
           eventType: item.eventType,
         })
       )

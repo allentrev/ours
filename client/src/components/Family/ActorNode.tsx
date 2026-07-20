@@ -127,14 +127,45 @@ const ActorNode = ({
     event.stopPropagation();
 
     /*
-     * Add nodes should respond immediately.
-     * They do not need double-click behaviour.
-     */
+    * Add nodes respond immediately.
+    */
     if (data.kind === "add") {
       handleSingleClick();
       return;
     }
 
+    /*
+    * Family nodes open Family Details
+    * immediately. They do not use the
+    * person double-click behaviour.
+    */
+    if (
+      data.kind === "family" &&
+      data.familyHandle
+    ) {
+      if (
+          typeof data.onOpenFamilyDetails !==
+          "function"
+        ) {
+          console.error(
+            "Family node is missing onOpenFamilyDetails:",
+            data
+          );
+
+          return;
+        }
+      data.onOpenFamilyDetails(
+        data.familyHandle
+      );
+
+      return;
+    }
+
+    /*
+    * Selected/person nodes retain the
+    * existing delayed single-click logic
+    * so a double-click can be detected.
+    */
     clearClickTimer();
 
     clickTimerRef.current = setTimeout(() => {

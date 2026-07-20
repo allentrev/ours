@@ -198,6 +198,7 @@ export interface ActorNodeData
   kind: ActorNodeKind;
 
   personHandle?: string;
+  familyHandle?: string;
   eventType?: ActorEventType;
 
   onOpenPersonDetails: (personHandle: string) => void;
@@ -209,6 +210,10 @@ export interface ActorNodeData
   onAddActor: (
     eventType: ActorEventType,
     personHandle: string
+  ) => void;
+
+  onOpenFamilyDetails: (
+    familyHandle: string
   ) => void;
 
   selectedPersonHandle: string;

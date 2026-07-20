@@ -1,6 +1,5 @@
 // backend/services/Family/noteResolver.service.ts
 import mongoose from "mongoose";
-import crypto from "node:crypto";
 
 import { 
   generateHandle,
@@ -15,7 +14,8 @@ export interface NewNoteInput {
 
 export const createNotesInTransaction = async (
   newNotes: NewNoteInput[] = [],
-  session: mongoose.ClientSession
+  session: mongoose.ClientSession,
+  userId: string,
 ): Promise<string[]> => {
   if (!newNotes.length) return [];
 
@@ -23,8 +23,11 @@ export const createNotesInTransaction = async (
     .map((note) => ({
       handle: generateHandle(),
       localId: generateLocalNoteId(),
-      orign: "local",
+      origin: "local",
       text: note.text?.trim(),
+      
+      createdByUserId: userId,
+      updatedByUserId: userId,
     }))
     .filter((note) => note.text);
 
@@ -41,11 +44,13 @@ export const createNotesInTransaction = async (
 export const resolveNoteHandles = async (
   existingNoteHandles: string[] = [],
   newNotes: NewNoteInput[] = [],
-  session: mongoose.ClientSession
+  session: mongoose.ClientSession,
+  userId: string,
 ): Promise<string[]> => {
   const newNoteHandles = await createNotesInTransaction(
     newNotes,
-    session
+    session,
+    userId,
   );
 
   return [

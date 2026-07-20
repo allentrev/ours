@@ -33,18 +33,29 @@ export const createFamily = async (
     const orign="local";
 
     try {
-        console.log("family.controller, createFamily", req.body);
-        const newFamily = new FamilyModel(req.body);
-        newFamily.handle = handle;
-        newFamily.grampsId = localId;
-        newFamily.localId = localId;
-        newFamily.origin = orign;
-        const savedFamily = await newFamily.save();
-        console.log("Family created");
-        res.status(201).json(savedFamily);
+      const clerkUserId = req.currentUser?.clerkUserId;
+      if (!clerkUserId) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Authenticated user is unavailable.",
+        });
+      }
+
+      console.log("family.controller, createFamily", req.body);
+      const newFamily = new FamilyModel(req.body);
+      newFamily.handle = handle;
+      newFamily.grampsId = localId;
+      newFamily.localId = localId;
+      newFamily.origin = orign;
+      newFamily.createdByUserId = clerkUserId;
+      newFamily.updatedByUserId = clerkUserId;
+      const savedFamily = await newFamily.save();
+      console.log("Family created");
+      res.status(201).json(savedFamily);
     } catch (error) {
-        console.error("Family Save Failed:", error);
-        res.status(500).json({ message: "Error creating Family", error });
+      console.error("Family Save Failed:", error);
+      res.status(500).json({ message: "Error creating Family", error });
     }
 };
 
@@ -86,21 +97,30 @@ export const updateFamily = async (
     res: Response
 ) => {
     try {
-        const wFamilyId = req.params.familyId;
-        const updateData = req.body;
-        console.log("family.controller, updateFamily", wFamilyId, updateData);
+      const clerkUserId = req.currentUser?.clerkUserId;
+      if (!clerkUserId) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Authenticated user is unavailable.",
+        });
+      }
+      const wFamilyId = req.params.familyId;
+      const updateData = req.body;
+      updateData.updatedByUserId = clerkUserId;
+      console.log("family.controller, updateFamily", wFamilyId, updateData);
 
-        const updatedFamily: FamilyDocument | null =
-            await FamilyModel.findOneAndUpdate({ handle: wFamilyId }, updateData, {
-                new: true,
-            });
+      const updatedFamily: FamilyDocument | null =
+          await FamilyModel.findOneAndUpdate({ handle: wFamilyId }, updateData, {
+              new: true,
+          });
 
-        if (!updatedFamily)
-            return res.status(404).json({ message: "Family not found" });
-        res.status(200).json(updatedFamily);
+      if (!updatedFamily)
+        return res.status(404).json({ message: "Family not found" });
+      res.status(200).json(updatedFamily);
     } catch (error) {
-        console.error("Error updating Family:", error);
-        res.status(500).json({ message: "Server error", error });
+      console.error("Error updating Family:", error);
+      res.status(500).json({ message: "Server error", error });
     }
 };
 

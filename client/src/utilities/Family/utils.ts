@@ -506,30 +506,76 @@ export const searchFamilyPlaces = async (
   return res.data.data;
 };
 
+//TODO: this can be removed alongwith controller and router
 export const createFamilyPlace = async (
-  place: Partial<PlaceRecord>
+  place: PlaceRecord,
+  token: string | null,
 ): Promise<PlaceRecord> => {
-  const res = await axios.post(`${API_URL}/family/places`, place);
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/places`;
 
-  return res.data.data;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(place),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create family place: ${errorText}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    throw new Error(`createFamilyPlace error: ${err}`);
+  }
 };
 
-export const fetchFamilyPlaceOptions =
-  async (): Promise<PlaceOptions> => {
-    const res = await axios.get(`${API_URL}/family/places/options`);
+export const fetchFamilyPlaceOptions = async (): Promise<PlaceOptions> => {
+  const funcName  = "fetchFamilyPlaceOptions";
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/places/options`;
 
-    return res.data.data;
-  };
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await res.json();
+    return data.data;
+  } catch (err) {
+    throw new Error(`${funcName} catch error: ${err}`);
+  }
+};
 
 export const createSimpleFamilyPlace = async (
-  request: CreateSimplePlaceRequest
+  request: CreateSimplePlaceRequest,
+  token: string | null,
 ): Promise<CreateSimplePlaceResponse> => {
-  const res = await axios.post(
-    `${API_URL}/family/places/simple`,
-    request
-  );
+  const url = `${import.meta.env.VITE_BACKEND_URL}/family/places/simple`;
 
-  return res.data.data;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to create simple family place: ${errorText}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    throw new Error(`createSimpleFamilyPlace error: ${err}`);
+  }
 };
 
 export const getPlaceName = (
@@ -554,17 +600,7 @@ export const getPlaceName = (
       break;
   }
 };
-/*
-export const getPlaceName =
-    handle: string,
-    placeOptions: PlaceOptions
-  ): string | undefined => {
-  
-    return placeOptions.urbanAreas.find(
-      (place) => place.handle === handle
-    )?.displayPlace;
-};
-*/
+
 //  ----------------------------- Note -----------------------------------
 //
 export const getAllNotes = async (): Promise<NoteRecord[]> => {

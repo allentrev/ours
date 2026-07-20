@@ -18,6 +18,7 @@ import {
 } from "../../utilities/Family/utils";
 
 import PersonDetailsModal from "./PersonDetailsModal";
+import FamilyDetailsModal from "./FamilyDetailsModal";
 import PersonRelationshipsModal from "./PersonRelationshipsModal";
 import PersonAddModal from "./PersonAddModal";
 
@@ -51,6 +52,11 @@ const DetailsPanel = ({
     relationshipsRefreshKey,
     setRelationshipsRefreshKey,
   ] = useState(0);
+  const [
+    familyDetailsHandle,
+    setFamilyDetailsHandle,
+  ] = useState<string | null>(null);
+
 
   const isLiving = !person?.deathDate;
 
@@ -231,7 +237,6 @@ const DetailsPanel = ({
           setDetailsModalOpen(false)
         }
       />
-
       <PersonRelationshipsModal
         open={relationshipsModalOpen}
         person={person}
@@ -247,6 +252,17 @@ const DetailsPanel = ({
         }
         onAddActor={
           handleAddActor
+        }
+        onOpenFamilyDetails={(familyHandle) => {
+          setRelationshipsModalOpen(false);
+          setFamilyDetailsHandle(familyHandle)
+        }}
+      />
+      <FamilyDetailsModal
+        open={familyDetailsHandle !== null}
+        familyHandle={familyDetailsHandle}
+        onClose={() =>
+          setFamilyDetailsHandle(null)
         }
       />
       <PersonAddModal

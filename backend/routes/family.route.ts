@@ -39,8 +39,8 @@ router.get("/places/search", PlaceController.searchFamilyPlaces);
 router.get("/places/options", PlaceController.getFamilyPlaceOptions);
 router.get("/places/:placeId", PlaceController.getPlaceName);
 
-router.post("/places", PlaceController.createFamilyPlace);
-router.post("/places/simple", PlaceController.createSimpleFamilyPlace);
+router.post("/places", requireAuth, PlaceController.createFamilyPlace);
+router.post("/places/simple", requireAuth, PlaceController.createSimpleFamilyPlace);
 
 router.get("/place", PlaceController.getAllPlaces);
 router.post("/place", requireAuth, PlaceController.createPlace);

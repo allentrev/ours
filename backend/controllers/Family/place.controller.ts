@@ -59,6 +59,15 @@ export const createFamilyPlace = async (
 ) => {
   
   try {
+    const clerkUserId = req.currentUser?.clerkUserId;
+    if (!clerkUserId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Authenticated user is unavailable.",
+      });
+    }
+    
     const geocodeName =
       typeof req.body.geocodeName === "string"
         ? req.body.geocodeName
@@ -80,7 +89,8 @@ export const createFamilyPlace = async (
       latitude: geo.latitude,
       longitude: geo.longitude,
       noteHandles: [],
-      
+      createdByUserId: clerkUserId,
+      updatedByUserId: clerkUserId,
     });
 
     return res.status(201).json({
@@ -102,6 +112,15 @@ export const createSimpleFamilyPlace = async (
   res: Response
 ) => {
   try {
+    const clerkUserId = req.currentUser?.clerkUserId;
+    if (!clerkUserId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Authenticated user is unavailable.",
+      });
+    }
+
     const kind = req.body.kind as
       | "country"
       | "county"
@@ -207,6 +226,8 @@ export const createSimpleFamilyPlace = async (
       latitude: geo.latitude,
       longitude: geo.longitude,
       noteHandles: [],
+      createdByUserId: clerkUserId,
+      updatedByUserId: clerkUserId,
     });
 
     const options = await useBuildFamilyPlaceOptions();
@@ -311,12 +332,23 @@ export const createPlace = async (
     const orign="local";
 
     try {
-        console.log("family.controller, createPlace", req.body);
-        const newPlace = new PlaceModel(req.body);
+      const clerkUserId = req.currentUser?.clerkUserId;
+      if (!clerkUserId) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Authenticated user is unavailable.",
+        });
+      }
+      
+      console.log("family.controller, createPlace", req.body);
+      const newPlace = new PlaceModel(req.body);
         newPlace.handle = handle;
         newPlace.grampsId = localId;
         newPlace.localId = localId;
         newPlace.origin = orign;
+        newPlace.createdByUserId = clerkUserId;
+        newPlace.updatedByUserId = clerkUserId;
         const savedPlace = await newPlace.save();
         console.log("Place created");
         res.status(201).json(savedPlace);
@@ -364,8 +396,18 @@ export const updatePlace = async (
     res: Response
 ) => {
     try {
+      const clerkUserId = req.currentUser?.clerkUserId;
+      if (!clerkUserId) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Authenticated user is unavailable.",
+        });
+      }
+
         const wPlaceId = req.params.placeId;
         const updateData = req.body;
+        updateData.updatedByUserId = clerkUserId;
         console.log("family.controller, updatePlace", wPlaceId, updateData);
 
         const updatedPlace: PlaceDocument | null =

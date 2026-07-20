@@ -54,6 +54,10 @@ interface PersonRelationshipsModalProps {
     eventType: ActorEventType,
     personHandle: string
   ) => void;
+
+  onOpenFamilyDetails: (
+    familyHandle: string
+  ) => void;
 }
 
 const nodeTypes: NodeTypes = {
@@ -71,6 +75,7 @@ const PersonRelationshipsModalContent = ({
   onOpenPersonDetails,
   onSelectPerson,
   onAddActor,
+  onOpenFamilyDetails,
 }: Omit<
   PersonRelationshipsModalProps,
   "open"
@@ -155,6 +160,7 @@ const PersonRelationshipsModalContent = ({
         data: relationshipData,
         onOpenPersonDetails,
         onSelectPerson,
+        onOpenFamilyDetails,
         onAddActor,
       });
     }, [
@@ -162,6 +168,7 @@ const PersonRelationshipsModalContent = ({
       onOpenPersonDetails,
       onSelectPerson,
       onAddActor,
+      onOpenFamilyDetails,
     ]);
 
   const handleBackdropClick = (
@@ -338,6 +345,7 @@ const PersonRelationshipsModal = ({
   onOpenPersonDetails,
   onSelectPerson,
   onAddActor,
+  onOpenFamilyDetails,
 }: PersonRelationshipsModalProps) => {
   if (!open || !person) {
     return null;
@@ -356,6 +364,7 @@ const PersonRelationshipsModal = ({
           onSelectPerson
         }
         onAddActor={onAddActor}
+        onOpenFamilyDetails={onOpenFamilyDetails}
       />
     </ReactFlowProvider>
   );

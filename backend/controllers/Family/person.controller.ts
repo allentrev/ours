@@ -149,7 +149,8 @@ export const createRelatedPerson = async (
   }
 
   try {
-    if (!req.currentUser?.clerkUserId) {
+    const clerkUserId = req.currentUser?.clerkUserId;
+    if (!clerkUserId) {
       return res.status(401).json({
         success: false,
         message: "Authenticated user is unavailable.",
@@ -159,7 +160,7 @@ export const createRelatedPerson = async (
     const result =
       await useCreateRelatedPerson(
         req.body,
-        req.currentUser.clerkUserId
+        clerkUserId
       );
 
     return res.status(201).json({
@@ -236,6 +237,14 @@ export const createPerson = async (
   try {
     const { person, newNotes = [] } = req.body;
 
+    const clerkUserId = req.currentUser?.clerkUserId;
+    if (!clerkUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authenticated user is unavailable.",
+      });
+    }
+
     if (!person) {
       return res.status(400).json({
         message: "Person data is required",
@@ -250,7 +259,8 @@ export const createPerson = async (
       const noteHandles = await resolveNoteHandles(
         person.noteHandles ?? [],
         newNotes,
-        session
+        session,
+        clerkUserId,
       );
 
       const createdPeople = await PersonModel.create(
@@ -262,6 +272,8 @@ export const createPerson = async (
             localId,
             origin,
             noteHandles,
+            createdByUserId: clerkUserId,
+            updatedByUserId: clerkUserId,
           },
         ],
         { session }
@@ -327,6 +339,14 @@ export const updatePerson = async (
 ) => {
   const funcName="updatePerson";
   try {
+    const clerkUserId = req.currentUser?.clerkUserId;
+    if (!clerkUserId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authenticated user is unavailable.",
+      });
+    }
+
     const personId = req.params.personId;
     const { person, newNotes = [] } = req.body;
     console.log(`${modName}${funcName} person, newNotes`, person, newNotes);
@@ -348,7 +368,8 @@ export const updatePerson = async (
       const noteHandles = await resolveNoteHandles(
         person.noteHandles ?? existingPerson.noteHandles ?? [],
         newNotes,
-        session
+        session,
+        clerkUserId,
       );
 
       return await PersonModel.findOneAndUpdate(
@@ -356,6 +377,7 @@ export const updatePerson = async (
         {
           ...person,
           noteHandles,
+          updatedByUserId: clerkUserId,
         },
         {
           new: true,
