@@ -274,3 +274,20 @@ export interface PersonActorData {
   partners: PersonActor[];
   children: PersonActor[];
 }
+
+export interface FamilyDetailsData {
+  handle: string;
+  grampsId?: string;
+
+  father?: PersonActor;
+  mother?: PersonActor;
+  children: PersonActor[];
+
+  relationshipType?: string;
+  relationshipDate?: string;
+
+  relationshipPlaceHandle?: string;
+  relationshipPlaceName?: string;
+
+  notes: NoteRecord[];
+}

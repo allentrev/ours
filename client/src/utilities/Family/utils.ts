@@ -15,6 +15,7 @@ import type {
   CreateRelatedPersonRequest,
   CreateRelatedPersonResponse,
   NewNoteInput,
+  FamilyDetailsData,
 } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -333,18 +334,41 @@ export const createFamily = async (
 };
 
 export const readFamily = async (
-  handle: string
-): Promise<FamilyRecord> => {
-  const res = await axios.get(
-    `${API_URL}/family/family/${encodeURIComponent(handle)}`
-  );
+  familyHandle: string
+): Promise<FamilyDetailsData> => {
+  const funcName = "readFamily";
 
-  return res.data.data;
+  const url =
+    `${import.meta.env.VITE_BACKEND_URL}/family/family/${familyHandle}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data.message ??
+          "Failed to read family."
+      );
+    }
+
+    return data.data as FamilyDetailsData;
+  } catch (err) {
+    throw new Error(
+      `${modName}${funcName}: ${err}`
+    );
+  }
 };
 
 export const updateFamily = async (
   updatedRecord: FamilyRecord,
-  token: string | null,
+  token: string,
 ): Promise<FamilyRecord> => {
   console.log("utilities/Family/utils/updateFamily updatedRecord:", updatedRecord);
   const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${updatedRecord.handle
@@ -363,7 +387,8 @@ export const updateFamily = async (
       const errorText = await res.text();
       throw new Error(`Failed to update family: ${errorText}`);
     }
-    return await res.json();
+    const response = await res.json();
+    return response.data as FamilyRecord;
   } catch (err) {
     throw new Error(`updateFamily error: ${err}`);
   }

@@ -2,6 +2,10 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 
 import { FamilyModel } from "../../models/Family/family.model.js";
+import {
+  readFamilyService,
+} from "../../services/readFamily.service.js";
+
 import { 
   generateHandle,
   generateLocalFamilyId,
@@ -23,14 +27,14 @@ export const getAllFamilies = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Failed to fetch families", error });
     }
 };
-
+//TODO: update API wrapper as per updateFamily
 export const createFamily = async (
     req: Request<{}, {}, Partial<FamilyDocument>>,
     res: Response
 ) => {
     const handle = generateHandle();
     const localId = generateLocalFamilyId();
-    const orign="local";
+    const origin="local";
 
     try {
       const clerkUserId = req.currentUser?.clerkUserId;
@@ -47,7 +51,7 @@ export const createFamily = async (
       newFamily.handle = handle;
       newFamily.grampsId = localId;
       newFamily.localId = localId;
-      newFamily.origin = orign;
+      newFamily.origin = origin;
       newFamily.createdByUserId = clerkUserId;
       newFamily.updatedByUserId = clerkUserId;
       const savedFamily = await newFamily.save();
@@ -63,14 +67,103 @@ export const readFamily = async (
   req: Request<{ familyId: string }>,
   res: Response
 ) => {
-  const funcName="readFamily";
-  try {
-    const family = await FamilyModel.findOne({
-      handle: req.params.familyId,
-    }).lean<FamilyRecord>();
+  const funcName = "readFamily";
 
-    if (!family) {
-      console.warn(`${modName}${funcName} Failed to find family ${req.params.familyId}`);
+  try {
+    const data = await readFamilyService(
+      req.params.familyId
+    );
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Family retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    console.error(
+      `${modName}${funcName}`,
+      error
+    );
+
+    if (
+      error instanceof Error &&
+      error.message ===
+        "FAMILY_NOT_FOUND"
+    ) {
+      return res.status(404).json({
+        success: false,
+        message: "Family not found",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to retrieve family",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error",
+    });
+  }
+};
+
+export const updateFamily = async (
+  req: Request<
+    { familyId: string },
+    unknown,
+    Partial<FamilyRecord>
+  >,
+  res: Response
+) => {
+  const funcName = "updateFamily";
+
+  try {
+    const clerkUserId =
+      req.currentUser?.clerkUserId;
+
+    if (!clerkUserId) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "Authenticated user is unavailable.",
+      });
+    }
+
+    const familyHandle =
+      req.params.familyId;
+
+    /*
+     * Prevent the client from changing
+     * immutable or audit-controlled fields.
+     */
+    const {
+      handle: _ignoredHandle,
+      createdByUserId:
+        _ignoredCreatedByUserId,
+      updatedByUserId:
+        _ignoredUpdatedByUserId,
+      ...safeUpdate
+    } = req.body;
+
+    const updatedFamily =
+      await FamilyModel.findOneAndUpdate(
+        {
+          handle: familyHandle,
+        },
+        {
+          ...safeUpdate,
+          updatedByUserId:
+            clerkUserId,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      ).lean<FamilyRecord>();
+
+    if (!updatedFamily) {
       return res.status(404).json({
         success: false,
         message: "Family not found",
@@ -79,49 +172,26 @@ export const readFamily = async (
 
     return res.status(200).json({
       success: true,
-      message: "Family retrieved successfully",
-      data: family,
+      message:
+        "Family updated successfully",
+      data: updatedFamily,
     });
   } catch (error) {
-    console.warn(`${modName}${funcName} Catch error Failed to retrieve family`);
+    console.error(
+      `${modName}${funcName}`,
+      error
+    );
+
     return res.status(500).json({
       success: false,
-      message: "Failed to retrieve family",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message:
+        "Failed to update family",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unknown error",
     });
   }
-};
-
-export const updateFamily = async (
-    req: Request<{ familyId: string }, {}, Partial<FamilyDocument>>,
-    res: Response
-) => {
-    try {
-      const clerkUserId = req.currentUser?.clerkUserId;
-      if (!clerkUserId) {
-        return res.status(401).json({
-          success: false,
-          message:
-            "Authenticated user is unavailable.",
-        });
-      }
-      const wFamilyId = req.params.familyId;
-      const updateData = req.body;
-      updateData.updatedByUserId = clerkUserId;
-      console.log("family.controller, updateFamily", wFamilyId, updateData);
-
-      const updatedFamily: FamilyDocument | null =
-          await FamilyModel.findOneAndUpdate({ handle: wFamilyId }, updateData, {
-              new: true,
-          });
-
-      if (!updatedFamily)
-        return res.status(404).json({ message: "Family not found" });
-      res.status(200).json(updatedFamily);
-    } catch (error) {
-      console.error("Error updating Family:", error);
-      res.status(500).json({ message: "Server error", error });
-    }
 };
 
 export const deleteFamily = async (

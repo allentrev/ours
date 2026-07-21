@@ -240,6 +240,11 @@ export interface ActorFamily {
   displayName: string;
 }
 
+export interface PersonActor {
+  handle: string;
+  displayName: string;
+}
+
 export interface ActorChildFamily {
   handle: string;
   displayName: string;
@@ -264,4 +269,21 @@ export interface PersonActorData {
    * These are possible destinations when adding a child.
    */
   childFamilies: ActorChildFamily[];
+}
+
+export interface FamilyDetailsData {
+  handle: string;
+  grampsId?: string;
+
+  father?: PersonActor;
+  mother?: PersonActor;
+  children: PersonActor[];
+
+  relationshipType?: string;
+  relationshipDate?: string;
+
+  relationshipPlaceHandle?: string;
+  relationshipPlaceName?: string;
+
+  notes: NoteRecord[];
 }

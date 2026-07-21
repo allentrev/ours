@@ -7,6 +7,7 @@ import type {
   ActorEventType,
   PersonAddType,
   TreePerson,
+  FamilyDetailsData,
 } from "../../types/familyTypes";
 
 import {
@@ -15,12 +16,17 @@ import {
 
 import {
   createRelatedPerson,
+  updateFamily,
 } from "../../utilities/Family/utils";
 
 import PersonDetailsModal from "./PersonDetailsModal";
 import FamilyDetailsModal from "./FamilyDetailsModal";
+import FamilyEditModal from "./FamilyEditModal";
+
 import PersonRelationshipsModal from "./PersonRelationshipsModal";
 import PersonAddModal from "./PersonAddModal";
+
+
 
 interface Props {
   person: TreePerson | null;
@@ -57,6 +63,12 @@ const DetailsPanel = ({
     setFamilyDetailsHandle,
   ] = useState<string | null>(null);
 
+  const [
+    familyEditItem,
+    setFamilyEditItem,
+  ] = useState<FamilyDetailsData | null>(
+    null
+  );
 
   const isLiving = !person?.deathDate;
 
@@ -259,11 +271,53 @@ const DetailsPanel = ({
         }}
       />
       <FamilyDetailsModal
-        open={familyDetailsHandle !== null}
-        familyHandle={familyDetailsHandle}
+        open={
+          familyDetailsHandle !== null
+        }
+        familyHandle={
+          familyDetailsHandle
+        }
         onClose={() =>
           setFamilyDetailsHandle(null)
         }
+        onEdit={(family) => {
+          setFamilyDetailsHandle(null);
+          setFamilyEditItem(family);
+        }}
+      />
+      <FamilyEditModal
+        open={familyEditItem !== null}
+        initialFamily={familyEditItem}
+        onClose={() =>
+          setFamilyEditItem(null)
+        }
+        onSave={async (family) => {
+          const token = await getToken({
+            skipCache: true,
+          });
+
+          if (!token) {
+            throw new Error(
+              "Authentication token is unavailable."
+            );
+          }
+
+          const updatedFamily =
+            await updateFamily(
+              family,
+              token
+            );
+
+          setFamilyEditItem(null);
+
+          setFamilyDetailsHandle(
+            updatedFamily.handle
+          );
+
+          setRelationshipsRefreshKey(
+            (current) => current + 1
+          );
+        }}
       />
       <PersonAddModal
         open={personAddType !== null}
