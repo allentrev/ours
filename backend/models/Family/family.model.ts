@@ -14,7 +14,14 @@ const familySchema = new Schema<FamilyRecord>(
 
     relationshipType: {
       type: String,
-      enum: ["marriage", "union", "unmarried", "unknown", "Married", "Unknown", "Union", "Unmarried", "Civil Union"],
+      enum: [
+        "marriage",  "Married",
+        "union",  "Union",
+        "unmarried",  "Unmarried",
+        "unknown", "Unknown",
+        "civil union", "Civil Union",
+        "divrced", "Divrced",
+      ],
       default: "Unknown",
     },
     relationshipDate: { type: String },

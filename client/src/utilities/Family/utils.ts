@@ -1,5 +1,7 @@
 import axios from "axios";
 
+import type { ApiResponse, } from "../../types/apiTypes";
+
 import type {
   TreeMode,
   TreeResponse,
@@ -21,14 +23,70 @@ import type {
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 const modName = "/utilities/Family/utils/";
 
+const readApiResponse = async <T>(
+  res: Response,
+  fallbackMessage: string
+): Promise<T> => {
+  let response: ApiResponse<T>;
+
+  try {
+    response =
+      await res.json() as ApiResponse<T>;
+  } catch {
+    throw new Error(
+      fallbackMessage
+    );
+  }
+
+  if (!res.ok || !response.success) {
+    throw new Error(
+      response.errors?.join("\n") ||
+      response.message ||
+      fallbackMessage
+    );
+  }
+
+  if (response.data === undefined) {
+    throw new Error(
+      "The server returned no data."
+    );
+  }
+
+  return response.data;
+};
+
 export const searchFamilyPeople = async (
   query: string
-) => {
-  const res = await axios.get(
-    `${API_URL}/family/search?q=${encodeURIComponent(query)}`
-  );
+): Promise<PersonRecord[]> => {
+  const url =
+    `${import.meta.env.VITE_BACKEND_URL}` +
+    `/family/search?q=${encodeURIComponent(
+      query
+    )}`;
 
-  return res.data.data;
+  const res = await fetch(url);
+
+  return readApiResponse<PersonRecord[]>(
+    res,
+    "Failed to search family people."
+  );
+};
+
+export const searchFamilyPlaces = async (
+  query: string
+): Promise<PlaceRecord[]> => {
+  const url =
+    `${import.meta.env.VITE_BACKEND_URL}` +
+    `/family/places/search?q=${encodeURIComponent(
+      query
+    )}`;
+
+  const res = await fetch(url);
+
+  return readApiResponse<PlaceRecord[]>(
+    res,
+    "Failed to search family places."
+  );
 };
 
 export const fetchTree = async (
@@ -151,9 +209,11 @@ export const createPerson = async (
   newNotes: NewNoteInput[] = [],
   token: string | null,
 ): Promise<PersonRecord> => {
+  const funcName = "createPerson";
   const url = `${import.meta.env.VITE_BACKEND_URL}/family/person`;
 
   try {
+    console.log(`${modName}${funcName} entry`);
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -165,11 +225,13 @@ export const createPerson = async (
 
     if (!res.ok) {
       const errorText = await res.text();
+      console.log(`${modName}${funcName} Failed to create Family Person`);
       throw new Error(`Failed to create family person: ${errorText}`);
     }
 
     return await res.json();
   } catch (err) {
+    console.log(`${modName}${funcName} catch error`, err);
     throw new Error(`createPerson error: ${err}`);
   }
 };
@@ -298,9 +360,12 @@ export const getAllFamilies = async (): Promise<FamilyRecord[]> => {
       headers: { "Content-Type": "application/json" },
     });
 
-    const data = await res.json();
-    //console.log("utils getAllFamilies", data);
-    return res.ok ? (data as FamilyRecord[]) : [];
+    return readApiResponse<FamilyRecord[]>(
+      res,
+      "Failed to retrieve families."
+    );
+
+
   } catch (err) {
     throw new Error(`getAllFamilies error: ${err}`);
   }
@@ -308,6 +373,7 @@ export const getAllFamilies = async (): Promise<FamilyRecord[]> => {
 
 export const createFamily = async (
   item: FamilyRecord,
+  newNotes: NewNoteInput[],
   token: string | null,
 ): Promise<FamilyRecord> => {
   const url = `${import.meta.env.VITE_BACKEND_URL}/family/family`;
@@ -319,15 +385,16 @@ export const createFamily = async (
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
       },
-      body: JSON.stringify(item),
+      body: JSON.stringify({
+        family: item,
+        newNotes,
+      }),
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to create family: ${errorText}`);
-    }
-
-    return await res.json();
+    return readApiResponse<FamilyRecord>(
+      res,
+      "Failed to create family."
+    );
   } catch (err) {
     throw new Error(`createFamily error: ${err}`);
   }
@@ -348,17 +415,11 @@ export const readFamily = async (
         "Content-Type": "application/json",
       },
     });
+    return readApiResponse<FamilyDetailsData>(
+      res,
+      "Failed to retrieve family."
+    );
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(
-        data.message ??
-          "Failed to read family."
-      );
-    }
-
-    return data.data as FamilyDetailsData;
   } catch (err) {
     throw new Error(
       `${modName}${funcName}: ${err}`
@@ -368,36 +429,52 @@ export const readFamily = async (
 
 export const updateFamily = async (
   updatedRecord: FamilyRecord,
-  token: string,
+  newNotes: NewNoteInput[],
+  token: string | null,
 ): Promise<FamilyRecord> => {
-  console.log("utilities/Family/utils/updateFamily updatedRecord:", updatedRecord);
-  const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${updatedRecord.handle
-    }`;
+  const funcName = "updateFamily";
+
+  const url =
+    `${import.meta.env.VITE_BACKEND_URL}` +
+    `/family/family/${updatedRecord.handle}`;
 
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(updatedRecord),
+      body: JSON.stringify({
+        family: updatedRecord,
+        newNotes,
+      }),
     });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to update family: ${errorText}`);
-    }
-    const response = await res.json();
-    return response.data as FamilyRecord;
-  } catch (err) {
-    throw new Error(`updateFamily error: ${err}`);
+    
+    return readApiResponse<FamilyRecord>(
+      res,
+      "Failed to update family."
+    );
+    
+  } catch (error) {
+    throw new Error(
+      `${funcName} error: ${
+        error instanceof Error
+          ? error.message
+          : String(error)
+      }`
+    );
   }
 };
+
+interface DeleteFamilyResult {
+  handle: string;
+}
 
 export const deleteFamily = async (
   handle: string,
   token: string | null
-): Promise<void> => {
+): Promise<DeleteFamilyResult>=> {
   if (!handle) throw new Error("Handle is required for deletion.");
 
   const url = `${import.meta.env.VITE_BACKEND_URL}/family/family/${encodeURIComponent(handle)}`;
@@ -411,11 +488,11 @@ export const deleteFamily = async (
       },
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to delete family: ${errorText}`);
-    }
-  } catch (err) {
+    return readApiResponse<DeleteFamilyResult>(
+      res,
+      "Failed to delete family."
+    );
+    } catch (err) {
     throw new Error(`deleteFamily error: ${err}`);
   }
 };
@@ -518,17 +595,6 @@ export const deletePlace = async (
   } catch (err) {
     throw new Error(`deletePlace error: ${err}`);
   }
-};
-
-
-export const searchFamilyPlaces = async (
-  query: string
-): Promise<PlaceRecord[]> => {
-  const res = await axios.get(
-    `${API_URL}/family/places/search?q=${encodeURIComponent(query)}`
-  );
-
-  return res.data.data;
 };
 
 //TODO: this can be removed alongwith controller and router

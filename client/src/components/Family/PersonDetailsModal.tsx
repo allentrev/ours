@@ -254,7 +254,7 @@ const PersonDetailsModal = ({
                 </div>
               ) : notes.length === 0 ? (
                 <div className="text-sm text-gray-500">
-                  No Notes found
+                  No Notes fPersonEditModalound
                 </div>
               ) : (
                 <div className="max-h-48 space-y-1 overflow-y-auto pr-2 text-sm text-gray-700">

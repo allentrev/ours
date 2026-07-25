@@ -1,10 +1,18 @@
-import React from "react";
-import { useEffect, useState, } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FC,
+} from "react";
 
 import type {
+  PersonRecord,
+  PersonActor,
   FamilyRecord,
   PlaceOptions,
   PlaceRecord,
+  NewNoteInput,
+  NoteRecord,
 } from "../../types/familyTypes";
 
 import {
@@ -14,8 +22,10 @@ import {
 
 //import { readFamily } from "../../utilities/Family/utils";
 import NewPlaceModal from "./NewPlaceModal";
-import PlaceSelectorModal from "./SelectorPlaceModal";
+import NewNoteModal from "./NewNoteModal";
+import PlaceSelectorModal from "./PlaceSelectorModal";
 import GenealogyDatePickerModal from "./GenealogyDatePickerModal";
+import PersonSelectorModal from "./PersonSelectorModal";
 
 import {
   MagnifyingGlassIcon,
@@ -25,15 +35,42 @@ interface FamilyEditFormAreaProps {
   item: FamilyRecord;
   setItem: (item: FamilyRecord) => void;
   isNew: boolean;
+
+  fatherName?: string;
+  motherName?: string;
+
+  childActors?: PersonActor[];
+  existingNotes?: NoteRecord[];
+  draftNotes?: NewNoteInput[];
+  
+  onCreateChild?: () => void;
+  onChildActorsChange?: (
+    children: PersonActor[]
+  ) => void;
+  onDraftNotesChange?: (
+    notes: NewNoteInput[]
+  ) => void;
 }
 const iconButtonClass =
   "flex h-9 w-9 items-center justify-center rounded " +
   "border border-gray-300 bg-gray-100 text-gray-700 " +
   "hover:bg-gray-200";
 
-const FamilyEditFormArea: React.FC<
+const FamilyEditFormArea: FC<
   FamilyEditFormAreaProps
-> = ({ item, setItem, isNew }) => {
+> = ({
+    item,
+    setItem,
+    isNew,
+    childActors = [],
+    existingNotes = [],
+    draftNotes = [],
+    fatherName,
+    motherName,
+    onCreateChild = () => {},
+    onChildActorsChange = () => {},
+    onDraftNotesChange = () => {},
+}) => {
   
   const [
     relationshipDateModalOpen,
@@ -60,6 +97,39 @@ const FamilyEditFormArea: React.FC<
     countries: [],
   });
 
+  const [
+    newNoteModalOpen,
+    setNewNoteModalOpen,
+  ] = useState(false);
+
+  const [
+    parentSelector,
+    setParentSelector,
+  ] = useState<{
+    open: boolean;
+    field:
+      | "fatherHandle"
+      | "motherHandle";
+  }>({
+    open: false,
+    field: "fatherHandle",
+  });
+
+  const [
+    selectedFatherName,
+    setSelectedFatherName,
+  ] = useState(fatherName ?? "");
+
+  const [
+    selectedMotherName,
+    setSelectedMotherName,
+  ] = useState(motherName ?? "");
+
+  const [
+    childSelectorOpen,
+    setChildSelectorOpen,
+  ] = useState(false);
+
   useEffect(() => {
     fetchFamilyPlaceOptions()
       .then(setPlaceOptions)
@@ -70,6 +140,72 @@ const FamilyEditFormArea: React.FC<
         );
       });
   }, []);
+
+  useEffect(() => {
+    setSelectedFatherName(
+      fatherName ?? ""
+    );
+
+    setSelectedMotherName(
+      motherName ?? ""
+    );
+  }, [
+    fatherName,
+    motherName,
+  ]);
+
+  const handleChildSelected = (
+    person: PersonRecord
+  ) => {
+    if (
+      item.childHandles?.includes(
+        person.handle
+      )
+    ) {
+      setChildSelectorOpen(false);
+      return;
+    }
+
+    setItem({
+      ...item,
+      childHandles: [
+        ...(item.childHandles ?? []),
+        person.handle,
+      ],
+    });
+
+    onChildActorsChange([
+      ...childActors,
+      {
+        handle: person.handle,
+        displayName:
+          person.displayName,
+      },
+    ]);
+
+    setChildSelectorOpen(false);
+  };
+
+  const handleRemoveChild = (
+    childHandle: string
+  ) => {
+    setItem({
+      ...item,
+      childHandles:
+        (item.childHandles ?? [])
+          .filter(
+            (handle) =>
+              handle !== childHandle
+          ),
+    });
+
+    onChildActorsChange(
+      childActors.filter(
+        (child) =>
+          child.handle !== childHandle
+      )
+    );
+  };
 
   const handlePlaceSelected = (
     place: PlaceRecord
@@ -83,8 +219,9 @@ const FamilyEditFormArea: React.FC<
     setSelectPlaceModalOpen(false);
   };
 
-  const handlePlaceCreated = async (
-    place: PlaceRecord
+  const handlePlaceCreated = (
+    place: PlaceRecord,
+    options: PlaceOptions
   ) => {
     setItem({
       ...item,
@@ -92,12 +229,40 @@ const FamilyEditFormArea: React.FC<
         place.handle,
     });
 
-    setPlaceOptions(
-      await fetchFamilyPlaceOptions()
-    );
-
+    setPlaceOptions(options);
     setNewPlaceModalOpen(false);
   };
+
+  const handleAddDraftNote = (
+    text: string
+  ) => {
+    const trimmedText = text.trim();
+
+    if (!trimmedText) {
+      return;
+    }
+
+    onDraftNotesChange([
+      ...draftNotes,
+      {
+        text: trimmedText,
+      },
+    ]);
+
+    setNewNoteModalOpen(false);
+  };
+
+  const displayedNotes = [
+    ...existingNotes,
+
+    ...draftNotes.map(
+      (note, index) => ({
+        handle: `draft-${index}`,
+        grampsId: "",
+        text: note.text,
+      })
+    ),
+  ];
 
   const relationshipPlaceName =
     item.relationshipPlaceHandle
@@ -109,9 +274,12 @@ const FamilyEditFormArea: React.FC<
       : "";
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    event: ChangeEvent<
+      HTMLInputElement |
+      HTMLSelectElement
+    >
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = event.target;
 
     const updatedItem: FamilyRecord = {
       ...item,
@@ -121,7 +289,34 @@ const FamilyEditFormArea: React.FC<
     setItem(updatedItem);
   };
 
-  
+  const handleParentSelected = (
+    person: PersonRecord
+  ) => {
+    setItem({
+      ...item,
+      [parentSelector.field]:
+        person.handle,
+    });
+
+    if (
+      parentSelector.field ===
+      "fatherHandle"
+    ) {
+      setSelectedFatherName(
+        person.displayName
+      );
+    } else {
+      setSelectedMotherName(
+        person.displayName
+      );
+    }
+
+    setParentSelector((current) => ({
+      ...current,
+      open: false,
+    }));
+  };
+
   return (
   <>
     <form
@@ -140,25 +335,99 @@ const FamilyEditFormArea: React.FC<
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col">
-            Father Handle:
-            <input
-              type="text"
-              name="fatherHandle"
-              value={item.fatherHandle ?? ""}
-              onChange={handleChange}
-              className="rounded border border-gray-300 px-2 py-1"
-            />
+            Father:
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={selectedFatherName}
+                readOnly
+                className="
+                  w-full rounded
+                  border border-gray-300
+                  bg-gray-100 px-2 py-1
+                "
+              />
+
+              <button
+                type="button"
+                title="Select father"
+                onClick={() =>
+                  setParentSelector({
+                    open: true,
+                    field: "fatherHandle",
+                  })
+                }
+                className={iconButtonClass}
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" />
+              </button>
+
+              <button
+                type="button"
+                title="Remove father"
+                onClick={() => {
+                  setItem({
+                    ...item,
+                    fatherHandle: undefined,
+                  });
+
+                  setSelectedFatherName("");
+                }}
+                className={iconButtonClass}
+              >
+                ×
+              </button>
+
+            </div>
           </label>
 
           <label className="flex flex-col">
-            Mother Handle:
-            <input
-              type="text"
-              name="motherHandle"
-              value={item.motherHandle ?? ""}
-              onChange={handleChange}
-              className="rounded border border-gray-300 px-2 py-1"
-            />
+            Mother:
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={selectedMotherName}
+                readOnly
+                className="
+                  w-full rounded
+                  border border-gray-300
+                  bg-gray-100 px-2 py-1
+                "
+              />
+
+              <button
+                type="button"
+                title="Select mother"
+                onClick={() =>
+                  setParentSelector({
+                    open: true,
+                    field: "motherHandle",
+                  })
+                }
+                className={iconButtonClass}
+              >
+                <MagnifyingGlassIcon className="h-5 w-5" />
+              </button>
+
+              <button
+                type="button"
+                title="Remove mother"
+                onClick={() => {
+                  setItem({
+                    ...item,
+                    motherHandle: undefined,
+                  });
+
+                  setSelectedMotherName("");
+                }}
+                className={iconButtonClass}
+              >
+                ×
+              </button>
+
+            </div>
           </label>
 
           <label className="flex flex-col">
@@ -242,20 +511,54 @@ const FamilyEditFormArea: React.FC<
           </label>
         </div>
       </fieldset>
+
       {/* Children */}
       <fieldset className="rounded border border-gray-300 p-4">
         <legend className="px-2 font-semibold text-gray-700">
           Children
         </legend>
 
-        {item.childHandles && item.childHandles.length > 0 ? (
+        {childActors.length > 0 ? (
           <div className="space-y-2">
-            {item.childHandles.map((handle) => (
+            {childActors.map((child) => (
               <div
-                key={handle}
-                className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+                key={child.handle}
+                className="
+                  flex items-center
+                  justify-between gap-3
+                  rounded border
+                  border-gray-200
+                  bg-gray-50
+                  px-3 py-2
+                "
               >
-                {handle}
+                <div className="min-w-0">
+                  <div className="truncate text-sm text-gray-800">
+                    {child.displayName}
+                  </div>
+
+                  <div className="text-xs text-gray-500">
+                    {child.handle}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleRemoveChild(
+                      child.handle
+                    )
+                  }
+                  className="
+                    shrink-0 rounded
+                    border border-red-300
+                    px-3 py-1
+                    text-xs text-red-700
+                    hover:bg-red-50
+                  "
+                >
+                  Remove
+                </button>
               </div>
             ))}
           </div>
@@ -264,6 +567,122 @@ const FamilyEditFormArea: React.FC<
             No children recorded.
           </p>
         )}
+
+        <button
+          type="button"
+          onClick={() =>
+            setChildSelectorOpen(true)
+          }
+          className="
+            mt-3 rounded
+            bg-blue-600
+            px-3 py-2
+            text-sm text-white
+            hover:bg-blue-700
+          "
+        >
+          Add Existing Child
+        </button>
+
+        <button
+          type="button"
+          onClick={onCreateChild}
+          className="
+            rounded bg-blue-600
+            px-3 py-2
+            text-sm text-white
+            hover:bg-blue-700
+          "
+        >
+          New Child
+        </button>
+
+      </fieldset>
+
+      {/* Notes */}
+      <fieldset className="rounded border border-gray-300 p-4">
+        <legend className="px-2 font-semibold text-gray-700">
+          Notes
+        </legend>
+
+        {displayedNotes.length === 0 ? (
+          <div className="text-sm text-gray-500">
+            No Notes found
+          </div>
+        ) : (
+          <div className="max-h-48 space-y-1 overflow-y-auto pr-2 text-sm text-gray-700">
+            {displayedNotes.map(
+              (note, index) => {
+                const isDraft =
+                  note.handle.startsWith(
+                    "draft-"
+                  );
+
+                return (
+                  <div
+                    key={note.handle}
+                    className={
+                      "flex items-start gap-2 rounded border p-1 " +
+                      (isDraft
+                        ? "border-blue-300 bg-blue-50"
+                        : "border-gray-200 bg-gray-50")
+                    }
+                  >
+                    <div>
+                      {index + 1}
+                    </div>
+
+                    <div className="min-w-0 flex-1 whitespace-pre-wrap">
+                      {note.text}
+
+                      {isDraft && (
+                        <span className="ml-2 text-xs text-blue-600">
+                          unsaved
+                        </span>
+                      )}
+                    </div>
+
+                    {isDraft && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const draftIndex =
+                            Number(
+                              note.handle.replace(
+                                "draft-",
+                                ""
+                              )
+                            );
+
+                          onDraftNotesChange(
+                            draftNotes.filter(
+                              (_, index) =>
+                                index !== draftIndex
+                            )
+                          );
+                        }}
+                        className="shrink-0 px-2 text-xs text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+            )}
+          </div>
+        )}
+
+        <button
+          type="button"
+          title="Add Note"
+          onClick={() =>
+            setNewNoteModalOpen(true)
+          }
+          className={`${iconButtonClass} mt-3`}
+        >
+          +
+        </button>
       </fieldset>
 
       {/* Ids */}
@@ -277,7 +696,7 @@ const FamilyEditFormArea: React.FC<
             Handle:
             <input
               type="text"
-              value={item.handle}
+              value={item.handle ?? ""}
               readOnly
               className="border border-gray-300 rounded px-2 py-1 bg-gray-100"
             />
@@ -287,7 +706,7 @@ const FamilyEditFormArea: React.FC<
             Gramps Id:
             <input
               type="text"
-              value={item.grampsId}
+              value={item.grampsId ?? ""}
               readOnly
               className="border border-gray-300 rounded px-2 py-1 bg-gray-100"
             />
@@ -295,6 +714,25 @@ const FamilyEditFormArea: React.FC<
         </div>
       </fieldset>
     </form>
+    <PersonSelectorModal
+      open={childSelectorOpen}
+      title="Select Child"
+      excludeHandles={[
+        ...(item.childHandles ?? []),
+        item.fatherHandle,
+        item.motherHandle,
+      ].filter(
+        (handle): handle is string =>
+          Boolean(handle)
+      )}
+      onClose={() =>
+        setChildSelectorOpen(false)
+      }
+      onSelectPerson={
+        handleChildSelected
+      }
+    />
+
     <PlaceSelectorModal
       open={selectPlaceModalOpen}
       onClose={() =>
@@ -313,6 +751,43 @@ const FamilyEditFormArea: React.FC<
       }
       onPlaceCreated={
         handlePlaceCreated
+      }
+    />
+    <NewNoteModal
+      open={newNoteModalOpen}
+      onClose={() =>
+        setNewNoteModalOpen(false)
+      }
+      onSave={handleAddDraftNote}
+    />
+
+    <PersonSelectorModal
+      open={parentSelector.open}
+      title={
+        parentSelector.field ===
+        "fatherHandle"
+          ? "Select Father"
+          : "Select Mother"
+      }
+      excludeHandles={[
+        parentSelector.field ===
+        "fatherHandle"
+          ? item.motherHandle
+          : item.fatherHandle,
+      ].filter(
+        (handle): handle is string =>
+          Boolean(handle)
+      )}
+      onClose={() =>
+        setParentSelector(
+          (current) => ({
+            ...current,
+            open: false,
+          })
+        )
+      }
+      onSelectPerson={
+        handleParentSelected
       }
     />
 

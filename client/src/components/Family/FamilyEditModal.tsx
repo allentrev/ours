@@ -6,89 +6,232 @@ import {
 } from "react";
 
 import FamilyEditFormArea from "./FamilyEditFormArea";
+import {
+  validateFamilyDraft,
+} from "../../utilities/Family/validators";
 
 import type {
   FamilyRecord,
   FamilyDetailsData,
+  NewNoteInput,
+  PersonActor,
 } from "../../types/familyTypes";
+
+type FamilyEditMode =
+  | "create"
+  | "edit";
 
 interface FamilyEditModalProps {
   open: boolean;
-  initialFamily: FamilyDetailsData | null;
+  mode: FamilyEditMode;
+  createdChild: PersonActor | null;
+  
+  initialFamily:
+    | FamilyDetailsData
+    | null;
+  initialRecord:
+    | FamilyRecord
+    | null;
+
+  initialCreateChildren?: PersonActor[];
+
   onClose: () => void;
-  onSave: ( family: FamilyRecord ) => Promise<void>;
+  onCreateChild: () => void;
+  onCreatedChildConsumed: () => void;
+  onSave: (
+    family: FamilyRecord,
+    draftNotes: NewNoteInput[],
+    mode: FamilyEditMode,
+  ) => Promise<void>;
 }
 
 const FamilyEditModal = ({
   open,
+  mode,
+  createdChild,
   initialFamily,
+  initialRecord,
+  initialCreateChildren = [],
   onClose,
+  onCreatedChildConsumed,
+  onCreateChild,
   onSave,
 }: FamilyEditModalProps) => {
   const [draft, setDraft] =
     useState<FamilyRecord | null>(
       null
     );
-  const [
-    relationshipDateModalOpen,
-    setRelationshipDateModalOpen,
-  ] = useState(false);
+
   const [saving, setSaving] =
     useState(false);
 
   const [saveError, setSaveError] =
     useState<string | null>(null);
 
+  const [
+    draftNotes,
+    setDraftNotes,
+  ] = useState<NewNoteInput[]>([]);
+
+  const [
+    childActors,
+    setChildActors,
+  ] = useState<PersonActor[]>([]);
+
   useEffect(() => {
-    if (!open || !initialFamily) {
+    if (!open) {
       setDraft(null);
+      setDraftNotes([]);
       setSaveError(null);
+      setSaving(false);
+
       return;
     }
 
-    setDraft({
-      handle: initialFamily.handle,
-      grampsId: initialFamily.grampsId,
+    if (
+      mode === "edit" &&
+      initialFamily
+    ) {
+      setDraft({
+        handle:
+          initialFamily.handle,
 
-      fatherHandle:
-        initialFamily.father?.handle,
+        grampsId:
+          initialFamily.grampsId,
 
-      motherHandle:
-        initialFamily.mother?.handle,
+        fatherHandle:
+          initialFamily.father
+            ?.handle,
 
-      childHandles:
-        initialFamily.children.map(
-          (child) => child.handle
-        ),
+        motherHandle:
+          initialFamily.mother
+            ?.handle,
 
-      relationshipType:
-        initialFamily.relationshipType,
+        childHandles:
+          initialFamily.children.map(
+            (child) =>
+              child.handle
+          ),
 
-      relationshipDate:
-        initialFamily.relationshipDate,
+        relationshipType:
+          initialFamily
+            .relationshipType,
 
-      relationshipPlaceHandle:
-        initialFamily.relationshipPlaceHandle,
+        relationshipDate:
+          initialFamily
+            .relationshipDate,
 
-      noteHandles:
-        initialFamily.notes.map(
-          (note) => note.handle
-        ),
+        relationshipPlaceHandle:
+          initialFamily
+            .relationshipPlaceHandle,
 
-      mediaHandles: [],
+        noteHandles:
+          initialFamily.notes.map(
+            (note) =>
+              note.handle
+          ),
 
-      origin: "local",
-    } as FamilyRecord);
+        mediaHandles: [],
 
+        origin: "local",
+      } as FamilyRecord);
+      setChildActors([
+        ...initialFamily.children,
+      ]);
+    } else if (
+      mode === "create" &&
+      initialRecord
+    ) {
+      setDraft({
+        ...initialRecord,
+
+        childHandles: [
+          ...(initialRecord
+            .childHandles ?? []),
+        ],
+
+        noteHandles: [
+          ...(initialRecord
+            .noteHandles ?? []),
+        ],
+      });
+      setChildActors([
+        ...initialCreateChildren,
+      ]);
+    } else {
+      setDraft(null);
+      setChildActors([]);
+    }
+
+    setDraftNotes([]);
     setSaveError(null);
-  }, [open, initialFamily]);
+    setSaving(false);
+  }, [
+    open,
+    mode,
+    initialFamily,
+    initialRecord,
+    initialCreateChildren,
+  ]);
 
-  if (!open || !draft) {
-    return null;
-  }
+  useEffect(() => {
+    if (!createdChild || !open) {
+      return;
+    }
+
+    setDraft((current) => {
+      if (
+        !current ||
+        current.childHandles?.includes(
+          createdChild.handle
+        )
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        childHandles: [
+          ...(current.childHandles ?? []),
+          createdChild.handle,
+        ],
+      };
+    });
+
+    setChildActors((current) => {
+      if (
+        current.some(
+          (child) =>
+            child.handle ===
+            createdChild.handle
+        )
+      ) {
+        return current;
+      }
+
+      return [
+        ...current,
+        createdChild,
+      ];
+    });
+
+    onCreatedChildConsumed();
+  }, [
+    createdChild,
+    open,
+    onCreatedChildConsumed,
+  ]);
 
   const handleSave = async () => {
     if (!draft || saving) {
+      return;
+    }
+
+    const validationError =
+      validateFamilyDraft(draft);
+
+    if (validationError) {
+      setSaveError(validationError);
       return;
     }
 
@@ -96,7 +239,7 @@ const FamilyEditModal = ({
       setSaving(true);
       setSaveError(null);
 
-      await onSave(draft);
+      await onSave(draft, draftNotes, mode);
     } catch (error) {
       console.error(
         "Failed to save family:",
@@ -113,15 +256,28 @@ const FamilyEditModal = ({
     }
   };
 
-  const familySurname = initialFamily
-    ? initialFamily.father?.displayName
-        ?.split(" ")
-        .at(-1) ??
-      initialFamily.mother?.displayName
-        ?.split(" ")
-        .at(-1) ??
-      "Unnamed"
-    : "Unnamed";
+  const familySurname =
+    initialFamily?.father
+      ?.displayName
+      ?.split(" ")
+      .at(-1) ??
+    initialFamily?.mother
+      ?.displayName
+      ?.split(" ")
+      .at(-1) ??
+    "";
+
+  const modalTitle =
+    mode === "create"
+      ? "Create Family"
+      : `Edit The ${
+          familySurname ||
+          "Unnamed"
+        } Family`;
+
+  if (!open || !draft) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
@@ -129,7 +285,7 @@ const FamilyEditModal = ({
         {/* Header */}
         <div className="shrink-0 border-b px-6 py-4">
           <h2 className="text-xl font-semibold text-gray-800">
-            Edit The {familySurname} Family
+            {modalTitle}
           </h2>
         </div>
 
@@ -138,7 +294,30 @@ const FamilyEditModal = ({
           <FamilyEditFormArea
             item={draft}
             setItem={setDraft}
-            isNew={false}
+            isNew={mode === "create"}
+            
+            childActors={childActors}
+            onChildActorsChange={
+              setChildActors
+            }
+
+            existingNotes={
+              initialFamily?.notes ?? []
+            }
+            draftNotes={draftNotes}
+            
+            fatherName={
+              initialFamily?.father
+                ?.displayName
+            }
+            motherName={
+              initialFamily?.mother
+                ?.displayName
+            }
+            onCreateChild={onCreateChild}
+            onDraftNotesChange={
+              setDraftNotes
+            }
           />
         </div>
         {saveError && (

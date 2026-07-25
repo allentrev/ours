@@ -487,7 +487,7 @@ export const buildRelationshipDiagram = (
     );
   });
 
-console.log("Sibling edges end", edges);
+//console.log("Sibling edges end", edges);
 /* -------------------- Partners -------------------- */
 
   const partnerItems = [

@@ -1,71 +1,157 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction} from "express";
 import type {} from "multer";
 
 import { FamilyModel } from "../../models/Family/family.model.js";
-import {
-  readFamilyService,
-} from "../../services/readFamily.service.js";
+
+import { withTransaction } from "../../lib/withTransaction.js";
+import { createdResponse, successResponse, } from "../../lib/apiResponse.js";
+
+import { resolveNoteHandles } from "../../services/noteResolver.js";
+import { readFamilyService, } from "../../services/readFamily.service.js";
 
 import { 
   generateHandle,
   generateLocalFamilyId,
 } from "../../lib/familyIdGenerator.js";
 
+import {
+  FamilyValidationError,
+  validateFamilyRelationships,
+} from "../../services/validateFamily.service.js";
+import { AppError } from "../../lib/AppError.js";
+
 import type {
   FamilyRecord,
   FamilyDocument,
+  UpdateFamilyRequestBody,
+  NewNoteInput,
 } from "../../types/family.types.js"
 
 const modName ="/controllers/family.controller/";
 
-export const getAllFamilies = async (req: Request, res: Response) => {
+export const getAllFamilies = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
     try {
         //console.log("family.controller, getAllFamilies");
         const families = await FamilyModel.find().lean<FamilyRecord[]>();
-        res.status(200).json(families);
+        return successResponse(
+          res,
+          families,
+          "Families retrieved successfully."
+        );
     } catch (error) {
-        res.status(500).json({ message: "Failed to fetch families", error });
+        next(error);
     }
 };
-//TODO: update API wrapper as per updateFamily
+
 export const createFamily = async (
-    req: Request<{}, {}, Partial<FamilyDocument>>,
-    res: Response
-) => {
-    const handle = generateHandle();
-    const localId = generateLocalFamilyId();
-    const origin="local";
-
-    try {
-      const clerkUserId = req.currentUser?.clerkUserId;
-      if (!clerkUserId) {
-        return res.status(401).json({
-          success: false,
-          message:
-            "Authenticated user is unavailable.",
-        });
-      }
-
-      console.log("family.controller, createFamily", req.body);
-      const newFamily = new FamilyModel(req.body);
-      newFamily.handle = handle;
-      newFamily.grampsId = localId;
-      newFamily.localId = localId;
-      newFamily.origin = origin;
-      newFamily.createdByUserId = clerkUserId;
-      newFamily.updatedByUserId = clerkUserId;
-      const savedFamily = await newFamily.save();
-      console.log("Family created");
-      res.status(201).json(savedFamily);
-    } catch (error) {
-      console.error("Family Save Failed:", error);
-      res.status(500).json({ message: "Error creating Family", error });
+  req: Request<
+    {},
+    {},
+    {
+      family: Partial<FamilyDocument>;
+      newNotes?: NewNoteInput[];
     }
+  >,
+  res: Response,
+  next: NextFunction
+) => {
+  const funcName = "createFamily";
+
+  try {
+    const clerkUserId =
+      req.currentUser?.clerkUserId;
+
+    if (!clerkUserId) {
+      throw new AppError(
+        401,
+        "Authenticated user is unavailable."
+      );
+    }
+
+    const {
+      family,
+      newNotes = [],
+    } = req.body;
+
+    if (!family) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Family data is required",
+      });
+    }
+
+    const savedFamily =
+      await withTransaction(
+        async (session) => {
+          const validatedRelationships =
+            await validateFamilyRelationships(
+              family,
+              session
+          );
+
+          const handle =
+            generateHandle();
+
+          const localId =
+            generateLocalFamilyId();
+
+          const noteHandles =
+            await resolveNoteHandles(
+              family.noteHandles ?? [],
+              newNotes,
+              session,
+              clerkUserId,
+            );
+
+          const createdFamilies =
+            await FamilyModel.create(
+              [
+                {
+                  ...family,
+                  ...validatedRelationships,
+
+                  handle,
+                  grampsId: localId,
+                  localId,
+                  origin: "local",
+
+                  noteHandles,
+
+                  createdByUserId:
+                    clerkUserId,
+
+                  updatedByUserId:
+                    clerkUserId,
+                },
+              ],
+              {
+                session,
+              }
+            );
+
+          return createdFamilies[0];
+        }
+      );
+
+      return createdResponse(
+        res,
+        savedFamily,
+        "Family created successfully."
+      );
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const readFamily = async (
   req: Request<{ familyId: string }>,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   const funcName = "readFamily";
 
@@ -74,48 +160,27 @@ export const readFamily = async (
       req.params.familyId
     );
 
-    return res.status(200).json({
-      success: true,
-      message:
-        "Family retrieved successfully",
+    return successResponse(
+      res,
       data,
-    });
-  } catch (error) {
-    console.error(
-      `${modName}${funcName}`,
-      error
+      "Family retrieved successfully."
     );
-
-    if (
-      error instanceof Error &&
-      error.message ===
-        "FAMILY_NOT_FOUND"
-    ) {
-      return res.status(404).json({
-        success: false,
-        message: "Family not found",
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Failed to retrieve family",
-      error:
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
-    });
+  } catch (error) {
+    next(error);
   }
 };
 
 export const updateFamily = async (
   req: Request<
     { familyId: string },
-    unknown,
-    Partial<FamilyRecord>
+    {},
+    {
+      family: Partial<FamilyDocument>;
+      newNotes?: NewNoteInput[];
+    }
   >,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   const funcName = "updateFamily";
 
@@ -124,95 +189,206 @@ export const updateFamily = async (
       req.currentUser?.clerkUserId;
 
     if (!clerkUserId) {
-      return res.status(401).json({
-        success: false,
-        message:
-          "Authenticated user is unavailable.",
-      });
+      throw new AppError(
+        401,
+        "Authenticated user is unavailable."
+      );
     }
 
-    const familyHandle =
+    const familyId =
       req.params.familyId;
 
-    /*
-     * Prevent the client from changing
-     * immutable or audit-controlled fields.
-     */
     const {
-      handle: _ignoredHandle,
-      createdByUserId:
-        _ignoredCreatedByUserId,
-      updatedByUserId:
-        _ignoredUpdatedByUserId,
-      ...safeUpdate
+      family,
+      newNotes = [],
     } = req.body;
 
-    const updatedFamily =
-      await FamilyModel.findOneAndUpdate(
-        {
-          handle: familyHandle,
-        },
-        {
-          ...safeUpdate,
-          updatedByUserId:
-            clerkUserId,
-        },
-        {
-          new: true,
-          runValidators: true,
-        }
-      ).lean<FamilyRecord>();
-
-    if (!updatedFamily) {
-      return res.status(404).json({
-        success: false,
-        message: "Family not found",
-      });
+    /*
+    console.log(
+      `${modName}${funcName} family, newNotes`,
+      family,
+      newNotes
+    );
+    */
+    
+    if (!family) {
+      throw new AppError(
+        400,
+        "Family data is required."
+      );
     }
 
-    return res.status(200).json({
-      success: true,
-      message:
-        "Family updated successfully",
-      data: updatedFamily,
-    });
-  } catch (error) {
-    console.error(
-      `${modName}${funcName}`,
-      error
-    );
+    const updatedFamily =
+      await withTransaction(
+        async (session) => {
+          const existingFamily =
+            await FamilyModel.findOne({
+              handle: familyId,
+            }).session(session);
 
-    return res.status(500).json({
-      success: false,
-      message:
-        "Failed to update family",
-      error:
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
-    });
+          if (!existingFamily) {
+            return null;
+          }
+
+          /*
+           * The client sends the complete editable
+           * family record. Validate that submitted
+           * state directly so omitted parent fields
+           * are treated as removals.
+           */
+          const validatedRelationships =
+            await validateFamilyRelationships(
+              family,
+              session
+            );
+
+          const noteHandles =
+            await resolveNoteHandles(
+              family.noteHandles ??
+                existingFamily.noteHandles ??
+                [],
+              newNotes,
+              session,
+              clerkUserId,
+            );
+
+          /*
+           * Remove fields that must not be controlled
+           * directly by the client or that require
+           * explicit relationship handling below.
+           */
+          const {
+            handle: _ignoredHandle,
+            createdByUserId:
+              _ignoredCreatedByUserId,
+            updatedByUserId:
+              _ignoredUpdatedByUserId,
+
+            fatherHandle:
+              _ignoredFatherHandle,
+            motherHandle:
+              _ignoredMotherHandle,
+            childHandles:
+              _ignoredChildHandles,
+
+            ...safeFamily
+          } = family;
+
+          const fieldsToSet: Record<
+            string,
+            unknown
+          > = {
+            ...safeFamily,
+
+            childHandles:
+              validatedRelationships
+                .childHandles,
+
+            noteHandles,
+
+            updatedByUserId:
+              clerkUserId,
+          };
+
+          const fieldsToUnset: Record<
+            string,
+            1
+          > = {};
+
+          if (
+            validatedRelationships
+              .fatherHandle
+          ) {
+            fieldsToSet.fatherHandle =
+              validatedRelationships
+                .fatherHandle;
+          } else {
+            fieldsToUnset.fatherHandle = 1;
+          }
+
+          if (
+            validatedRelationships
+              .motherHandle
+          ) {
+            fieldsToSet.motherHandle =
+              validatedRelationships
+                .motherHandle;
+          } else {
+            fieldsToUnset.motherHandle = 1;
+          }
+
+          const updateOperation: {
+            $set: Record<string, unknown>;
+            $unset?: Record<string, 1>;
+          } = {
+            $set: fieldsToSet,
+          };
+
+          if (
+            Object.keys(
+              fieldsToUnset
+            ).length > 0
+          ) {
+            updateOperation.$unset =
+              fieldsToUnset;
+          }
+
+          return FamilyModel.findOneAndUpdate(
+            {
+              handle: familyId,
+            },
+            updateOperation,
+            {
+              new: true,
+              runValidators: true,
+              session,
+            }
+          );
+        }
+      );
+
+    if (!updatedFamily) {
+      throw new AppError(
+        404,
+        "Family not found."
+      );
+    }
+
+    return successResponse(
+      res,
+      updatedFamily,
+      "Family updated successfully."
+    );
+  } catch (error) {
+    next(error);
   }
 };
 
 export const deleteFamily = async (
     req: Request<{ familyId: string }>,
-    res: Response
+    res: Response,
+    next: NextFunction
 ) => {
-    try {
-        console.log("family.controller, deleteFamily");
-        const wFamilyId = req.params.familyId;
+  try {
+    console.log("family.controller, deleteFamily");
+    const wFamilyId = req.params.familyId;
 
-        const deletedFamily = await FamilyModel.findOneAndDelete({ handle: wFamilyId });
+    const deletedFamily = await FamilyModel.findOneAndDelete({ handle: wFamilyId });
 
-        if (!deletedFamily) {
-            return res
-                .status(404)
-                .json({ message: "Family not found or already deleted" });
-        }
-
-        res.status(200).json({ message: "Family has been deleted" });
-    } catch (error) {
-        console.error("Error deleting Family:", error);
-        res.status(500).json({ message: "Server error", error });
+    if (!deletedFamily) {
+        return res
+            .status(404)
+            .json({ message: "Family not found or already deleted" });
     }
+    return successResponse(
+      res,
+      {
+        handle:
+          deletedFamily.handle,
+      },
+      "Family deleted successfully."
+    );
+  } catch (error) {
+    next(error);
+  }
 };

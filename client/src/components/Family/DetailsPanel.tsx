@@ -1,6 +1,6 @@
 // components/Family/DetailsPanel.tsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@clerk/clerk-react";
 
 import type {
@@ -8,6 +8,8 @@ import type {
   PersonAddType,
   TreePerson,
   FamilyDetailsData,
+  FamilyRecord,
+  PersonActor,
 } from "../../types/familyTypes";
 
 import {
@@ -15,11 +17,14 @@ import {
 } from "../../utilities/Family/formatters";
 
 import {
+  createPerson,
   createRelatedPerson,
+  createFamily,
   updateFamily,
 } from "../../utilities/Family/utils";
 
 import PersonDetailsModal from "./PersonDetailsModal";
+import NewPersonModal from "./NewPersonModal";
 import FamilyDetailsModal from "./FamilyDetailsModal";
 import FamilyEditModal from "./FamilyEditModal";
 
@@ -34,7 +39,7 @@ interface Props {
     personHandle: string
   ) => void;
 }
-//const modName = "/components/Family/DetailsPanel";
+const modName = "/components/Family/DetailsPanel";
 
 const DetailsPanel = ({
   person,
@@ -69,7 +74,34 @@ const DetailsPanel = ({
   ] = useState<FamilyDetailsData | null>(
     null
   );
+  
+  const [
+    familyEditMode,
+    setFamilyEditMode,
+  ] = useState<
+    "create" | "edit"
+  >("edit");
 
+  const [
+    familyCreateRecord,
+    setFamilyCreateRecord,
+  ] = useState<
+    FamilyRecord | null
+  >(null);
+  
+  const [
+    newFamilyChildOpen,
+    setNewFamilyChildOpen,
+  ] = useState(false);
+
+  const [
+    newlyCreatedFamilyChild,
+    setNewlyCreatedFamilyChild,
+  ] = useState<PersonActor | null>(
+    null
+  );
+
+  
   const isLiving = !person?.deathDate;
 
   const handleOpenPersonDetails = (
@@ -113,8 +145,43 @@ const DetailsPanel = ({
     });
 
     if (eventType === "addFamily") {
-      console.log(
-        "Add Family is not wired yet."
+      const newFamily: FamilyRecord = {
+        handle: "",
+        grampsId: "",
+
+        origin: "local",
+
+        fatherHandle: undefined,
+        motherHandle: undefined,
+
+        /*
+        * The selected person belongs
+        * to this new parent family.
+        */
+        childHandles: [
+          personHandle,
+        ],
+
+        relationshipType:
+          "Unknown",
+
+        relationshipDate: "",
+
+        relationshipPlaceHandle:
+          undefined,
+
+        noteHandles: [],
+        mediaHandles: [],
+      } as FamilyRecord;
+
+      setRelationshipsModalOpen(false);
+
+      setFamilyEditItem(null);
+
+      setFamilyEditMode("create");
+
+      setFamilyCreateRecord(
+        newFamily
       );
 
       return;
@@ -142,7 +209,26 @@ const DetailsPanel = ({
     pendingDetailsHandle,
   ]);
 
-  if (!person) {
+  const initialCreateChildren =
+    useMemo(
+      () =>
+        familyEditMode === "create"
+          ? [
+              {
+                handle: person?.handle || "",
+                displayName:
+                  person?.displayName || "",
+              },
+            ]
+          : [],
+      [
+        familyEditMode,
+        person?.handle,
+        person?.displayName,
+      ]
+    );
+
+    if (!person) {
     return (
       <aside className="h-full w-full bg-white p-4 text-sm text-gray-500">
         Select a person to view details.
@@ -215,11 +301,11 @@ const DetailsPanel = ({
 
               <button
                 type="button"
-                onClick={() =>
-                  setRelationshipsModalOpen(
-                    true
-                  )
-                }
+                onClick={() => {
+                  setFamilyDetailsHandle(null);
+                  setFamilyEditItem(null);
+                  setRelationshipsModalOpen( true )
+                }}
                 className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
               >
                 Relationships
@@ -267,7 +353,7 @@ const DetailsPanel = ({
         }
         onOpenFamilyDetails={(familyHandle) => {
           setRelationshipsModalOpen(false);
-          setFamilyDetailsHandle(familyHandle)
+          setFamilyDetailsHandle(familyHandle);
         }}
       />
       <FamilyDetailsModal
@@ -282,16 +368,94 @@ const DetailsPanel = ({
         }
         onEdit={(family) => {
           setFamilyDetailsHandle(null);
+          setFamilyCreateRecord(null);
+          setFamilyEditMode("edit");
           setFamilyEditItem(family);
         }}
       />
+
       <FamilyEditModal
-        open={familyEditItem !== null}
-        initialFamily={familyEditItem}
-        onClose={() =>
-          setFamilyEditItem(null)
+        open={
+          familyEditMode === "edit"
+            ? familyEditItem !== null
+            : familyCreateRecord !== null
         }
-        onSave={async (family) => {
+        mode={familyEditMode}
+        initialFamily={
+          familyEditItem
+        }
+        initialRecord={
+          familyCreateRecord
+        }
+        initialCreateChildren={
+          initialCreateChildren
+        }
+        createdChild={
+          newlyCreatedFamilyChild
+        }
+        onClose={() => {
+          setFamilyEditItem(null);
+          setFamilyCreateRecord(null);
+        }}
+        onCreateChild={() =>
+          setNewFamilyChildOpen(true)
+        }
+        onCreatedChildConsumed={() =>
+          setNewlyCreatedFamilyChild(null)
+        }
+        onSave={async (
+          family,
+          draftNotes,
+          mode
+        ) => {
+          const token =
+            await getToken({
+              skipCache: true,
+            });
+
+          if (!token) {
+            throw new Error(
+              "Authentication token is unavailable."
+            );
+          }
+
+          const savedFamily =
+            mode === "create"
+              ? await createFamily(
+                  family,
+                  draftNotes,
+                  token
+                )
+              : await updateFamily(
+                  family,
+                  draftNotes,
+                  token
+                );
+
+          setFamilyEditItem(null);
+          setFamilyCreateRecord(null);
+
+          setFamilyDetailsHandle(
+            savedFamily.handle
+          );
+
+          setRelationshipsRefreshKey(
+            (current) =>
+              current + 1
+          );
+        }}
+      />
+
+      <NewPersonModal
+        open={newFamilyChildOpen}
+        onClose={() =>
+          setNewFamilyChildOpen(false)
+        }
+        onSave={async (
+          personDraft,
+          draftNotes
+        ) => {
+          console.log(`${modName} NewPersonModal call, personDraft`, personDraft )
           const token = await getToken({
             skipCache: true,
           });
@@ -302,23 +466,23 @@ const DetailsPanel = ({
             );
           }
 
-          const updatedFamily =
-            await updateFamily(
-              family,
+          const createdPerson =
+            await createPerson(
+              personDraft,
+              draftNotes,
               token
             );
+          console.log(`${modName} after createPerson createdPerson`, createdPerson);
+          setNewlyCreatedFamilyChild({
+            handle: createdPerson.handle,
+            displayName:
+              createdPerson.displayName,
+          });
 
-          setFamilyEditItem(null);
-
-          setFamilyDetailsHandle(
-            updatedFamily.handle
-          );
-
-          setRelationshipsRefreshKey(
-            (current) => current + 1
-          );
+          setNewFamilyChildOpen(false);
         }}
       />
+
       <PersonAddModal
         open={personAddType !== null}
         addType={personAddType}
@@ -340,8 +504,9 @@ const DetailsPanel = ({
             );
           }
 
-          const token = await getToken(
-               {skipCache: true,}
+          const token = await getToken({
+            skipCache: true,
+          }
           );
           //console.log(`${modName}<PersonAddModal>, ${token}`)
           if (!token) {

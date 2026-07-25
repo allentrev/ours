@@ -71,7 +71,7 @@ export const requireAuth = async (
   const funcName= "/middlewares/auth/requireAuth";
   //console.log(`${funcName} entry`);
   const { user } = await getCurrentUser(req);
-  console.log(`${funcName} user`, user);
+  //console.log(`${funcName} user`, user);
 
   if (!user) {
     return res.status(401).json("Not authenticated!");

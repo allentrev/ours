@@ -291,3 +291,8 @@ export interface FamilyDetailsData {
 
   notes: NoteRecord[];
 }
+
+export interface UpdateFamilyRequestBody {
+  family: FamilyRecord;
+  newNotes?: NewNoteInput[];
+}

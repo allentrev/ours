@@ -25,7 +25,7 @@ import {
 } from "../../utilities/Family/utils";
 
 import NewPlaceModal from "./NewPlaceModal";
-import PlaceSelectorModal from "./SelectorPlaceModal";
+import PlaceSelectorModal from "./PlaceSelectorModal";
 import GenealogyDatePickerModal from "./GenealogyDatePickerModal";
 import PhotoSelectorModal from "./PhotoSelectorModal";
 

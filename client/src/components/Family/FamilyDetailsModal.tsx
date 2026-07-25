@@ -105,7 +105,7 @@ const FamilyDetailsModal = ({
     "Unnamed";
 
   const familyName =
-    `${familySurname} Family`;
+    `The ${familySurname} Family`;
 
   const handleBackdropClick = (
     event: MouseEvent<HTMLDivElement>
@@ -255,9 +255,9 @@ const FamilyDetailsModal = ({
                   Children
                 </legend>
 
-                {family.children.length > 0 ? (
+                {family.children?.length > 0 ? (
                   <ul className="space-y-2">
-                    {family.children.map(
+                    {family.children?.map(
                       (child) => (
                         <li
                           key={child.handle}
@@ -287,9 +287,9 @@ const FamilyDetailsModal = ({
                   Notes
                 </legend>
 
-                {family.notes.length > 0 ? (
+                {family.notes?.length > 0 ? (
                   <div className="space-y-3">
-                    {family.notes.map(
+                    {family.notes?.map(
                       (note) => (
                         <div
                           key={note.handle}

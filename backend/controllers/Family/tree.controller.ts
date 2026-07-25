@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import type {} from "multer";
 
 import { PersonModel } from "../../models/Family/person.model.js";
@@ -59,37 +59,48 @@ export const getFamilyTree = async (req: Request, res: Response) => {
   }
 };
 
+import {
+  successResponse,
+} from "../../lib/apiResponse.js";
+
 export const searchFamilyPeople = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   try {
     const query =
-      typeof req.query.q === "string" ? req.query.q.trim() : "";
+      typeof req.query.q === "string"
+        ? req.query.q.trim()
+        : "";
 
-    const results = await PersonModel.find({
-      displayName: {
-        $regex: query,
-        $options: "i",
-      },
-    })
-      .sort({ displayName: 1 })
-      .limit(20)
-      .lean<PersonRecord[]>();
+    if (query.length < 2) {
+      return successResponse(
+        res,
+        [],
+        "Enter at least two characters to search."
+      );
+    }
 
-    return res.status(200).json({
-      success: true,
-      message: "Family people retrieved successfully",
-      data: results,
-    });
+    const results =
+      await PersonModel.find({
+        displayName: {
+          $regex: query,
+          $options: "i",
+        },
+      })
+        .sort({
+          displayName: 1,
+        })
+        .limit(20)
+        .lean<PersonRecord[]>();
+
+    return successResponse(
+      res,
+      results,
+      "Family people retrieved successfully."
+    );
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to search family people",
-      error:
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
-    });
+    next(error);
   }
 };

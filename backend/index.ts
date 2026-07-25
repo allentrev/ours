@@ -33,7 +33,9 @@ import cors, { CorsOptions } from "cors";
 
 import { clerkMiddleware } from "@clerk/express";
 
+
 import connectDB from "./lib/connectDB.js";
+import { errorHandler, } from "./middlewares/errorHandler.js";
 
 import userRouter from "./routes/user.route.js";
 import postRouter from "./routes/post.route.js";
@@ -167,16 +169,7 @@ app.get("/test", (_req, res) => {
 });
 
 /* -------------------- Error handler -------------------- */
-
-app.use(
-  (err: any, _req: Request, res: Response, _next: NextFunction) => {
-    console.error(err);
-
-    res.status(err.status || 500).json({
-      message: err.message || "Something went wrong",
-    });
-  }
-);
+app.use(errorHandler);
 
 /* -------------------- Start server -------------------- */
 
