@@ -911,8 +911,7 @@ export const updatePost = async (
       post.seoTitle !== undefined
     ) {
       existingPost.seoTitle =
-        post.seoTitle.trim() ||pdate
-        undefined;
+        post.seoTitle.trim() || undefined;
     }
 
     if (
