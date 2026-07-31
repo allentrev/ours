@@ -1,82 +1,248 @@
-import { useEffect, useState } from "react"
+// components/Blog/ToDo.tsx
 
-import TypePagedCard from "./TypedPagedCard"
-import ItemSelector from "./ItemSelector"
-import type { TodoData } from "../../types/blogTypes"
+import {
+  useEffect,
+  useState,
+} from "react";
 
-interface Props {
-  data: TodoData
-  updateTodo: <K extends keyof TodoData>(
+import TypePagedCard from "./TypedPagedCard";
+import ItemSelector from "./ItemSelector";
+
+import type {
+  TodoData,
+} from "../../types/blogTypes";
+
+interface TodoProps {
+  data: TodoData;
+  dishes: string[];
+
+  updateTodo: <
+    K extends keyof TodoData
+  >(
     key: K,
     value: TodoData[K]
-  ) => void
+  ) => void;
+
+  onDishesChange: (
+    dishes: string[]
+  ) => void;
 }
 
-const Todo = ({ data, updateTodo  }: Props) => {
-  const [dishOptions, setDishOptions] = useState<string[]>([])
-  
-  console.log("Todo component", { data });
-    useEffect(() => {
-      const fetchDishes = async () => {
-        try {
-          const res = await fetch("/api/dishes")
-          const json = await res.json()
-  
-          setDishOptions(json.map((d: any) => d.name))
-        } catch (err) {
-          console.error("Failed to load dishes", err)
+const venueOptions = [
+  "Hawker",
+  "Coffee_Shop",
+  "Food_Court",
+  "Mall",
+  "Restaurant",
+];
+
+interface DishOption {
+  name: string;
+}
+
+const Todo = ({
+  data,
+  dishes,
+  updateTodo,
+  onDishesChange,
+}: TodoProps) => {
+  const [
+    dishOptions,
+    setDishOptions,
+  ] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchDishes = async () => {
+      try {
+        const url =
+          `${import.meta.env.VITE_BACKEND_URL}` +
+          "/dishes";
+
+        const res =
+          await fetch(url);
+
+        if (!res.ok) {
+          throw new Error(
+            "Failed to retrieve dishes."
+          );
+        }
+
+        const response =
+          await res.json();
+
+        /*
+         * Supports either:
+         *
+         * 1. the new ApiResponse<T> shape; or
+         * 2. the older direct-array response.
+         */
+        const records:
+          DishOption[] =
+            response.data ??
+            response;
+
+        const options =
+          records.map(
+            (dish) =>
+              dish.name
+          );
+
+        if (!cancelled) {
+          setDishOptions(
+            options
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load dishes:",
+          error
+        );
+
+        if (!cancelled) {
+          setDishOptions([]);
         }
       }
-  
-      fetchDishes()
-    }, [])
+    };
+
+    void fetchDishes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <TypePagedCard
       pages={[
         {
+          title: "Basics",
+
+          content: (
+            <div className="grid gap-4">
+              <ItemSelector
+                label="Venues"
+                items={
+                  data.venues
+                }
+                setItems={(
+                  venues
+                ) =>
+                  updateTodo(
+                    "venues",
+                    venues
+                  )
+                }
+                mode="multi"
+                options={
+                  venueOptions
+                }
+              />
+
+              <ItemSelector
+                label="Dishes"
+                items={dishes}
+                setItems={
+                  onDishesChange
+                }
+                mode="multi"
+                options={
+                  dishOptions
+                }
+              />
+            </div>
+          ),
+        },
+
+        {
           title: "Location",
+
           content: (
             <div className="grid gap-4">
               <input
-                value={data.location.postcode}
-                onChange={(e) =>
-                  updateTodo("location", {
-                    ...data.location,
-                    postcode: e.target.value
-                  })
+                value={
+                  data.location
+                    .postcode
                 }
-                className="p-3 border rounded-xl"
+                onChange={(
+                  event
+                ) =>
+                  updateTodo(
+                    "location",
+                    {
+                      ...data.location,
+
+                      postcode:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="
+                  rounded-xl
+                  border p-3
+                "
+                placeholder="Postcode"
               />
 
               <input
-                value={data.location.placeName}
-                onChange={(e) =>
-                  updateTodo("location", {
-                    ...data.location,
-                    placeName: e.target.value
-                  })
+                value={
+                  data.location
+                    .address
                 }
-                className="p-3 border rounded-xl"
+                onChange={(
+                  event
+                ) =>
+                  updateTodo(
+                    "location",
+                    {
+                      ...data.location,
+
+                      address:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="
+                  rounded-xl
+                  border p-3
+                "
+                placeholder="Address"
+              />
+
+              <input
+                value={
+                  data.location
+                    .placeName
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateTodo(
+                    "location",
+                    {
+                      ...data.location,
+
+                      placeName:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="
+                  rounded-xl
+                  border p-3
+                "
+                placeholder="Place name"
               />
             </div>
-          )
+          ),
         },
-        {
-          title: "Food",
-          content: (
-              <ItemSelector
-                label="Dish"
-                items={data.dish ? [data.dish] : []}
-                setItems={(v) => updateTodo("dish", v[0] || "")}
-                mode="single"
-                options={dishOptions}
-              />
-          )
-        }
       ]}
     />
-  )
-}
+  );
+};
 
-export default Todo
+export default Todo;

@@ -1,47 +1,81 @@
-import { Link } from "react-router-dom";
-import { format } from "timeago.js";
-import type { PostRecord } from "../../types/blogTypes";  
+import {
+  Link,
+} from "react-router-dom";
 
-interface Props {
+import type {
+  PostRecord,
+} from "../../types/blogTypes";
+
+interface PostListItemProps {
   post: PostRecord;
 }
 
-
-//TODO get rid of hard coded username
-const PostListItem = ({ post }: Props) => {
-  const user = post.user;
-  let userName = "";
-  if (!user) {
-    userName = "allentrev99"
-  } else {
-    userName = user.username;
-  }
+const PostListItem = ({
+  post,
+}: PostListItemProps) => {
+  const postUrl =
+    `/blog/${post.slug}`;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-8 mb-12">
-      {/* Cover image */}
-      {post.cover && (
-        <div className="md:hidden xl:block xl:w-1/3">
-          <img src={post.cover} className="rounded-2xl object-cover w-full max-h-68" width="735" />
+    <article className="border-b border-gray-200 py-3">
+      <div className="flex items-start gap-3">
+        {post.cover && (
+          <Link
+            to={postUrl}
+            className="hidden shrink-0 sm:block"
+          >
+            <img
+              src={post.cover}
+              alt=""
+              className="
+                h-20
+                w-28
+                rounded-lg
+                object-cover
+              "
+            />
+          </Link>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <h3>
+            <Link
+              to={postUrl}
+              className="
+                block
+                text-xl
+                font-medium
+                text-gray-800
+                hover:text-blue-800
+                transition-colors
+              "
+            >
+              {post.title}
+            </Link>
+          </h3>
+
+          {post.desc && (
+            <p className="mt-1 line-clamp-2 text-sm leading-5 text-gray-600">
+              {post.desc}
+            </p>
+          )}
         </div>
-      )}
-      {/* details */}
-      <div className="flex flex-col gap-4 xl:w-2/3">
-        <Link to={`/blog/${post.slug}`} className="text-4xl font-semibold">
-          {post.title}
-        </Link>
-        <div className="flex items-center gap-2 text-gray-400 text-sm">
-          <span>Written by</span>
-          <Link className="text-blue-800" to={`/posts?author=${userName}`}>{userName}</Link>
-          <span>on</span>
-          <span>{format(post.createdAt)}</span>
-        </div>
-        <p>{post.desc}</p>
-        <Link to={`/blog/${post.slug}`} className="underline text-blue-800 text-sm">
-          Read More
+
+        <Link
+          to={postUrl}
+          className="
+            shrink-0
+            self-center
+            text-sm
+            font-medium
+            text-blue-800
+            hover:underline
+          "
+        >
+          More →
         </Link>
       </div>
-    </div>
+    </article>
   );
 };
 

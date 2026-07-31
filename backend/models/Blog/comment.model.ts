@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { CommentDocument }  from "../types/comment.js";
+import { CommentDocument }  from "../../types/blog.types.js";
 
 const commentSchema = new Schema<CommentDocument>(
   {
@@ -21,9 +21,9 @@ const commentSchema = new Schema<CommentDocument>(
   { timestamps: true }
 );
 
-const Comment = mongoose.model<CommentDocument> (
+const CommentModel = mongoose.model<CommentDocument> (
   "Comment",
   commentSchema
 );
 
-export default Comment;
+export default CommentModel;

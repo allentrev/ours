@@ -1,5 +1,5 @@
 import express from "express"
-import { addComment, deleteComment, getPostComments } from "../controllers/comment.controller.js"
+import { addComment, deleteComment, getPostComments } from "../controllers/Blog/comment.controller.js"
 
 const router = express.Router()
 

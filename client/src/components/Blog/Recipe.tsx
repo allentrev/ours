@@ -1,86 +1,192 @@
-import { useEffect, useState } from "react"
+// components/Blog/Recipe.tsx
 
-import TypePagedCard from "./TypedPagedCard"
-import ItemSelector from "./ItemSelector"
-import type { RecipeData } from "../../types/blogTypes"
+import {
+  useEffect,
+  useState,
+} from "react";
 
-interface Props {
-  data: RecipeData
-  updateRecipe: <K extends keyof RecipeData>(
+import TypePagedCard from "./TypedPagedCard";
+import ItemSelector from "./ItemSelector";
+
+import type {
+  RecipeData,
+} from "../../types/blogTypes";
+
+interface RecipeProps {
+  data: RecipeData;
+
+  dishes: string[];
+
+  updateRecipe: <
+    K extends keyof RecipeData
+  >(
     key: K,
     value: RecipeData[K]
-  ) => void
-  }
+  ) => void;
 
-const Recipe = ({ data, updateRecipe }: Props) => {
-  const [dishOptions, setDishOptions] = useState<string[]>([])
-  console.log("Recipe component", { data });
+  onDishesChange: (
+    dishes: string[]
+  ) => void;
+}
 
-    useEffect(() => {
+const Recipe = ({
+  data,
+  dishes,
+  updateRecipe,
+  onDishesChange,
+}: RecipeProps) => {
+  const [
+    dishOptions,
+    setDishOptions,
+  ] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
     const fetchDishes = async () => {
       try {
-        const res = await fetch("/api/dishes")
-        const json = await res.json()
+        const url =
+          `${import.meta.env.VITE_BACKEND_URL}` +
+          "/dishes";
 
-        setDishOptions(json.map((d: any) => d.name))
-      } catch (err) {
-        console.error("Failed to load dishes", err)
+        const res =
+          await fetch(url);
+
+        if (!res.ok) {
+          throw new Error(
+            "Failed to retrieve dishes."
+          );
+        }
+
+        const result =
+          await res.json();
+
+        /*
+         * Retain this mapping if the dishes
+         * endpoint returns an array directly.
+         *
+         * If the endpoint now uses ApiResponse<T>,
+         * change result to result.data below.
+         */
+        const records =
+          result.data ?? result;
+
+        const options =
+          records.map(
+            (dish: {
+              name: string;
+            }) => dish.name
+          );
+
+        if (!cancelled) {
+          setDishOptions(
+            options
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load dishes:",
+          error
+        );
+
+        if (!cancelled) {
+          setDishOptions([]);
+        }
       }
-    }
+    };
 
-    fetchDishes()
-  }, [])
+    void fetchDishes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <TypePagedCard
       pages={[
         {
           title: "Basics",
+
           content: (
             <div className="grid gap-4">
               <ItemSelector
-                label="Dish"
-                items={data.dish ? [data.dish] : []}
-                setItems={(v) => updateRecipe("dish", v[0] || "")}
-                mode="single"
-                options={dishOptions}
+                label="Dishes"
+                items={dishes}
+                setItems={
+                  onDishesChange
+                }
+                options={
+                  dishOptions
+                }
               />
 
               <ItemSelector
                 label="Cuisine"
-                items={data.cuisines}
-                setItems={(c) => updateRecipe("cuisines", c)}
+                items={
+                  data.cuisines
+                }
+                setItems={(
+                  cuisines
+                ) =>
+                  updateRecipe(
+                    "cuisines",
+                    cuisines
+                  )
+                }
               />
             </div>
-          )
+          ),
         },
+
         {
           title: "Ingredients",
+
           content: (
             <textarea
-              className="p-4 border rounded-xl"
-              value={data.ingredients}
-              onChange={(e) =>
-                updateRecipe("ingredients", e.target.value)
+              className="
+                min-h-48
+                rounded-xl border
+                p-4
+              "
+              value={
+                data.ingredients
+              }
+              onChange={(event) =>
+                updateRecipe(
+                  "ingredients",
+                  event.target.value
+                )
               }
             />
-          )
+          ),
         },
+
         {
           title: "Instructions",
+
           content: (
             <textarea
-              className="p-4 border rounded-xl"
-              value={data.instructions}
-              onChange={(e) =>
-                updateRecipe("instructions", e.target.value)
+              className="
+                min-h-48
+                rounded-xl border
+                p-4
+              "
+              value={
+                data.instructions
+              }
+              onChange={(event) =>
+                updateRecipe(
+                  "instructions",
+                  event.target.value
+                )
               }
             />
-          )
-        }
+          ),
+        },
       ]}
     />
-  )
-}
+  );
+};
 
-export default Recipe
+export default Recipe;

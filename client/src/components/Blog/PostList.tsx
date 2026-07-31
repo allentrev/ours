@@ -1,23 +1,9 @@
 import PostListItem from "./PostListItem";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import axios from "axios";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useSearchParams } from "react-router-dom";
-import type { PostsResponse } from "../../types/blogTypes";
+import { readPosts } from "../../utilities/blogUtils";
 
-const fetchPosts = async (
-    pageParam: number,
-    searchParams: URLSearchParams
-): Promise<PostsResponse> => {
-  const searchParamsObj = Object.fromEntries([...searchParams]);
-  console.log("PostList SearchPraramsObj");
-  console.log([...searchParams.entries()]);
-
-  const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/posts`, {
-    params: { page: pageParam, limit: 10, ...searchParamsObj },
-  });
-  return res.data;
-};
 
 const PostList = () => {
   const [ searchParams ] = useSearchParams();
@@ -30,7 +16,7 @@ const PostList = () => {
       isFetching,
   } = useInfiniteQuery({
       queryKey: ["posts", searchParams.toString()],
-      queryFn: ({ pageParam = 1 }) => fetchPosts(pageParam, searchParams),
+      queryFn: ({ pageParam = 1 }) => readPosts(pageParam, searchParams),
       initialPageParam: 1,
       getNextPageParam: (lastPage, pages) =>
       lastPage.hasMore ? pages.length + 1 : undefined,

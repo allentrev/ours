@@ -1,20 +1,16 @@
-import { Link, useParams } from "react-router-dom";
-import axios from "axios";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "timeago.js";
 import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
+import BlogCategoryLinks from "../../components/Blog/BlogCategoriesLinks";
 
 import PostMenuActions from "../../components/Blog/PostMenuActions";
 import Search from "../../components/Blog/Search";
 import Comments from "../../components/Blog/Comments";
 import TiptapEditorWithToolbar from '../../components/Tiptap';
 import { useProfile } from "../../hooks/userProfile";
-
-const fetchPost = async (slug: string) => {
-  const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/posts/${slug}`);
-  return res.data;
-};
+import { readPost } from "../../utilities/blogUtils";
 
 const SinglePostPage = () => {
   const { slug } = useParams();
@@ -28,7 +24,7 @@ const SinglePostPage = () => {
 
   const { isPending, error, data } = useQuery({
     queryKey: ["post", slug],
-    queryFn: () => fetchPost(slug ?? ""),
+    queryFn: () => readPost(slug ?? ""),
   });
 
   if (isPending) return "loading...";
@@ -145,14 +141,7 @@ const SinglePostPage = () => {
           )}
 
           <h1 className="mt-8 mb-4 text-sm font-medium">Categories</h1>
-          <div className="flex flex-col gap-2 text-sm">
-            <p className="underline">All</p>
-            <Link className="underline" to="/blog">Web Design</Link>
-            <Link className="underline" to="/blog">Development</Link>
-            <Link className="underline" to="/blog">Databases</Link>
-            <Link className="underline" to="/blog">Search Engines</Link>
-            <Link className="underline" to="/blog">Marketing</Link>
-          </div>
+            <BlogCategoryLinks />
           <h1 className="mt-8 mb-4 text-sm font-medium">Search</h1>
           <Search />
         </div>

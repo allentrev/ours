@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 
-import Comment from "../models/comment.model.js";
-import { CommentDocument } from "../types/comment.js";
-import User from "../models/user.model.js";
-import { UserDocument } from "../types/user.js";
+import Comment from "../../models/Blog/comment.model.js";
+import { CommentDocument } from "../../types/blog.types.js";
+import User from "../../models/user.model.js";
+import { UserDocument } from "../../types/user.js";
 
 /**
  * GET comments for a specific post

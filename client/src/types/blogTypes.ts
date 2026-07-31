@@ -1,5 +1,26 @@
-/* -------------------- Post Types -------------------- */
-export type PostType = "recipe" | "review" | "todo" | "note";
+// types/blogTypes.ts
+
+/* ========================================================================== */
+/* General API response                                                       */
+/* ========================================================================== */
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+  errors?: string[];
+  details?: unknown;
+}
+
+/* ========================================================================== */
+/* Post type                                                                  */
+/* ========================================================================== */
+
+export type PostType =
+  | "recipe"
+  | "review"
+  | "todo"
+  | "note";
 
 export const POST_TYPES: PostType[] = [
   "recipe",
@@ -8,45 +29,52 @@ export const POST_TYPES: PostType[] = [
   "note",
 ];
 
-/* -------------------- Shared Base Content -------------------- */
-type BasePostContent = {
+/* ========================================================================== */
+/* Shared post data                                                           */
+/* ========================================================================== */
+
+export interface PostAuthor {
+  _id: string;
+  username: string;
+  img?: string;
+}
+
+/*
+ * Fields shared by every post type and edited
+ * through the main Write page.
+ */
+export interface BasePostFormData {
   title: string;
   desc: string;
   content: string;
+
   cover?: string;
+
+  category: string;
+
   tags: string[];
-};
+  dishes: string[];
 
-/* -------------------- Database Meta -------------------- */
-type PostMeta = {
-  _id: string;
-  userId: string;
-  slug: string;
-  createdAt: string;
-  user?: {
-    _id: string;
-    username: string;
-    img?: string;
-  };
-};
+  seoTitle?: string;
+  seoDesc?: string;
 
-/* -------------------- Shared Types -------------------- */
-export type VenueType =
-  | "Hawker"
-  | "Coffee_Shop"
-  | "Food_Court"
-  | "Mall"
-  | "Restaurant";
+  isFeatured: boolean;
+}
 
-/* -------------------- Recipe -------------------- */
+/* ========================================================================== */
+/* Recipe                                                                     */
+/* ========================================================================== */
+
 export interface RecipeData {
-  dish: string;
   cuisines: string[];
   ingredients: string;
   instructions: string;
 }
 
-/* -------------------- Review -------------------- */
+/* ========================================================================== */
+/* Review                                                                     */
+/* ========================================================================== */
+
 export interface ReviewTransport {
   busStop: string;
   busNotes: string;
@@ -67,16 +95,20 @@ export interface ReviewLocation {
 }
 
 export interface ReviewData {
-  dish?: string;
-  venue: VenueType;
+  venues: string[];
   cuisines: string[];
+
   location: ReviewLocation;
   transport: ReviewTransport;
   trading: ReviewTrading;
+
   rating: number;
 }
 
-/* -------------------- Todo -------------------- */
+/* ========================================================================== */
+/* Todo                                                                       */
+/* ========================================================================== */
+
 export interface TodoLocation {
   postcode: string;
   address: string;
@@ -84,53 +116,122 @@ export interface TodoLocation {
 }
 
 export interface TodoData {
-  dish?: string;
-  venue: VenueType;
+  venues: string[];
   location: TodoLocation;
 }
 
-/* -------------------- Note -------------------- */
-export interface NoteData {
-  dish?: string;
+/* ========================================================================== */
+/* Typed post form data                                                       */
+/* ========================================================================== */
+
+/*
+ * This discriminated union ensures each post type
+ * carries only the additional data appropriate to it.
+ *
+ * Notes use BasePostFormData.content and therefore
+ * require no separate NoteData object.
+ */
+export type PostFormData =
+  | (
+      BasePostFormData & {
+        type: "recipe";
+        recipe: RecipeData;
+
+        review?: never;
+        todo?: never;
+      }
+    )
+  | (
+      BasePostFormData & {
+        type: "review";
+        review: ReviewData;
+
+        recipe?: never;
+        todo?: never;
+      }
+    )
+  | (
+      BasePostFormData & {
+        type: "todo";
+        todo: TodoData;
+
+        recipe?: never;
+        review?: never;
+      }
+    )
+  | (
+      BasePostFormData & {
+        type: "note";
+
+        recipe?: never;
+        review?: never;
+        todo?: never;
+      }
+    );
+
+/* ========================================================================== */
+/* Write payloads                                                             */
+/* ========================================================================== */
+
+/*
+ * Payload sent when creating a post.
+ *
+ * Database fields such as _id, user, slug, readingTime,
+ * visit and timestamps are assigned by the backend.
+ */
+export type CreatePost =
+  PostFormData;
+
+/*
+ * Payload sent when updating a post.
+ *
+ * This allows partial updates while retaining the slug
+ * used to identify the existing post.
+ */
+export type UpdatePost =
+  Partial<PostFormData>;
+
+/* ========================================================================== */
+/* Post returned by API                                                       */
+/* ========================================================================== */
+
+export interface PostApiMeta {
+  _id: string;
+
+  user: PostAuthor;
+
+  slug: string;
+
+  readingTime?: number;
+  visit: number;
+
+  createdByUserId?: string;
+  updatedByUserId?: string;
+
+  createdAt: string;
+  updatedAt: string;
 }
 
-/* -------------------- Post Content (Discriminated Union) -------------------- */
-export type PostContent =
-  | (BasePostContent & {
-      type: "recipe";
-      recipe: RecipeData;
-    })
-  | (BasePostContent & {
-      type: "review";
-      review: ReviewData;
-    })
-  | (BasePostContent & {
-      type: "todo";
-      todo: TodoData;
-    })
-  | (BasePostContent & {
-      type: "note";
-      note: NoteData;
-    });
+/*
+ * The complete post returned by the API.
+ *
+ * Because PostFormData is a discriminated union,
+ * checking post.type narrows the corresponding
+ * specialised data automatically.
+ */
+export type PostRecord =
+  PostFormData &
+  PostApiMeta;
 
-/* -------------------- Final Types -------------------- */
-export type PostFormData = BasePostContent & {
-  type: PostType;
+/* ========================================================================== */
+/* API result types                                                           */
+/* ========================================================================== */
 
-  recipe?: RecipeData;
-  review?: ReviewData;
-  todo?: TodoData;
-  note?: NoteData;
-};
-
-/** Used when creating a post (frontend → backend) */
-export type CreatePost = PostContent;
-
-/** Used when reading posts (API response) */
-export type PostRecord = PostContent & PostMeta;
-
-/* -------------------- API Responses -------------------- */
 export interface PostsResponse {
   posts: PostRecord[];
   hasMore: boolean;
+}
+
+export interface DeletePostResult {
+  slug: string;
 }

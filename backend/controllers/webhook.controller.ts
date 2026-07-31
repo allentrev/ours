@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 
 import User from "../models/user.model.js";
-import Post from "../models/post.model.js";
+import { PostModel } from "../models/Blog/post.model.js";
 import Image from "../models/image.model.js";
-import Comment from "../models/comment.model.js";
+import  CommentModel  from "../models/Blog/comment.model.js";
 import { createTypedWebhook } from "../lib/typedWebhook.js";
 
 const getRoleFromClerkUser = (data: any) =>
@@ -92,8 +92,8 @@ export const clerkWebHook = async (req: Request, res: Response) => {
       });
 
       if (deletedUser) {
-        await Post.deleteMany({ user: deletedUser._id });
-        await Comment.deleteMany({ user: deletedUser._id });
+        await PostModel.deleteMany({ user: deletedUser._id });
+        await CommentModel.deleteMany({ user: deletedUser._id });
       }
       console.log("User deleted:", {
         clerkUserId: evt.data.id,

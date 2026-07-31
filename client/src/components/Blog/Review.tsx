@@ -1,15 +1,31 @@
-import { useEffect, useState } from "react"
+// components/Blog/Review.tsx
 
-import TypePagedCard from "./TypedPagedCard"
-import ItemSelector from "./ItemSelector"
-import type { ReviewData } from "../../types/blogTypes"
+import {
+  useEffect,
+  useState,
+} from "react";
 
-interface Props {
-  data: ReviewData
-  updateReview: <K extends keyof ReviewData>(
+import TypePagedCard from "./TypedPagedCard";
+import ItemSelector from "./ItemSelector";
+
+import type {
+  ReviewData,
+} from "../../types/blogTypes";
+
+interface ReviewProps {
+  data: ReviewData;
+  dishes: string[];
+
+  updateReview: <
+    K extends keyof ReviewData
+  >(
     key: K,
     value: ReviewData[K]
-  ) => void
+  ) => void;
+
+  onDishesChange: (
+    dishes: string[]
+  ) => void;
 }
 
 const venueOptions = [
@@ -17,175 +33,424 @@ const venueOptions = [
   "Coffee_Shop",
   "Food_Court",
   "Mall",
-  "Restaurant"
-] as const
+  "Restaurant",
+];
 
-const Review = ({ data, updateReview }: Props) => {
-  const [dishOptions, setDishOptions] = useState<string[]>([])
-
-  console.log("Review component", { data })
+const Review = ({
+  data,
+  dishes,
+  updateReview,
+  onDishesChange,
+}: ReviewProps) => {
+  const [
+    dishOptions,
+    setDishOptions,
+  ] = useState<string[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchDishes = async () => {
       try {
-        const res = await fetch("/api/dishes")
-        const json = await res.json()
+        const url =
+          `${import.meta.env.VITE_BACKEND_URL}` +
+          "/dishes";
 
-        setDishOptions(json.map((d: any) => d.name))
-      } catch (err) {
-        console.error("Failed to load dishes", err)
+        const res =
+          await fetch(url);
+
+        if (!res.ok) {
+          throw new Error(
+            "Failed to retrieve dishes."
+          );
+        }
+
+        const response =
+          await res.json();
+
+        const records =
+          response.data ??
+          response;
+
+        const options =
+          records.map(
+            (dish: {
+              name: string;
+            }) => dish.name
+          );
+
+        if (!cancelled) {
+          setDishOptions(
+            options
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load dishes:",
+          error
+        );
+
+        if (!cancelled) {
+          setDishOptions([]);
+        }
       }
-    }
+    };
 
-    fetchDishes()
-  }, [])
+    void fetchDishes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <TypePagedCard
       pages={[
         {
           title: "Basics",
+
           content: (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {/* Venues */}
 
-              {/* ---------------- Venue ---------------- */}
-              <div className="grid gap-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Venue
-                </label>
-
-                <select
-                  value={data.venue ?? ""}
-                  onChange={(e) =>
-                    updateReview(
-                      "venue",
-                      e.target.value as ReviewData["venue"]
-                    )
-                  }
-                  className="
-                    w-full
-                    p-3
-                    border
-                    rounded-xl
-                    bg-white
-                    text-gray-800
-                    shadow-sm
-                    focus:outline-none
-                    focus:ring-2
-                    focus:ring-blue-500
-                    focus:border-blue-500
-                    transition
-                  "
-                >
-                  <option value="" disabled>
-                    Select a venue
-                  </option>
-
-                  {venueOptions.map((v) => (
-                    <option key={v} value={v}>
-                      {v.replace("_", " ")}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* ---------------- Dish ---------------- */}
               <ItemSelector
-                label="Dish"
-                items={data.dish ? [data.dish] : []}
-                setItems={(v) => updateReview("dish", v[0] || "")}
-                mode="single"
-                options={dishOptions}
+                label="Venues"
+                items={
+                  data.venues
+                }
+                setItems={(
+                  venues
+                ) =>
+                  updateReview(
+                    "venues",
+                    venues
+                  )
+                }
+                mode="multi"
+                options={
+                  venueOptions
+                }
               />
 
-              {/* ---------------- Cuisine ---------------- */}
+              {/* Dishes */}
+
               <ItemSelector
-                label="Cuisine"
-                items={data.cuisines}
-                setItems={(c) => updateReview("cuisines", c)}
+                label="Dishes"
+                items={dishes}
+                setItems={
+                  onDishesChange
+                }
+                mode="multi"
+                options={
+                  dishOptions
+                }
+              />
+
+              {/* Cuisines */}
+
+              <ItemSelector
+                label="Cuisines"
+                items={
+                  data.cuisines
+                }
+                setItems={(
+                  cuisines
+                ) =>
+                  updateReview(
+                    "cuisines",
+                    cuisines
+                  )
+                }
                 mode="multi"
               />
             </div>
-          )
+          ),
         },
 
-        /* ---------------- Location ---------------- */
         {
           title: "Location",
+
           content: (
             <div className="grid gap-4">
               <input
-                value={data.location.postcode}
-                onChange={(e) =>
-                  updateReview("location", {
-                    ...data.location,
-                    postcode: e.target.value
-                  })
+                value={
+                  data.location
+                    .postcode
                 }
-                className="p-3 border rounded-xl"
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "location",
+                    {
+                      ...data.location,
+
+                      postcode:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Postcode"
               />
 
-              <div>{data.location.address}</div>
+              <input
+                value={
+                  data.location
+                    .address
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "location",
+                    {
+                      ...data.location,
+
+                      address:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Address"
+              />
+
+              <input
+                value={
+                  data.location
+                    .placeName
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "location",
+                    {
+                      ...data.location,
+
+                      placeName:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Place name"
+              />
             </div>
-          )
+          ),
         },
 
-        /* ---------------- Transport ---------------- */
         {
           title: "Transport",
+
           content: (
             <div className="grid gap-4">
               <input
-                placeholder="Bus Stop"
-                value={data.transport.busStop}
-                onChange={(e) =>
-                  updateReview("transport", {
-                    ...data.transport,
-                    busStop: e.target.value
-                  })
+                value={
+                  data.transport
+                    .busStop
                 }
-                className="p-3 border rounded-xl"
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "transport",
+                    {
+                      ...data.transport,
+
+                      busStop:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Bus stop"
+              />
+
+              <textarea
+                value={
+                  data.transport
+                    .busNotes
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "transport",
+                    {
+                      ...data.transport,
+
+                      busNotes:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Bus notes"
+              />
+
+              <input
+                value={
+                  data.transport
+                    .mrt
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "transport",
+                    {
+                      ...data.transport,
+
+                      mrt:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="MRT station"
+              />
+
+              <textarea
+                value={
+                  data.transport
+                    .mrtNotes
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "transport",
+                    {
+                      ...data.transport,
+
+                      mrtNotes:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="MRT notes"
               />
             </div>
-          )
+          ),
         },
 
-        /* ---------------- Trading ---------------- */
         {
           title: "Trading",
+
           content: (
             <div className="grid gap-4">
               <input
-                value={data.trading.openDays}
-                onChange={(e) =>
-                  updateReview("trading", {
-                    ...data.trading,
-                    openDays: e.target.value
-                  })
+                value={
+                  data.trading
+                    .openDays
                 }
-                className="p-3 border rounded-xl"
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "trading",
+                    {
+                      ...data.trading,
+
+                      openDays:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Open days"
+              />
+
+              <input
+                value={
+                  data.trading
+                    .openHours
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "trading",
+                    {
+                      ...data.trading,
+
+                      openHours:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Open hours"
+              />
+
+              <input
+                value={
+                  data.trading
+                    .closedDays
+                }
+                onChange={(
+                  event
+                ) =>
+                  updateReview(
+                    "trading",
+                    {
+                      ...data.trading,
+
+                      closedDays:
+                        event.target
+                          .value,
+                    }
+                  )
+                }
+                className="rounded-xl border p-3"
+                placeholder="Closed days"
               />
             </div>
-          )
+          ),
         },
 
-        /* ---------------- Rating ---------------- */
         {
           title: "Rating",
+
           content: (
             <input
               type="number"
-              value={data.rating}
-              onChange={(e) =>
-                updateReview("rating", Number(e.target.value))
+              min={0}
+              max={5}
+              step={0.5}
+              value={
+                data.rating
               }
-              className="p-3 border rounded-xl"
+              onChange={(
+                event
+              ) =>
+                updateReview(
+                  "rating",
+                  Number(
+                    event.target
+                      .value
+                  )
+                )
+              }
+              className="rounded-xl border p-3"
             />
-          )
-        }
+          ),
+        },
       ]}
     />
-  )
-}
+  );
+};
 
-export default Review
+export default Review;

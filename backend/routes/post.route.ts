@@ -6,7 +6,7 @@ import {
   updatePost,
   deletePost,
   featurePost,
-} from "../controllers/post.controller.js";
+} from "../controllers/Blog/post.controller.js";
 import { requireAuth } from "../middlewares/auth.js";
 import increaseVisit from "../middlewares/increaseVisit.js";
 
@@ -17,9 +17,9 @@ console.log("Post Route");
 router.get("/", getPosts);
 router.get("/:slug", increaseVisit, getPost);
 router.post("/", requireAuth, createPost);
-router.put("/:id", requireAuth, updatePost);
+router.put("/:postId", requireAuth, updatePost);
 
-router.delete("/:id", requireAuth, deletePost);
+router.delete("/:postId", requireAuth, deletePost);
 router.patch("/featured", requireAuth, featurePost);
 
 export default router;

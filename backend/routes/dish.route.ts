@@ -1,8 +1,8 @@
 // routes/dishes.ts
-import express from "express"
-import Dish from "../models/dish.model.js"
+import express from "express";
+import Dish from "../models/Blog/dish.model.js";
 
-const router = express.Router()
+const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
@@ -11,6 +11,6 @@ router.get("/", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch dishes" })
   }
-})
+});
 
-export default router
+export default router;

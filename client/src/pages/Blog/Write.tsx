@@ -1,374 +1,817 @@
-import { useAuth, useUser } from '@clerk/clerk-react'
-import { useRef, useState } from "react"
-import axios from 'axios'
-import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import {
+  useAuth,
+  useUser,
+} from "@clerk/clerk-react";
 
-import { createPost } from "../../utilities/blogUtils"
-import { importFile } from '../../utilities/galleryUtils'
+import {
+  useRef,
+  useState,
+} from "react";
+
+import {
+  useMutation,
+} from "@tanstack/react-query";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  toast,
+} from "react-toastify";
+
+import {
+  createPost,
+} from "../../utilities/blogUtils";
+
+import {
+  importFile,
+} from "../../utilities/galleryUtils";
+
 import type {
   CreatePost,
   RecipeData,
-  TodoData,
   ReviewData,
-  NoteData,
-  PostType
-} from "../../types/blogTypes"
-import { POST_TYPES } from "../../types/blogTypes"
+  TodoData,
+} from "../../types/blogTypes";
 
-import TiptapEditorWithToolbar from '../../components/Tiptap'
-import Recipe from "../../components/Blog/Recipe"
-import Review from "../../components/Blog/Review"
-import Todo from "../../components/Blog/ToDo"
-import ItemSelector from "../../components/Blog/ItemSelector"
+import {
+  POST_TYPES,
+} from "../../types/blogTypes";
 
-/* -------------------- FORM TYPE -------------------- */
-type PostFormData = {
-  type: PostType;
+import TiptapEditorWithToolbar from "../../components/Tiptap";
+import Recipe from "../../components/Blog/Recipe";
+import Review from "../../components/Blog/Review";
+import Todo from "../../components/Blog/ToDo";
+import ItemSelector from "../../components/Blog/ItemSelector";
+
+/* -------------------- Initial values -------------------- */
+
+const initialRecipe: RecipeData = {
+  cuisines: [],
+  ingredients: "",
+  instructions: "",
+};
+
+const initialReview: ReviewData = {
+  venues: [
+    "Restaurant",
+  ],
+
+  cuisines: [],
+
+  location: {
+    postcode: "",
+    address: "",
+    placeName: "",
+  },
+
+  transport: {
+    busStop: "",
+    busNotes: "",
+    mrt: "",
+    mrtNotes: "",
+  },
+
+  trading: {
+    openDays: "",
+    openHours: "",
+    closedDays: "",
+  },
+
+  rating: 0,
+};
+
+const initialTodo: TodoData = {
+  venues: [
+    "Restaurant",
+  ],
+
+  location: {
+    postcode: "",
+    address: "",
+    placeName: "",
+  },
+};
+
+/*
+ * The form holds all possible typed sections.
+ * buildPostPayload() returns only the section
+ * appropriate to the selected post type.
+ */
+interface WriteFormState {
+  type:
+    | "recipe"
+    | "review"
+    | "todo"
+    | "note";
+
   title: string;
   desc: string;
   content: string;
-  cover?: string;
-  tags: string[];
 
-  recipe?: RecipeData;
-  review?: ReviewData;
-  todo?: TodoData;
-  note?: NoteData;
+  cover?: string;
+
+  category: string;
+
+  tags: string[];
+  dishes: string[];
+
+  seoTitle?: string;
+  seoDesc?: string;
+
+  isFeatured: boolean;
+
+  recipe: RecipeData;
+  review: ReviewData;
+  todo: TodoData;
 }
 
-/* -------------------- BUILDER -------------------- */
-const buildPostPayload = (data: PostFormData): CreatePost => {
+/* -------------------- Payload builder -------------------- */
+
+const buildPostPayload = (
+  data: WriteFormState
+): CreatePost => {
+  const sharedFields = {
+    title:
+      data.title,
+
+    desc:
+      data.desc,
+
+    content:
+      data.content,
+
+    cover:
+      data.cover,
+
+    category:
+      data.category,
+
+    tags:
+      data.tags,
+
+    dishes:
+      data.dishes,
+
+    seoTitle:
+      data.seoTitle,
+
+    seoDesc:
+      data.seoDesc,
+
+    isFeatured:
+      data.isFeatured,
+  };
+
   switch (data.type) {
     case "recipe":
       return {
+        ...sharedFields,
         type: "recipe",
-        title: data.title,
-        desc: data.desc,
-        content: data.content,
-        cover: data.cover,
-        tags: data.tags,
-        recipe: data.recipe!,
-      }
+        recipe:
+          data.recipe,
+      };
 
     case "review":
       return {
+        ...sharedFields,
         type: "review",
-        title: data.title,
-        desc: data.desc,
-        content: data.content,
-        cover: data.cover,
-        tags: data.tags,
-        review: data.review!,
-      }
+        review:
+          data.review,
+      };
 
     case "todo":
       return {
+        ...sharedFields,
         type: "todo",
-        title: data.title,
-        desc: data.desc,
-        content: data.content,
-        cover: data.cover,
-        tags: data.tags,
-        todo: data.todo!,
-      }
+        todo:
+          data.todo,
+      };
 
     case "note":
       return {
+        ...sharedFields,
         type: "note",
-        title: data.title,
-        desc: data.desc,
-        content: data.content,
-        cover: data.cover,
-        tags: data.tags,
-        note: data.note ?? {},
-      }
+      };
   }
-}
+};
 
 const Write = () => {
-  const { isLoaded, isSignedIn } = useUser()
-  const { getToken } = useAuth()
-  const navigate = useNavigate()
+  const {
+    isLoaded,
+    isSignedIn,
+  } = useUser();
 
-  const coverInputRef = useRef<HTMLInputElement | null>(null)
+  const {
+    getToken,
+  } = useAuth();
 
-  const [cover, setCover] = useState<string>("")
+  const navigate =
+    useNavigate();
 
-  const [formData, setFormData] = useState<PostFormData>({
+  const coverInputRef =
+    useRef<HTMLInputElement | null>(
+      null
+    );
+
+  const [
+    cover,
+    setCover,
+  ] = useState("");
+
+  const [
+    formData,
+    setFormData,
+  ] = useState<WriteFormState>({
     type: "todo",
+
     title: "",
     desc: "",
     content: "",
+
+    cover: "",
+
+    category:
+      "general",
+
     tags: [],
+    dishes: [],
+
+    seoTitle: "",
+    seoDesc: "",
+
+    isFeatured: false,
 
     recipe: {
-      dish: "",
-      cuisines: [],
-      ingredients: "",
-      instructions: ""
+      ...initialRecipe,
     },
 
     review: {
-      dish: "",
-      venue: "Restaurant",
-      cuisines: [],
+      ...initialReview,
+
       location: {
-        postcode: "",
-        address: "",
-        placeName: ""
+        ...initialReview.location,
       },
+
       transport: {
-        busStop: "",
-        busNotes: "",
-        mrt: "",
-        mrtNotes: ""
+        ...initialReview.transport,
       },
+
       trading: {
-        openDays: "",
-        openHours: "",
-        closedDays: ""
+        ...initialReview.trading,
       },
-      rating: 0
+
+      venues: [
+        ...initialReview.venues,
+      ],
+
+      cuisines: [
+        ...initialReview.cuisines,
+      ],
     },
 
     todo: {
-      dish: "",
-      venue: "Restaurant",
+      ...initialTodo,
+
       location: {
-        postcode: "",
-        address: "",
-        placeName: ""
-      }
+        ...initialTodo.location,
+      },
+
+      venues: [
+        ...initialTodo.venues,
+      ],
     },
+  });
 
-    note: {}
-  })
+  /* -------------------- Generic update -------------------- */
 
-  /* -------------------- GENERIC UPDATE -------------------- */
-  const updateField = <K extends keyof PostFormData>(
+  const updateField = <
+    K extends keyof WriteFormState
+  >(
     key: K,
-    value: PostFormData[K]
+    value: WriteFormState[K]
   ) => {
-    setFormData(prev => ({
-      ...prev,
-      [key]: value,
-    }))
-  }
+    setFormData(
+      (previous) => ({
+        ...previous,
+        [key]: value,
+      })
+    );
+  };
 
-  /* -------------------- TYPE-SPECIFIC UPDATES -------------------- */
-  const updateRecipe = <K extends keyof RecipeData>(
+  /* -------------------- Type-specific updates -------------------- */
+
+  const updateRecipe = <
+    K extends keyof RecipeData
+  >(
     key: K,
     value: RecipeData[K]
   ) => {
-    setFormData(prev => ({
-      ...prev,
-      recipe: {
-        ...prev.recipe!,
-        [key]: value
-      }
-    }))
-  }
+    setFormData(
+      (previous) => ({
+        ...previous,
 
-  const updateReview = <K extends keyof ReviewData>(
+        recipe: {
+          ...previous.recipe,
+          [key]: value,
+        },
+      })
+    );
+  };
+
+  const updateReview = <
+    K extends keyof ReviewData
+  >(
     key: K,
     value: ReviewData[K]
   ) => {
-    setFormData(prev => ({
-      ...prev,
-      review: {
-        ...prev.review!,
-        [key]: value
-      }
-    }))
-  }
+    setFormData(
+      (previous) => ({
+        ...previous,
 
-  const updateTodo = <K extends keyof TodoData>(
+        review: {
+          ...previous.review,
+          [key]: value,
+        },
+      })
+    );
+  };
+
+  const updateTodo = <
+    K extends keyof TodoData
+  >(
     key: K,
     value: TodoData[K]
   ) => {
-    setFormData(prev => ({
-      ...prev,
-      todo: {
-        ...prev.todo!,
-        [key]: value
-      }
-    }))
-  }
+    setFormData(
+      (previous) => ({
+        ...previous,
 
-  /* -------------------- COVER UPLOAD -------------------- */
-  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+        todo: {
+          ...previous.todo,
+          [key]: value,
+        },
+      })
+    );
+  };
+
+  /* -------------------- Cover upload -------------------- */
+
+  const handleCoverUpload = async (
+    event:
+      React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
 
     try {
-      const result = await importFile(file, "/content/covers")
+      const result =
+        await importFile(
+          file,
+          "/content/covers"
+        );
 
-      if (result.url) {
-        setCover(result.url)
-        toast.success("Cover uploaded")
-      } else {
-        toast.error("Upload failed")
+      if (!result.url) {
+        throw new Error(
+          "The upload returned no URL."
+        );
       }
-    } catch {
-      toast.error("Cover upload failed")
+
+      setCover(
+        result.url
+      );
+
+      updateField(
+        "cover",
+        result.url
+      );
+
+      toast.success(
+        "Cover uploaded."
+      );
+    } catch (error) {
+      console.error(
+        "Cover upload failed:",
+        error
+      );
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Cover upload failed."
+      );
     }
 
-    e.target.value = ""
+    event.target.value = "";
+  };
+
+  /* -------------------- Mutation -------------------- */
+
+  const mutation =
+    useMutation({
+      mutationFn: async (
+        newPost: CreatePost
+      ) => {
+        const token =
+          await getToken({
+            skipCache: true,
+          });
+
+        if (!token) {
+          throw new Error(
+            "Authentication token is unavailable."
+          );
+        }
+
+        return createPost(
+          newPost,
+          token
+        );
+      },
+
+      onSuccess: (
+        createdPost
+      ) => {
+        toast.success(
+          "Post created successfully."
+        );
+
+        navigate(
+          `/blog/${createdPost.slug}`
+        );
+      },
+
+      onError: (
+        error
+      ) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred."
+        );
+      },
+    });
+
+  /* -------------------- Submit -------------------- */
+
+  const handleSubmit = async (
+    event:
+      React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    const payload =
+      buildPostPayload({
+        ...formData,
+
+        cover:
+          cover ||
+          formData.cover,
+      });
+
+    await mutation.mutateAsync(
+      payload
+    );
+  };
+
+  /* -------------------- Authentication -------------------- */
+
+  if (!isLoaded) {
+    return (
+      <div>
+        Loading...
+      </div>
+    );
   }
 
-  /* -------------------- MUTATION -------------------- */
-  const mutation = useMutation({
-    mutationFn: async (newPost: CreatePost) => {
-      const token = await getToken()
-      return createPost(newPost, token)
-    },
-    onSuccess: (res) => {
-      toast.success("Post created successfully")
-      navigate(`/blog/${res.slug}`)
-    },
-    onError: (error) => {
-      if (axios.isAxiosError(error)) {
-        toast.error("Axios error:" + error.response?.data || "Request failed")
-      } else {
-        toast.error("An unexpected error occurred")
-      }
-    }
-  })
-
-  /* -------------------- SUBMIT -------------------- */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const payload = buildPostPayload({
-      ...formData,
-      cover: cover || formData.cover,
-    })
-
-    await mutation.mutateAsync(payload)
+  if (!isSignedIn) {
+    return (
+      <div>
+        Please sign in.
+      </div>
+    );
   }
-
-  /* -------------------- AUTH -------------------- */
-  if (!isLoaded) return <div>Loading...</div>
-  if (!isSignedIn) return <div>Please sign in.</div>
 
   /* -------------------- UI -------------------- */
+
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col gap-6">
-      <h1 className="text-xl font-light">Create a New Post</h1>
+    <div className="flex h-[calc(100vh-64px)] flex-col gap-6">
+      <h1 className="text-xl font-light">
+        Create a New Post
+      </h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6 flex-1 mb-6 border p-4 rounded-xl">
+      <form
+        onSubmit={
+          handleSubmit
+        }
+        className="
+          mb-6 flex flex-1
+          flex-col gap-6
+          rounded-xl border p-4
+        "
+      >
+        {/* Type */}
 
-        {/* TYPE */}
         <div className="flex flex-wrap gap-2">
-          {POST_TYPES.map((t) => (
-            <button
-              type="button"
-              key={t}
-              onClick={() => updateField("type", t)}
-              className={`px-4 py-2 rounded-full border ${
-                formData.type === t ? "bg-blue-600 text-white border-blue-600" : "border-gray-300"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+          {POST_TYPES.map(
+            (postType) => (
+              <button
+                type="button"
+                key={postType}
+                onClick={() =>
+                  updateField(
+                    "type",
+                    postType
+                  )
+                }
+                className={
+                  "rounded-full border px-4 py-2 " +
+                  (
+                    formData.type ===
+                    postType
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300"
+                  )
+                }
+              >
+                {postType}
+              </button>
+            )
+          )}
         </div>
 
-        {/* COVER */}
+        {/* Cover */}
+
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => coverInputRef.current?.click()}
-            className="p-2 shadow rounded-xl text-sm bg-white"
+            onClick={() =>
+              coverInputRef.current
+                ?.click()
+            }
+            className="
+              rounded-xl bg-white
+              p-2 text-sm shadow
+            "
           >
             Add cover image
           </button>
 
           <input
-            ref={coverInputRef}
+            ref={
+              coverInputRef
+            }
             type="file"
             accept="image/*"
-            onChange={handleCoverUpload}
+            onChange={
+              handleCoverUpload
+            }
             className="hidden"
           />
 
           <span className="text-sm text-gray-500">
-            {cover ? "Image selected" : "No file chosen"}
+            {cover
+              ? "Image selected"
+              : "No file chosen"}
           </span>
         </div>
 
         {cover && (
           <img
             src={cover}
-            className="w-full max-w-md h-48 object-cover rounded-xl"
+            alt="Post cover"
+            className="
+              h-48 w-full
+              max-w-md rounded-xl
+              object-cover
+            "
           />
         )}
 
-        {/* TAGS */}
-        <ItemSelector
-          label="Tags"
-          items={formData.tags}
-          setItems={(t: string[]) => updateField("tags", t)}
-          options={["chinese", "spicy", "cheap-eats", "street-food"]}
+        {/* Category */}
+
+        <input
+          value={
+            formData.category
+          }
+          onChange={(event) =>
+            updateField(
+              "category",
+              event.target.value
+            )
+          }
+          className="
+            rounded-xl border
+            bg-white p-3
+          "
+          placeholder="Category"
         />
 
-        {/* TITLE */}
+        {/* Tags */}
+
+        <ItemSelector
+          label="Tags"
+          items={
+            formData.tags
+          }
+          setItems={(tags) =>
+            updateField(
+              "tags",
+              tags
+            )
+          }
+          options={[
+            "chinese",
+            "spicy",
+            "cheap-eats",
+            "street-food",
+          ]}
+        />
+
+        {/* Title */}
+
         <input
-          value={formData.title}
-          onChange={(e) => updateField("title", e.target.value)}
-          className="text-4xl font-semibold bg-transparent outline-none"
+          value={
+            formData.title
+          }
+          onChange={(event) =>
+            updateField(
+              "title",
+              event.target.value
+            )
+          }
+          className="
+            bg-transparent
+            text-4xl font-semibold
+            outline-none
+          "
           placeholder="Enter title"
         />
 
-        {/* DESC */}
+        {/* Description */}
+
         <textarea
-          value={formData.desc}
-          onChange={(e) => updateField("desc", e.target.value)}
-          className="p-4 rounded-xl bg-white shadow"
+          value={
+            formData.desc
+          }
+          onChange={(event) =>
+            updateField(
+              "desc",
+              event.target.value
+            )
+          }
+          className="
+            rounded-xl bg-white
+            p-4 shadow
+          "
           placeholder="Short description"
         />
 
-        {/* TYPE-SPECIFIC */}
-        {formData.type === "recipe" && formData.recipe && (
-          <Recipe data={formData.recipe} updateRecipe={updateRecipe} />
+        {/* Type-specific fields */}
+
+        {formData.type ===
+          "recipe" && (
+          <Recipe
+            data={
+              formData.recipe
+            }
+            dishes={
+              formData.dishes
+            }
+            updateRecipe={
+              updateRecipe
+            }
+            onDishesChange={(
+              dishes
+            ) =>
+              updateField(
+                "dishes",
+                dishes
+              )
+            }
+          />
         )}
 
-        {formData.type === "review" && formData.review && (
-          <Review data={formData.review} updateReview={updateReview} />
+        {formData.type ===
+          "review" && (
+          <Review
+            data={formData.review}
+            dishes={formData.dishes}
+            updateReview={updateReview}
+            onDishesChange={(dishes) =>
+              updateField(
+                "dishes",
+                dishes
+              )
+            }
+          />
         )}
 
-        {formData.type === "todo" && formData.todo && (
-          <Todo data={formData.todo} updateTodo={updateTodo} />
+        {formData.type ===
+          "todo" && (
+          <Todo
+            data={formData.todo}
+            dishes={formData.dishes}
+            updateTodo={updateTodo}
+            onDishesChange={(dishes) =>
+              updateField(
+                "dishes",
+                dishes
+              )
+            }
+          />
         )}
 
-        {formData.type === "note" && (
-          <div className="text-gray-500 italic">
-            No additional fields for notes
+        {formData.type ===
+          "note" && (
+          <div className="italic text-gray-500">
+            Notes use the main
+            content field below.
           </div>
         )}
 
-        {/* CONTENT */}
+        {/* Content */}
+
         <TiptapEditorWithToolbar
-          content={formData.content}
-          onChange={(val) => updateField("content", val)}
+          content={
+            formData.content
+          }
+          onChange={(content) =>
+            updateField(
+              "content",
+              content
+            )
+          }
           readOnly={false}
         />
 
-        {/* SAVE */}
+        {/* SEO */}
+
+        <input
+          value={
+            formData.seoTitle ??
+            ""
+          }
+          onChange={(event) =>
+            updateField(
+              "seoTitle",
+              event.target.value
+            )
+          }
+          className="
+            rounded-xl border
+            bg-white p-3
+          "
+          placeholder="SEO title"
+        />
+
+        <textarea
+          value={
+            formData.seoDesc ??
+            ""
+          }
+          onChange={(event) =>
+            updateField(
+              "seoDesc",
+              event.target.value
+            )
+          }
+          className="
+            rounded-xl border
+            bg-white p-3
+          "
+          placeholder="SEO description"
+        />
+
+        {/* Save */}
+
         <div className="flex justify-end">
           <button
-            disabled={mutation.isPending}
-            className="bg-blue-800 text-white rounded-xl p-3 w-40"
+            type="submit"
+            disabled={
+              mutation.isPending
+            }
+            className="
+              w-40 rounded-xl
+              bg-blue-800 p-3
+              text-white
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
           >
-            {mutation.isPending ? "Saving..." : "Save"}
+            {mutation.isPending
+              ? "Saving..."
+              : "Save"}
           </button>
         </div>
-
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default Write
+export default Write;

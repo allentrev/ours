@@ -1,78 +1,65 @@
-import ToDoPosts from "../../components/Blog/ToDoPosts";
+import {
+  Link,
+} from "react-router-dom";
+
 import PostList from "../../components/Blog/PostList";
-import MainCategories from "../../components/Blog/MainCategories";
-import { Link } from "react-router-dom";
+import BlogControls from "../../components/Blog/BlogControls";
+
+/*
+ * py-2 controls the vertical height of the Categories/Write bar.
+ * gap-2 controls spacing between the main page sections.
+ * mt-2 controls spacing above the introduction paragraphs.
+ * mb-2 controls spacing below "Recent Posts".
+ */
 
 const BlogHomePage = () => {
   return (
-    <div className='mt-4 flex flex-col gap-4'>
-      {/* BREADCRUMB */}
-      <div className="flex gap-4">
-        <Link to='/'>Home</Link>
-        <span>*</span>
-        <span className="text-blue-800">Blogs and Articles</span>
-      </div>
-      {/* INTRODUCTION */}
-      <div className="flex items-center justify-between">
-        {/* titles */}
-        <div className="text-grey-800 text-2xl md:text-5xl lg:text-6xl font-bold">
-          <h1> Blog</h1>
-          <p className="mt-8 text-md md:text-xl">Where we have been, thoughts on them, and a to do list of places to try.</p>
-        </div>
-        {/* animated button */}
-        <Link to="write" className="hidden md:block relative">
-        <svg 
-          viewBox="0 0 200 200"
-          width="200"
-          height="200"
-          className="text-lg tracking-widest animate-spin animatedButton"
-          //className="text-lg tracking-widest"
-        >
-          <path
-            id="circlePath"
-            fill="none"
-            d="M 100,100 m -75, 0 a 75, 75 0 1, 1 150, 0 a 75, 75 0 1, 1 -150, 0"
-          />
-          <text>
-            <textPath href="#circlePath" startOffset="0%">Write your story</textPath>
-            <textPath href="#circlePath" startOffset="50%">Share your idea</textPath>
-          </text>
-        </svg>
-        <button className="absolute top-0 left-0 right-0 bottom-0 m-auto w-20 h-20 bg-blue-800 rounded-full flex items-center justify-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="50"
-            height="50"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-          >
-            <line x1="6" y1="18" x2="18" y2="6" />
-            <polyline points="9 6 18 6 18 15" />
-          </svg>
-        </button>
-        </Link>
-      </div>
-      {/* CATEGORIES */}
-      Categories
-      < MainCategories/>
-      {/* TO DO LIST` */}
-      <div className="">
-        <h1 className="my-8 text-2xl text-gray-600">
-          To Do Posts
-        </h1>
-        <ToDoPosts />
-      </div>
-      {/* POST LIST */}
-      <div className="">
-        <h1 className="my-8 text-2xl text-gray-600">
-          Recent Posts
-        </h1>
-        <PostList/>
-      </div>
-    </div>
-  )
-}
+    <div className="flex flex-col gap-2">
+      {/* Categories and write button */}
 
-export default BlogHomePage
+      <div className="flex items-center justify-between gap-3 border-y border-gray-200 py-2">
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <BlogControls />
+        </div>
+
+      </div>
+
+      {/* Introduction */}
+
+      <section className="max-w-4xl">
+        <h1 className="text-2xl font-semibold text-gray-800 sm:text-3xl">
+          Exploring Singapore, one bite at a time
+        </h1>
+
+        <div className="mt-2 space-y-1 text-sm leading-6 text-gray-600 sm:text-base">
+          <p>
+            This is a collection of recipes, reviews, notes, and places that
+            have caught our interest.
+          </p>
+
+          <p>
+            Some entries record places we have already visited, while others
+            are reminders of food and locations still waiting to be explored.
+          </p>
+
+          <p>
+            Follow the categories above to browse a particular type of post,
+            or start with the most recent entries below.
+          </p>
+        </div>
+      </section>
+
+      {/* Recent posts */}
+
+      <section>
+        <h2 className="mb-2 text-lg font-semibold text-gray-700">
+          Recent Posts
+        </h2>
+
+        <PostList />
+      </section>
+    </div>
+  );
+};
+
+export default BlogHomePage;
