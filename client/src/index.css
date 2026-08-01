@@ -49,6 +49,51 @@ body {
   line-height: 1.5;
 }
 
+/* Code blocks */
+.ProseMirror pre {
+  margin: 1rem 0;
+  padding: 1rem;
+  overflow-x: auto;
+
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+/* Code inside code blocks */
+.ProseMirror pre code {
+  padding: 0;
+  margin: 0;
+  border: 0;
+
+  background: transparent;
+  color: inherit;
+
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Inline code */
+.ProseMirror :not(pre) > code {
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+
+  background-color: #f3f4f6;
+  color: #b91c1c;
+
+  font-size: 0.9em;
+}
+
+/* Remove Tailwind Typography's injected backticks */
+.ProseMirror code::before,
+.ProseMirror code::after {
+  content: none !important;
+}
+
 /* Images inside editor */
 .prose img {
   @apply max-w-full h-auto rounded;
