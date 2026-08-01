@@ -117,9 +117,6 @@ export interface PostRecord
   review?: ReviewData;
   todo?: TodoData;
 
-  seoTitle?: string;
-  seoDesc?: string;
-
   readingTime?: number;
   isFeatured: boolean;
   visit: number;

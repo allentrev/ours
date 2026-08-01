@@ -44,6 +44,7 @@ import Recipe from "../../components/Blog/Recipe";
 import Review from "../../components/Blog/Review";
 import Todo from "../../components/Blog/ToDo";
 import ItemSelector from "../../components/Blog/ItemSelector";
+import SEO from "@/components/SEO";
 
 /* -------------------- Initial values -------------------- */
 
@@ -117,9 +118,6 @@ interface WriteFormState {
   tags: string[];
   dishes: string[];
 
-  seoTitle?: string;
-  seoDesc?: string;
-
   isFeatured: boolean;
 
   recipe: RecipeData;
@@ -153,12 +151,6 @@ const buildPostPayload = (
 
     dishes:
       data.dishes,
-
-    seoTitle:
-      data.seoTitle,
-
-    seoDesc:
-      data.seoDesc,
 
     isFeatured:
       data.isFeatured,
@@ -237,9 +229,6 @@ const Write = () => {
 
     tags: [],
     dishes: [],
-
-    seoTitle: "",
-    seoDesc: "",
 
     isFeatured: false,
 
@@ -501,6 +490,14 @@ const Write = () => {
 
   return (
     <div className="flex h-[calc(100vh-64px)] flex-col gap-6">
+
+      <SEO
+        title="Family | Personal Website"
+        description="Family memories, stories, and moments collected in one place."
+        image={ cover }
+        type="article"
+      />
+
       <h1 className="text-xl font-light">
         Create a New Post
       </h1>
@@ -748,44 +745,6 @@ const Write = () => {
             )
           }
           readOnly={false}
-        />
-
-        {/* SEO */}
-
-        <input
-          value={
-            formData.seoTitle ??
-            ""
-          }
-          onChange={(event) =>
-            updateField(
-              "seoTitle",
-              event.target.value
-            )
-          }
-          className="
-            rounded-xl border
-            bg-white p-3
-          "
-          placeholder="SEO title"
-        />
-
-        <textarea
-          value={
-            formData.seoDesc ??
-            ""
-          }
-          onChange={(event) =>
-            updateField(
-              "seoDesc",
-              event.target.value
-            )
-          }
-          className="
-            rounded-xl border
-            bg-white p-3
-          "
-          placeholder="SEO description"
         />
 
         {/* Save */}

@@ -55,9 +55,6 @@ export interface BasePostFormData {
   tags: string[];
   dishes: string[];
 
-  seoTitle?: string;
-  seoDesc?: string;
-
   isFeatured: boolean;
 }
 

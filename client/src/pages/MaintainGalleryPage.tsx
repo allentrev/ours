@@ -192,7 +192,10 @@ const MaintainGalleryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
-      <SEO title="Maintain Gallery and Images" description="Admin interface for editing Galleries and uploading images" />
+      <SEO
+        title="Maintain Gallery and Images"
+        description="Admin interface for editing Galleries and uploading images"
+      />
       {dialog}
       <MaintainPageLayout
         backgroundImage={backgroundImage as string}

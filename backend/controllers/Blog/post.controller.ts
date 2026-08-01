@@ -61,9 +61,6 @@ interface PostWriteInput {
   review?: ReviewData;
   todo?: TodoData;
 
-  seoTitle?: string;
-  seoDesc?: string;
-
   isFeatured?: boolean;
 }
 
@@ -616,12 +613,6 @@ export const createPost = async (
         tags:
           post.tags ?? [],
 
-          seoTitle:
-          post.seoTitle?.trim() ||
-          undefined,
-        seoDesc:
-          post.seoDesc?.trim() ||
-          undefined,
         readingTime:
           calculateReadingTime(
             content
@@ -904,23 +895,6 @@ export const updatePost = async (
      * - clear all specialised data for note posts;
      * - remove sections belonging to other types.
      */
-
-    /* -------------------- SEO -------------------- */
-
-    if (
-      post.seoTitle !== undefined
-    ) {
-      existingPost.seoTitle =
-        post.seoTitle.trim() || undefined;
-    }
-
-    if (
-      post.seoDesc !== undefined
-    ) {
-      existingPost.seoDesc =
-        post.seoDesc.trim() ||
-        undefined;
-    }
 
     /* -------------------- Featured status -------------------- */
 

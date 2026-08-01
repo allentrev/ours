@@ -285,16 +285,6 @@ const postSchema =
         type: todoSchema,
       },
 
-      seoTitle: {
-        type: String,
-        trim: true,
-      },
-
-      seoDesc: {
-        type: String,
-        trim: true,
-      },
-
       readingTime: {
         type: Number,
         min: 0,

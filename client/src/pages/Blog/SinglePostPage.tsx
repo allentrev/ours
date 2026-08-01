@@ -11,6 +11,7 @@ import Comments from "../../components/Blog/Comments";
 import TiptapEditorWithToolbar from '../../components/Tiptap';
 import { useProfile } from "../../hooks/userProfile";
 import { readPost } from "../../utilities/blogUtils";
+import SEO from "@/components/SEO";
 
 const SinglePostPage = () => {
   const { slug } = useParams();
@@ -48,6 +49,12 @@ const SinglePostPage = () => {
     <div className="flex flex-col gap-8">
       {/* detail */}
       <div className="flex gap-8">
+        <SEO
+          title="Family | Personal Website"
+          description="Family memories, stories, and moments collected in one place."
+          image={data.cover}
+          type="article"
+        />
         <div className="lg:w-3/5 flex flex-col gap-8">
           {isEditMode ? (
             <input
