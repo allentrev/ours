@@ -165,7 +165,7 @@ const DetailsPanel = ({
         relationshipType:
           "Unknown",
 
-        relationshipDate: "",
+        relationshipDate: undefined,
 
         relationshipPlaceHandle:
           undefined,

@@ -19,6 +19,39 @@ export interface AuditFields {
   createdByUserId?: string;
   updatedByUserId?: string;
 }
+//  ------------------------------------- Genealogical Dates ----------------------------
+//
+export type GenealogicalDateType =
+  | "exact"
+  | "about"
+  | "before"
+  | "after";
+
+export interface GenealogicalDate {
+  /*
+   * User-facing representation.
+   *
+   * Examples:
+   * "12 Oct 1941"
+   * "about 1941"
+   * "before Mar 1902"
+   */
+  text: string;
+
+  /*
+   * Numeric YYYYMMDD sort key.
+   *
+   * Examples:
+   * 19410000
+   * 19411000
+   * 19411012
+   */
+  value?: number;
+
+  type: GenealogicalDateType;
+}
+
+
 // Project has 3 distint layers:
 // 1. RawGramps (parser layer) that represents exactly what comes from Grmaps
 // 2. Document interfaces (Mongo layer) represents whats stored in Mongo
@@ -47,11 +80,16 @@ export interface RawGrampsPerson {
 }
 
 export interface PersonRecord
-  extends RawGrampsPerson,
+  extends Omit<
+      RawGrampsPerson,
+      "birthDate" | "deathDate"
+    >,
     LocalRecordFields,
     ImportBatchRef,
-    AuditFields
-    {
+    AuditFields {
+      birthDate?: GenealogicalDate;
+      deathDate?: GenealogicalDate;
+
       deceased: boolean;
     }
 
@@ -72,8 +110,8 @@ export interface CreateRelatedPersonBody {
     firstName?: string;
     surname?: string;
     displayName?: string;
-    birthDate?: string;
-    deathDate?: string;
+    birthDate?: GenealogicalDate;
+    deathDate?: GenealogicalDate;
     birthPlaceHandle?: string;
     deathPlaceHandle?: string;
     primaryPhotoUrl?: string;
@@ -95,12 +133,14 @@ export interface RawGrampsFamily {
   mediaHandles?: string[];
 }
 export interface FamilyRecord
-  extends RawGrampsFamily,
+  extends Omit<
+      RawGrampsFamily,
+      "relationshipDate"
+    >,
     LocalRecordFields,
     ImportBatchRef,
-    AuditFields
-    {
-      grampsId: string
+    AuditFields {
+      relationshipDate?: GenealogicalDate;
     }
 
 export type FamilyDocument = HydratedDocument<FamilyRecord>;
@@ -220,7 +260,7 @@ export interface RawRelationship {
 }
 
 export interface MappedFamilyData {
-  people: RawGrampsPerson[];
+  people: PersonRecord[];
   relationships: RawRelationship[];
   families: FamilyGroup[];
 }
@@ -229,8 +269,8 @@ export interface FamilyTreeNode {
   id: string;
   label: string;
   gender?: string;
-  birthDate?: string;
-  deathDate?: string;
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
   depth: number;
   noPartners: number
 }
@@ -284,8 +324,7 @@ export interface FamilyDetailsData {
   children: PersonActor[];
 
   relationshipType?: string;
-  relationshipDate?: string;
-
+  relationshipDate?: GenealogicalDate;
   relationshipPlaceHandle?: string;
   relationshipPlaceName?: string;
 

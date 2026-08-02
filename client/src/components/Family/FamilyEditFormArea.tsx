@@ -454,7 +454,7 @@ const FamilyEditFormArea: FC<
                 type="text"
                 name="relationshipDate"
                 value={
-                  item.relationshipDate ?? ""
+                  item.relationshipDate?.text ?? ""
                 }
                 onChange={handleChange}
                 className="w-full min-w-0 rounded border border-gray-300 px-2 py-1"
@@ -794,7 +794,7 @@ const FamilyEditFormArea: FC<
     <GenealogyDatePickerModal
       open={relationshipDateModalOpen}
       value={
-        item.relationshipDate ?? ""
+        item.relationshipDate
       }
       onClose={() =>
         setRelationshipDateModalOpen(

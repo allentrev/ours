@@ -1,3 +1,7 @@
+import type {
+  GenealogicalDate,
+} from "../../types/familyTypes";
+
 const MAX_REASONABLE_AGE = 100;
 
 export const formatFamilyDate = (value?: string) => {
@@ -19,16 +23,16 @@ export const formatLifeDates = (
 // familyDateUtils.ts
 
 export const formatPersonDate = (
-  date?: string,
+  date?: GenealogicalDate,
   isLiving = false
-) => {
-  if (!date) return "";
-
-  const d = new Date(date);
+): string => {
+  if (date?.text) {
+    return date.text;
+  }
 
   return isLiving
-    ? d.getFullYear().toString()
-    : d.toLocaleDateString();
+    ? "Living"
+    : "";
 };
 
 export const calculateAge = (
@@ -79,16 +83,30 @@ export const extractYear = (
 };
 
 export const isPersonProbablyLiving = (
-  birthDate?: string,
-  deathDate?: string
+  birthDate?: GenealogicalDate,
+  deathDate?: GenealogicalDate
 ): boolean => {
-  if (deathDate) return false;
+  if (deathDate) {
+    return false;
+  }
 
-  const birthYear = extractYear(birthDate);
+  const birthYear =
+    birthDate?.value
+      ? Math.floor(
+          birthDate.value / 10000
+        )
+      : undefined;
 
-  if (!birthYear) return false;
+  if (!birthYear) {
+    return false;
+  }
 
-  const currentYear = new Date().getFullYear();
+  const currentYear =
+    new Date().getFullYear();
 
-  return currentYear - birthYear < MAX_REASONABLE_AGE;
+  return (
+    currentYear -
+      birthYear <
+    MAX_REASONABLE_AGE
+  );
 };

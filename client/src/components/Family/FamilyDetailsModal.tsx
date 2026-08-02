@@ -235,7 +235,7 @@ const FamilyDetailsModal = ({
                     <span className="font-medium text-gray-600">
                       Date:
                     </span>{" "}
-                    {family.relationshipDate ||
+                    {family.relationshipDate?.text ||
                       "Not recorded"}
                   </div>
 

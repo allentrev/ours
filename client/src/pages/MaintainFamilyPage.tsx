@@ -115,7 +115,7 @@ function validateFamily(family: FamilyRecord | null | undefined): ValidationResu
     motherHandle:  "",
     childHandles:  [],
     relationshipType:  "",
-    relationshipDate:  "",
+    relationshipDate:  undefined,
     relationshipPlaceHandle: "",
     noteHandles: [],
   };

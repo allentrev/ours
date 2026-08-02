@@ -36,14 +36,21 @@ const mapPerson = (person: any): RawGrampsPerson => ({
 
 const loadPeopleByHandles = async (
   handles: string[]
-): Promise<RawGrampsPerson[]> => {
-  if (handles.length === 0) return [];
+): Promise<PersonRecord[]> => {
+  if (handles.length === 0) {
+    return [];
+  }
 
-  const people = await PersonModel.find({
-    handle: { $in: [...new Set(handles)] },
-  }).lean<PersonRecord[]>();
+  const people =
+    await PersonModel.find({
+      handle: {
+        $in: [
+          ...new Set(handles),
+        ],
+      },
+    }).lean<PersonRecord[]>();
 
-  return people.map(mapPerson);
+  return people;
 };
 
 const collectDescendantData = async (

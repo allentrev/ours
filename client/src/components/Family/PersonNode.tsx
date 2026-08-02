@@ -7,13 +7,14 @@ import {
   isPersonProbablyLiving,
 } from "../../utilities/Family/formatters";
 import { useUser } from "@clerk/clerk-react";
+import type { GenealogicalDate } from "@/types/familyTypes";
 
 interface PersonNodeData {
   label: string;
   shortId: string;
   gender?: string;
-  birthDate?: string;
-  deathDate?: string;
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
   isSelected?: boolean;
 }
 
@@ -30,7 +31,7 @@ const PersonNode = ({ data }: Props) => {
     data.birthDate,
     data.deathDate
   );
-  const age = calculateAge(isLiving,data.birthDate, data.deathDate);
+  const age = calculateAge(isLiving,data.birthDate?.text, data.deathDate?.text);
 
   return (
     <div
@@ -70,7 +71,7 @@ const PersonNode = ({ data }: Props) => {
       
         <div>
           <span className="font-medium">Died:</span>{" "}
-          {data.deathDate || "-"}
+          {formatPersonDate(data.deathDate, isLiving)}
         </div>
         
         <div>

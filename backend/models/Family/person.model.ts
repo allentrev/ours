@@ -1,6 +1,12 @@
 import mongoose, { Schema, model } from "mongoose";
 import type { PersonRecord } from "../../types/family.types.js";
+import {
+  genealogicalDateSchema,
+} from "./genealogicalDate.schema.js";
 
+/* ========================================================================== */
+/* Person schemas                                                             */
+/* ========================================================================== */
 const personSchema = new Schema<PersonRecord>(
   {
     handle: { type: String, required: true, unique: true, index: true },
@@ -13,8 +19,8 @@ const personSchema = new Schema<PersonRecord>(
     surname: { type: String },
     gender: { type: String },
 
-    birthDate: { type: String },
-    deathDate: { type: String },
+    birthDate: { type: genealogicalDateSchema },
+    deathDate: { type: genealogicalDateSchema },
     deceased: { type: Boolean, default: false, index: true },
 
     birthPlaceHandle: { type: String, index: true },

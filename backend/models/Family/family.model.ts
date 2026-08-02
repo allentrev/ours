@@ -1,5 +1,8 @@
 import mongoose, { Schema, model } from "mongoose";
 import type { FamilyRecord } from "../../types/family.types.js";
+import {
+  genealogicalDateSchema,
+} from "./genealogicalDate.schema.js";
 
 const familySchema = new Schema<FamilyRecord>(
   {
@@ -24,7 +27,7 @@ const familySchema = new Schema<FamilyRecord>(
       ],
       default: "Unknown",
     },
-    relationshipDate: { type: String },
+    relationshipDate: { type: genealogicalDateSchema },
     relationshipPlaceHandle: { type: String, index: true },
 
     mediaHandles: [{ type: String }],

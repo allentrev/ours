@@ -1,23 +1,53 @@
+import type {
+  Node,
+} from "@xyflow/react";
 
-import type { Node } from "@xyflow/react";
+/* -------------------------------------------------------------------------- */
+/* Genealogical dates                                                         */
+/* -------------------------------------------------------------------------- */
 
-export type TreeMode = "ancestors" | "descendants";
+export type GenealogicalDateType =
+  | "exact"
+  | "about"
+  | "before"
+  | "after";
+
+export interface GenealogicalDate {
+  text: string;
+  value?: number;
+  type: GenealogicalDateType;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Family tree                                                                */
+/* -------------------------------------------------------------------------- */
+
+export type TreeMode =
+  | "ancestors"
+  | "descendants";
 
 export interface TreeNodeData {
   label?: string;
   gender?: string;
-  birthDate?: string;
-  deathDate?: string;
+
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
+
   isSelected?: boolean;
 }
 
 export interface TreeNode {
   id: string;
-  type?: "person" | "relationship";
+
+  type?:
+    | "person"
+    | "relationship";
+
   position: {
     x: number;
     y: number;
   };
+
   data: TreeNodeData;
 }
 
@@ -30,31 +60,40 @@ export interface TreeEdge {
 export interface TreePerson {
   handle: string;
   grampsId?: string;
+
   gender?: string;
   firstName?: string;
   surname?: string;
   displayName: string;
-  birthDate?: string;
-  deathDate?: string;
+
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
+
   birthPlaceHandle?: string;
   deathPlaceHandle?: string;
+
   primaryPhotoUrl?: string;
   noteHandles?: string[];
 }
+
 export interface TreeResponseNode {
   id: string;
   label: string;
   gender?: string;
-  birthDate?: string;
-  deathDate?: string;
+
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
+
   depth: number;
-  noPartners: number
-};
+  noPartners: number;
+}
+
 export interface TreeResponseEdge {
   source: string;
   target: string;
   relationshipType: string;
 }
+
 export interface TreeResponseFamily {
   id: string;
   fatherHandle?: string;
@@ -69,66 +108,71 @@ export interface TreeResponse {
   families?: TreeResponseFamily[];
 }
 
+/* -------------------------------------------------------------------------- */
+/* Person                                                                     */
+/* -------------------------------------------------------------------------- */
+
 export interface PersonRecord {
   handle: string;
   grampsId: string;
+
   gender: string;
   firstName?: string;
   surname?: string;
   displayName: string;
-  birthDate?: string;
-  deathDate?: string;
+
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
+
   birthPlaceHandle?: string;
   deathPlaceHandle?: string;
+
   primaryPhotoUrl?: string;
   noteHandles?: string[];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Place                                                                      */
+/* -------------------------------------------------------------------------- */
 
 export interface PlaceRecord {
   handle: string;
   grampsId: string;
   type: string;
+
   line1?: string;
   line2?: string;
   urbanArea?: string;
   county?: string;
   country?: string[];
+
   code?: string;
+
   displayPlace: string;
   name: string;
   shortName: string;
+
   geocodeName?: string;
+
   latitude?: number;
   longitude?: number;
+
   noteHandles?: string[];
 }
 
-export interface NoteRecord {
-  handle: string;
-  grampsId: string;
-  type?: string;
-  text: string;
+export interface NewPlaceKindMap {
+  country: "country";
+  county: "county";
+  urbanArea: "urbanArea";
 }
 
-export interface NewNoteInput {
-  text: string;
-}
+export type NewPlaceKind =
+  keyof NewPlaceKindMap;
 
-export interface FamilyRecord {
-  handle: string;
-  grampsId: string;
-  fatherHandle?: string;
-  motherHandle?: string;
-  childHandles?: string[];
-  relationshipType: string;
-  relationshipDate?: string;
-  relationshipPlaceHandle?: string;
-  noteHandles?: string[];
-}
-
-export type NewPlaceKind = "country" | "county" | "urbanArea";
-
-export type UrbanPlaceType = "Village" | "Town" | "City";
+export type UrbanPlaceType =
+  | "Village"
+  | "Town"
+  | "City";
 
 export interface CreateSimplePlaceRequest {
   kind: NewPlaceKind;
@@ -155,8 +199,44 @@ export interface PlaceOptions {
   countries: PlaceOption[];
 }
 
-//  -------------------------------- Relationship Diagram --------------------
-//
+/* -------------------------------------------------------------------------- */
+/* Notes                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export interface NoteRecord {
+  handle: string;
+  grampsId: string;
+  type?: string;
+  text: string;
+}
+
+export interface NewNoteInput {
+  text: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Family                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface FamilyRecord {
+  handle: string;
+  grampsId: string;
+
+  fatherHandle?: string;
+  motherHandle?: string;
+  childHandles?: string[];
+
+  relationshipType: string;
+  relationshipDate?: GenealogicalDate;
+
+  relationshipPlaceHandle?: string;
+  noteHandles?: string[];
+}
+
+/* -------------------------------------------------------------------------- */
+/* Relationship diagram                                                       */
+/* -------------------------------------------------------------------------- */
+
 export type PersonAddType =
   | "addChild"
   | "addPartner"
@@ -177,19 +257,46 @@ export type ActorNodeKind =
 export interface ActorPerson {
   handle: string;
   displayName: string;
+
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
 }
 
 export interface ActorFamily {
   handle: string;
   displayName: string;
+
+  relationshipDate?: GenealogicalDate;
+}
+
+export interface ActorChildFamily {
+  handle: string;
+  displayName: string;
+
+  fatherHandle?: string;
+  motherHandle?: string;
+
+  relationshipDate?: GenealogicalDate;
 }
 
 export interface PersonActorData {
   selectedPerson: ActorPerson;
+
   children: ActorPerson[];
   siblings: ActorPerson[];
   partners: ActorPerson[];
+
+  /*
+   * Families in which the selected person
+   * is a child.
+   */
   families: ActorFamily[];
+
+  /*
+   * Families in which the selected person
+   * is a parent.
+   */
+  childFamilies: ActorChildFamily[];
 }
 
 export interface ActorNodeData
@@ -201,7 +308,9 @@ export interface ActorNodeData
   familyHandle?: string;
   eventType?: ActorEventType;
 
-  onOpenPersonDetails: (personHandle: string) => void;
+  onOpenPersonDetails: (
+    personHandle: string
+  ) => void;
 
   onSelectPerson: (
     personHandle: string
@@ -224,6 +333,10 @@ export type ActorFlowNode = Node<
   "actor"
 >;
 
+/* -------------------------------------------------------------------------- */
+/* Related-person creation                                                    */
+/* -------------------------------------------------------------------------- */
+
 export interface CreateRelatedPersonRequest {
   sourcePersonHandle: string;
   relationshipType: PersonAddType;
@@ -235,40 +348,16 @@ export interface CreateRelatedPersonResponse {
   person: PersonRecord;
 }
 
-export interface ActorFamily {
-  handle: string;
-  displayName: string;
-}
+/* -------------------------------------------------------------------------- */
+/* Family details                                                             */
+/* -------------------------------------------------------------------------- */
 
 export interface PersonActor {
   handle: string;
   displayName: string;
-}
 
-export interface ActorChildFamily {
-  handle: string;
-  displayName: string;
-  fatherHandle?: string;
-  motherHandle?: string;
-}
-
-export interface PersonActorData {
-  selectedPerson: ActorPerson;
-  children: ActorPerson[];
-  siblings: ActorPerson[];
-  partners: ActorPerson[];
-
-  /*
-   * Families in which the selected person is a child.
-   * These are displayed above the selected person.
-   */
-  families: ActorFamily[];
-
-  /*
-   * Families in which the selected person is a parent.
-   * These are possible destinations when adding a child.
-   */
-  childFamilies: ActorChildFamily[];
+  birthDate?: GenealogicalDate;
+  deathDate?: GenealogicalDate;
 }
 
 export interface FamilyDetailsData {
@@ -280,7 +369,7 @@ export interface FamilyDetailsData {
   children: PersonActor[];
 
   relationshipType?: string;
-  relationshipDate?: string;
+  relationshipDate?: GenealogicalDate;
 
   relationshipPlaceHandle?: string;
   relationshipPlaceName?: string;

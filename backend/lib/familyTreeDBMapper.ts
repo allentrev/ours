@@ -1,4 +1,10 @@
 // backend/lib/familyTreeDbMapper.ts
+/*
+Purpose: Load data from MongoDB and present it in the shape expected
+    by the old tree engine.
+
+
+*/
 
 import { PersonModel } from "../models/Family/person.model.js";
 import { FamilyModel } from "../models/Family/family.model.js";
@@ -33,8 +39,8 @@ export const loadParsedFamilyDataFromDb =
       firstName: person.firstName ?? undefined,
       surname: person.surname ?? undefined,
       displayName: person.displayName,
-      birthDate: person.birthDate ?? undefined,
-      deathDate: person.deathDate ?? undefined,
+      birthDate: person.birthDate?.text ?? undefined,
+      deathDate: person.deathDate?.text ?? undefined,
       birthPlaceHandle: person.birthPlaceHandle ?? undefined,
       deathPlaceHandle: person.deathPlaceHandle ?? undefined,
       noteHandles: person.noteHandles ?? [],
@@ -46,7 +52,7 @@ export const loadParsedFamilyDataFromDb =
       handle: family.handle,
       grampsId: family.grampsId ?? undefined,
       relationshipType: family.relationshipType,
-      relationshipDate: family.relationshipDate ?? undefined,
+      relationshipDate: family.relationshipDate?.text ?? undefined,
       relationshipPlaceHandle:
         family.relationshipPlaceHandle ?? undefined,
       fatherHandle: family.fatherHandle ?? undefined,

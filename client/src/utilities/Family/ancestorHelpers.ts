@@ -64,8 +64,8 @@ export const buildAncestorTree = (
         id: `multiple-partner-${person.id}`,
         label: "Dummy",
         gender: person.gender === "M" ? "F" : "M",
-        birthDate: "",
-        deathDate: "",
+        birthDate: undefined,
+        deathDate: undefined,
         depth,
         noPartners: (depth === 0) ? person.noPartners : person.noPartners,
       };

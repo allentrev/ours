@@ -7,7 +7,15 @@ import {
   ImportBatchModel,
 } from "../models/Family/index.js";
 
-import type { ParsedGrampsData, PersonRecord, RawGrampsNote, RawGrampsPerson } from "../types/family.types.js";
+import { convertGrampsDate, } from "../lib/genealogicalDate.js";
+
+import type { 
+  ParsedGrampsData,
+  PersonRecord,
+  RawGrampsNote,
+  RawGrampsPerson,
+} from "../types/family.types.js";
+
 import { geocodePlace } from "../lib/geocodePlace.js";
 
 const DECEASED_LIMIT = 100;
@@ -98,8 +106,8 @@ try {
       surname: person.surname,
       gender: person.gender,
 
-      birthDate: person.birthDate,
-      deathDate: person.deathDate,
+      birthDate: convertGrampsDate( person.birthDate ),
+      deathDate: convertGrampsDate( person.deathDate ),
 
       deceased: estimateDeceasedMarker(person),
 
@@ -116,9 +124,14 @@ try {
   );
   const mongoPeopleCount = await PersonModel.countDocuments();
   console.log("mapped People records", mongoPeopleCount);
-}
-  catch (err) {
-    console.log("Caught People error", err);
+
+} catch (error) {
+  console.error(
+    "Caught People error",
+    error
+  );
+
+  throw error;
 }
 // --------------------------------------- Family -----------------------
 //
@@ -138,7 +151,7 @@ try {
       noteHandles: family.noteHandles ?? [],
 
       relationshipType: family.relationshipType ?? "unknown",
-      relationshipDate: family.relationshipDate ?? null,
+      relationshipDate: convertGrampsDate( family.relationshipDate ), 
       relationshipPlaceHandle: family.relationshipPlaceHandle ?? null,
 
       importBatchId: importBatch._id,
@@ -146,9 +159,14 @@ try {
   )
   const mongoFamilyCount = await FamilyModel.countDocuments();
   console.log("mapped Family records", mongoFamilyCount);
-}
-  catch (err) {
-    console.log("Caught Family error", err);
+
+} catch (error) {
+  console.error(
+    "Caught Family error",
+    error
+  );
+
+  throw error;
 }
 // --------------------------------------- Place -----------------------
 //
@@ -212,9 +230,13 @@ try {
 
   const mongoPlaceCount = await PlaceModel.countDocuments();
   console.log("mapped Place records", mongoPlaceCount);
-}
-  catch (err) {
-    console.log("Caught Place error", err);
+} catch (error) {
+  console.error(
+    "Caught Place error",
+    error
+  );
+
+  throw error;
 }
 */    
 // --------------------------------------- Finish up -----------------------

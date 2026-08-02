@@ -334,7 +334,7 @@ const PersonFormCore = ({
             <input
               type="text"
               name="birthDate"
-              value={person.birthDate ?? ""}
+              value={person.birthDate?.text ?? ""}
               onChange={handleChange}
               className="w-full min-w-0 rounded border border-gray-300 px-2 py-1"
             />
@@ -397,7 +397,7 @@ const PersonFormCore = ({
             <input
               type="text"
               name="deathDate"
-              value={person.deathDate ?? ""}
+              value={person.deathDate?.text ?? ""}
               onChange={handleChange}
               className="w-full min-w-0 rounded border border-gray-300 px-2 py-1"
             />
@@ -536,10 +536,13 @@ const PersonFormCore = ({
         }
         onPlaceCreated={handlePlaceCreated}
       />
-
       <GenealogyDatePickerModal
         open={dateModal.open}
-        value={person[dateModal.field] ?? ""}
+        value={
+          dateModal.field
+            ? person[dateModal.field]
+            : undefined
+        }
         onClose={() =>
           setDateModal((current) => ({
             ...current,

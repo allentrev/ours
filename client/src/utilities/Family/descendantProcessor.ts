@@ -77,8 +77,8 @@ export const buildDescendantWorkNodes = (
         id: `multiple-partner-${key}`,
         label: "Dummy",
         gender: spouseNode.gender === "M" ? "F" : "M",
-        birthDate: "",
-        deathDate: "",
+        birthDate: undefined,
+        deathDate: undefined,
         depth: spouseNode.depth ?? 0,
         noPartners: spouseNode.noPartners ?? 1,
       };

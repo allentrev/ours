@@ -1,8 +1,64 @@
+/*
+Purpose: Convert Gramps parser output into the
+    application's internal Family Tree model.
+Gramps XML
+      │
+      ▼
+RawGrampsPerson
+RawGrampsFamily
+      │
+      ▼
+familyTreeMapper
+      │
+      ▼
+MappedFamilyData
+*/
+
+import {
+  convertGrampsDate,
+} from "./genealogicalDate.js";
+
 import {
   MappedFamilyData,
   ParsedGrampsData,
   RawRelationship,
+  PersonRecord,
+  RawGrampsPerson,
 } from "../types/family.types.js";
+
+const mapRawPerson = (
+  person: RawGrampsPerson
+): PersonRecord => {
+  const birthDate =
+    convertGrampsDate(
+      person.birthDate
+    );
+
+  const deathDate =
+    convertGrampsDate(
+      person.deathDate
+    );
+
+  return {
+    ...person,
+
+    birthDate,
+    deathDate,
+
+    origin: "gramps",
+
+    deceased:
+      Boolean(deathDate),
+
+    noteHandles:
+      person.noteHandles ??
+      [],
+
+    mediaHandles:
+      person.mediaHandles ??
+      [],
+  };
+};
 
 export const mapFamilyTreeData = (
   parsedData: ParsedGrampsData
@@ -60,7 +116,10 @@ export const mapFamilyTreeData = (
   });
 
   return {
-    people: parsedData.people,
+    people:
+      parsedData.people.map(
+        mapRawPerson
+      ),
     relationships,
     families: parsedData.families.map((family) => ({
       id: family.handle,

@@ -61,42 +61,6 @@ const extractPersonName = (person: any) => {
   };
 };
 
-const extractEventDate = (
-  record: any,
-  recordType: GrampsRecordType,
-  eventMap: Map<string, any>,
-  eventType: "Birth" | "Death" | "Baptism" | "Census" | "Marriage" | "Residence" | "Adopted" | "Civil Union"
-) => {
-  const expectedRole = recordType === "Person" ? "Primary" : "Family";
-
-
-  const eventRefs = toArray(record.eventref);
-  for (const eventRef of eventRefs) {
-    const eventHandle = eventRef?._hlink;
-
-    if (!eventHandle) {
-      continue;
-    }
-
-    const event = eventMap.get(eventHandle);
-
-    if (!event) {
-      continue;
-    }
-
-    const type =
-      getTextValue(event.type) ||
-      getTextValue(event._type);
-
-    if (type === eventType && eventRef._role ===  expectedRole) {
-      return event.dateval?._val;
-    }
-  }
-
-  return undefined;
-};
-
-
 const extractEventData = (
   record: any,
   recordType: GrampsRecordType,
