@@ -297,8 +297,8 @@ export interface FamilyGroup {
 export interface PersonActor {
   handle: string;
   displayName: string;
+  birthDate?: GenealogicalDate;
 }
-
 export interface ActorChildFamily {
   handle: string;
   displayName: string;
