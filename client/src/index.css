@@ -134,8 +134,3 @@ body {
 .animatedButton:hover {
   animation-play-state: paused;
 }
-
-.child-edge path {
-  stroke: #2563eb !important;
-  stroke-width: 4px !important;
-}

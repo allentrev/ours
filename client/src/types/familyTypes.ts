@@ -1,4 +1,5 @@
 import type {
+  Edge,
   Node,
 } from "@xyflow/react";
 
@@ -57,6 +58,8 @@ export interface TreeEdge {
   target: string;
 }
 
+
+
 export interface TreePerson {
   handle: string;
   grampsId?: string;
@@ -99,6 +102,8 @@ export interface TreeResponseFamily {
   fatherHandle?: string;
   motherHandle?: string;
   childHandles: string[];
+
+  relationshipDate?: GenealogicalDate;
 }
 
 export interface TreeResponse {
@@ -376,3 +381,26 @@ export interface FamilyDetailsData {
 
   notes: NoteRecord[];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Edges                                                             */
+/* -------------------------------------------------------------------------- */
+export type FamilyTreeEdgeRouteMode =
+  | "vertical-channel"
+  | "horizontal-first";
+
+export interface FamilyTreeEdgeData
+  extends Record<string, unknown> {
+  channelOffset?: number;
+  targetOffset?: number;
+  routeMode?: FamilyTreeEdgeRouteMode;
+}
+
+export type FamilyTreeEdge =
+  Edge<FamilyTreeEdgeData> & {
+    /*
+     * The underlying genealogy family
+     * represented by this edge.
+     */
+    familyId: string;
+  };

@@ -7,7 +7,6 @@ import {
 } from "@xyflow/react";
 
 import type {
-  Edge,
   Node,
   ReactFlowInstance,
 } from "@xyflow/react";
@@ -34,6 +33,7 @@ import type {
   TreePerson,
   TreeMode,
   TreeResponse,
+  FamilyTreeEdge,
 } from "../../types/familyTypes";
 
 const nodeTypes = {
@@ -69,7 +69,7 @@ const TreeViewer = ({
   onPersonSelect,
 }: Props) => {
   const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const [edges, setEdges] = useState<FamilyTreeEdge[]>([]);
   const [highlightedEdges, setHighlightedEdges] = useState(new Set<string>());
   
   const [loading, setLoading] =
@@ -81,10 +81,12 @@ const TreeViewer = ({
   const [
     reactFlowInstance,
     setReactFlowInstance,
-  ] =
-    useState<ReactFlowInstance | null>(
-      null
-    );
+  ] = useState<
+    ReactFlowInstance<
+      Node,
+      FamilyTreeEdge
+    > | null
+  >(null);
 
   useEffect(() => {
     const loadTree = async () => {
@@ -193,42 +195,47 @@ const TreeViewer = ({
   
   const handleEdgeClick = (
     _event: React.MouseEvent,
-    edge: Edge
+    edge: FamilyTreeEdge
   ) => {
-    const relationshipNodeId = edge.source.startsWith("relationship-")
-      ? edge.source
-      : edge.target.startsWith("relationship-")
-        ? edge.target
-        : null;
+    const branchEdgeIds =
+      edges
+        .filter(
+          (item) =>
+            item.familyId ===
+            edge.familyId
+        )
+        .map(
+          (item) =>
+            item.id
+        );
 
-    if (!relationshipNodeId) {
-      return;
-    }
+    setHighlightedEdges(
+      (current) => {
+        const isSameBranch =
+          current.size ===
+            branchEdgeIds.length &&
+          branchEdgeIds.every(
+            (id) =>
+              current.has(id)
+          );
 
-    const branchEdgeIds = edges
-      .filter(
-        (item) =>
-          item.source === relationshipNodeId ||
-          item.target === relationshipNodeId
-      )
-      .map((item) => item.id);
+        if (isSameBranch) {
+          return new Set();
+        }
 
-        setHighlightedEdges((current) => {
-          const isSameBranch =
-            current.size === branchEdgeIds.length &&
-            branchEdgeIds.every((id) => current.has(id));
-
-          if (isSameBranch) {
-            return new Set();
-          }
-
-          return new Set(branchEdgeIds);
-        });
+        return new Set(
+          branchEdgeIds
+        );
+      }
+    );
   };
-  
+
+  console.log("TreeViewer Rendered with nodes:", nodes);
+  console.log("TreeViewer Rendered with edges:", edges);
+
   return (
     <div className="w-full h-full">
-      <ReactFlow
+      <ReactFlow<Node, FamilyTreeEdge>
         nodes={nodes}
         edges={displayedEdges}
         nodeTypes={

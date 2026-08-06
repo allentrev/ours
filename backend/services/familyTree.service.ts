@@ -78,29 +78,63 @@ const addEdgeIfMissing = (
   }
 };
 
+const isAdoptedFamily = (
+  relationshipType?: string
+): boolean => {
+  return (
+    relationshipType
+      ?.trim()
+      .toLowerCase() ===
+    "adopted"
+  );
+};
+
 export const buildAncestorTree = (
   data: MappedFamilyData,
   personHandle: string,
   maxDepth = 5
 ): FamilyTreeResponse => {
-  //console.log("Building ancestor tree for handle:", personHandle);
   const nodes: FamilyTreeNode[] = [];
   const edges: FamilyTreeEdge[] = [];
 
-  const visited = new Set<string>();
+  const visited =
+    new Set<string>();
 
-  const walk = (currentHandle: string, depth: number) => {
-    if (depth > maxDepth) return;
-    if (visited.has(currentHandle)) return;
-  //console.log(`Adding handle: ${currentHandle} at depth: ${depth}`);
-    visited.add(currentHandle);
+  const walk = (
+    currentHandle: string,
+    depth: number
+  ) => {
+    if (depth > maxDepth) {
+      return;
+    }
 
-    const currentNode = createNode(data, currentHandle, depth);
+    if (
+      visited.has(
+        currentHandle
+      )
+    ) {
+      return;
+    }
 
-    //console.log(`Creating node for handle: ${currentHandle} at depth: ${depth}`);
-    if (!currentNode) return;
+    visited.add(
+      currentHandle
+    );
 
-    addNodeIfMissing(nodes, currentNode);
+    const currentNode =
+      createNode(
+        data,
+        currentHandle,
+        depth
+      );
+
+    if (!currentNode) {
+      return;
+    }
+
+    addNodeIfMissing(
+      nodes,
+      currentNode
+    );
 
     addSpousesForPerson(
       data,
@@ -110,51 +144,126 @@ export const buildAncestorTree = (
       edges
     );
 
-    const parentRelationships = data.relationships.filter(
-      (relationship) =>
-        relationship.relationshipType === "child" &&
-        relationship.fromHandle === currentHandle
-    );
-
-    parentRelationships.forEach((relationship) => {
-      const parentHandle = relationship.toHandle;
-
-      const parentNode = createNode(data, parentHandle, depth + 1);
-
-      if (!parentNode) return;
-
-      addNodeIfMissing(nodes, parentNode);
-
-      addSpousesForPerson(
-        data,
-        currentHandle,
-        depth,
-        nodes,
-        edges
+    /*
+     * Find families in which the current
+     * person is recorded as a child.
+     *
+     * Adoptive families remain available
+     * elsewhere in the application, but the
+     * biological ancestor walk stops here.
+     */
+    const biologicalParentFamilies =
+      data.families.filter(
+        (family) =>
+          family.childHandles.includes(
+            currentHandle
+          ) &&
+          !isAdoptedFamily(
+            family.relationshipType
+          )
       );
 
-      addEdgeIfMissing(edges, {
-        source: parentHandle,
-        target: currentHandle,
-        relationshipType: "parent",
-      });
+    biologicalParentFamilies.forEach(
+      (family) => {
+        const parentHandles = [
+          family.fatherHandle,
+          family.motherHandle,
+        ].filter(
+          (
+            handle
+          ): handle is string =>
+            Boolean(handle)
+        );
 
-      walk(parentHandle, depth + 1);
-    });
+        parentHandles.forEach(
+          (parentHandle) => {
+            const parentDepth =
+              depth + 1;
+
+            const parentNode =
+              createNode(
+                data,
+                parentHandle,
+                parentDepth
+              );
+
+            if (!parentNode) {
+              return;
+            }
+
+            addNodeIfMissing(
+              nodes,
+              parentNode
+            );
+
+            /*
+             * This must use the parent,
+             * not currentHandle.
+             */
+            addSpousesForPerson(
+              data,
+              parentHandle,
+              parentDepth,
+              nodes,
+              edges
+            );
+
+            addEdgeIfMissing(
+              edges,
+              {
+                source:
+                  parentHandle,
+
+                target:
+                  currentHandle,
+
+                relationshipType:
+                  "parent",
+
+              }
+            );
+
+            walk(
+              parentHandle,
+              parentDepth
+            );
+          }
+        );
+      }
+    );
   };
 
-  walk(personHandle, 0);
+  walk(
+    personHandle,
+    0
+  );
 
   return {
     nodes,
     edges,
-    families: data.families.filter((family) =>
-      nodes.some((node) => node.id === family.fatherHandle) ||
-      nodes.some((node) => node.id === family.motherHandle) ||
-      family.childHandles.some((childHandle) =>
-        nodes.some((node) => node.id === childHandle)
-      )
-    ),
+
+    families:
+      data.families.filter(
+        (family) =>
+          nodes.some(
+            (node) =>
+              node.id ===
+              family.fatherHandle
+          ) ||
+          nodes.some(
+            (node) =>
+              node.id ===
+              family.motherHandle
+          ) ||
+          family.childHandles.some(
+            (childHandle) =>
+              nodes.some(
+                (node) =>
+                  node.id ===
+                  childHandle
+              )
+          )
+      ),
   };
 };
 

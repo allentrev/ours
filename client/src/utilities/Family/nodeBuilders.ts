@@ -56,8 +56,8 @@ export const buildPersonNodes = (
         x: indexInGeneration * TREE.NODE_WIDTH - generationWidth / 2,
         y:
           mode === "ancestors"
-            ? -node.depth * TREE.LEVEL_HEIGHT
-            : node.depth * TREE.LEVEL_HEIGHT,
+            ? -node.depth * TREE.ANCESTOR_LEVEL_HEIGHT
+            : node.depth * TREE.DESCENDANT_LEVEL_HEIGHT,
       },
       data: {
         label: wLabel,

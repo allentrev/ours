@@ -144,6 +144,15 @@ export interface FamilyRecord
     }
 
 export type FamilyDocument = HydratedDocument<FamilyRecord>;
+
+export interface RawGrampsFamilyChildRelationship {
+  familyHandle: string;
+  childHandle: string;
+
+  relationshipType:
+    FamilyChildRelationshipType;
+}
+
 //  ------------------------------------- Place -----------------------------
 //
 export interface RawGrampsPlace {
@@ -239,6 +248,7 @@ export interface ImportBatchRecord {
     placeCount: number;
     noteCount: number;
     mediaCount: number;
+    familyChildRelationshipCount: number;
  }
 
 export type ImportBatchDocument = HydratedDocument<ImportBatchRecord>;
@@ -251,6 +261,8 @@ export interface ParsedGrampsData {
   places: RawGrampsPlace[];
   notes: RawGrampsNote[];
   media: RawGrampsMedia[];
+  familyChildRelationships:
+  RawGrampsFamilyChildRelationship[];
 }
 
 export interface RawRelationship {
@@ -263,6 +275,7 @@ export interface MappedFamilyData {
   people: PersonRecord[];
   relationships: RawRelationship[];
   families: FamilyGroup[];
+  familyChildRelationships: RawGrampsFamilyChildRelationship[];
 }
 
 export interface FamilyTreeNode {
@@ -292,6 +305,8 @@ export interface FamilyGroup {
   fatherHandle?: string;
   motherHandle?: string;
   childHandles: string[];
+  relationshipType?: string;
+  relationshipDate?: GenealogicalDate;
 }
 //-----------------------
 export interface PersonActor {
@@ -334,4 +349,24 @@ export interface FamilyDetailsData {
 export interface UpdateFamilyRequestBody {
   family: FamilyRecord;
   newNotes?: NewNoteInput[];
+}
+
+//----------------------- Adoption ------------------------
+//
+export type FamilyChildRelationshipType =
+  | "biological"
+  | "adopted"
+  | "unknown";
+
+export interface FamilyChildRelationshipRecord
+  extends LocalRecordFields,
+    ImportBatchRef,
+    AuditFields {
+  handle: string;
+
+  familyHandle: string;
+  childHandle: string;
+
+  relationshipType:
+    FamilyChildRelationshipType;
 }

@@ -17,6 +17,7 @@ const importBatchSchema = new Schema<ImportBatchRecord>(
     placeCount: { type: Number, default: 0 },
     noteCount: { type: Number, default: 0 },
     mediaCount: { type: Number, default: 0 },
+    familyChildRelationshipCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

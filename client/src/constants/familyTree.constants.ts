@@ -10,6 +10,9 @@ export const PERSON_CARD_HEIGHT = 150;
 export const PARTNERSHIP_ROW_SPACING = 150;
 export const CHILD_SECTION_GAP = 0;
 
+export const ANCESTOR_LEVEL_HEIGHT = 320;
+export const DESCENDANT_LEVEL_HEIGHT = 320;
+
 export const urbanPlaceTypes: UrbanPlaceType[] = [
   "Village",
   "Town",

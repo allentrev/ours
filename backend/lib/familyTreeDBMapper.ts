@@ -99,5 +99,6 @@ export const loadParsedFamilyDataFromDb =
       places: mappedPlaces,
       notes: mappedNotes,
       media: [],
+      familyChildRelationships: [],
     };
   };

@@ -126,6 +126,12 @@ export const mapFamilyTreeData = (
       fatherHandle: family.fatherHandle,
       motherHandle: family.motherHandle,
       childHandles: family.childHandles,
+      relationshipDate:
+        convertGrampsDate(
+          family.relationshipDate
+        ),
     })),
+    familyChildRelationships:
+      parsedData.familyChildRelationships,
   };
 };

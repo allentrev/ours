@@ -1,9 +1,10 @@
-import type { Edge, Node } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
 
 import type {
   TreeMode,
   TreeResponse,
   TreeResponseNode,
+  FamilyTreeEdge,
 } from "../../types/familyTypes";
 
 import { positionSelectedFamilyBlocks } from "./familyBlockLayout";
@@ -26,7 +27,7 @@ import { buildTreeEdges } from "./edgeBuilders";
 export const buildTree = (
   data: TreeResponse,
   mode: TreeMode
-): { nodes: Node[]; edges: Edge[] } => {
+): { nodes: Node[]; edges: FamilyTreeEdge[] } => {
 
   //console.log("buildTreee");
 
@@ -37,7 +38,7 @@ export const buildTree = (
   //  - Get list of hidden spouse handles based on multi-partner logic
   // --------------------------------------------------
   let mappedNodes: Node[] = [];
-  let mappedEdges: Edge[] = [];
+  let mappedEdges: FamilyTreeEdge[] = [];
   // --------------------------------------------------
   // Layout Context
   // --------------------------------------------------

@@ -5,6 +5,7 @@ import {
   NoteModel,
   MediaModel,
   ImportBatchModel,
+  FamilyChildRelationshipModel,
 } from "../models/Family/index.js";
 
 import { convertGrampsDate, } from "../lib/genealogicalDate.js";
@@ -62,12 +63,15 @@ export const importFamilyDataToMongo = async (
   const familyCount = parsedData.families.length;
   const placeCount = parsedData.places.length;
   const noteCount = parsedData.notes.length;
+  const familyChildRelationshipCount =
+    parsedData.familyChildRelationships.length;
 
   importBatch.peopleCount = peopleCount;
   importBatch.familyCount = familyCount;
   importBatch.placeCount = placeCount;
   importBatch.noteCount = noteCount;
   importBatch.mediaCount = 0;
+  importBatch.familyChildRelationshipCount = familyChildRelationshipCount;
 // --------------------------------------- Notes -----------------------
 //
 try {
@@ -168,6 +172,59 @@ try {
 
   throw error;
 }
+
+// ---------------- Family-child relationships ----------------
+//
+try {
+  await FamilyChildRelationshipModel.deleteMany({});
+
+  const relationshipRecords =
+    parsedData.familyChildRelationships.map(
+      (relationship, index) => ({
+        /*
+         * Gramps does not provide a separate handle
+         * for childref, so construct a stable one.
+         */
+        handle:
+          `${relationship.familyHandle}::${relationship.childHandle}`,
+
+        origin:
+          "gramps",
+
+        familyHandle:
+          relationship.familyHandle,
+
+        childHandle:
+          relationship.childHandle,
+
+        relationshipType:
+          relationship.relationshipType,
+
+        importBatchId:
+          importBatch._id,
+      })
+    );
+
+  await FamilyChildRelationshipModel.insertMany(
+    relationshipRecords
+  );
+
+  const mongoRelationshipCount =
+    await FamilyChildRelationshipModel.countDocuments();
+
+  console.log(
+    "mapped Family Child Relationship records",
+    mongoRelationshipCount
+  );
+} catch (err) {
+  console.error(
+    "Caught Family Child Relationship error",
+    err
+  );
+
+  throw err;
+}
+
 // --------------------------------------- Place -----------------------
 //
 /*
@@ -249,6 +306,8 @@ try {
     people: parsedData.people.length,
     mongoPeople: await PersonModel.countDocuments(),
     mongoFamily: await FamilyModel.countDocuments(),
+    mongoFamilyChildRelationships:
+      await FamilyChildRelationshipModel.countDocuments(),
     mongoPlaces: await PlaceModel.countDocuments(),
     mongoNotes: await NoteModel.countDocuments(),
     };

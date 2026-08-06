@@ -1,5 +1,6 @@
 import { PersonModel } from "../models/Family/person.model.js";
 import { FamilyModel } from "../models/Family/family.model.js";
+import { FamilyChildRelationshipModel } from "../models/Family/familyChildRelationship.model.js";
 
 import {
   buildAncestorTree,
@@ -14,6 +15,7 @@ import type {
   RawGrampsPerson,
   RawRelationship,
   MappedFamilyData,
+  FamilyChildRelationshipRecord,
 } from "../types/family.types.js";
 
 const MAX_DEPTH = 5;
@@ -82,6 +84,8 @@ const collectDescendantData = async (
         fatherHandle,
         motherHandle,
         childHandles,
+        relationshipType: family.relationshipType,
+        relationshipDate: family.relationshipDate,
       });
 
       if (fatherHandle) personHandles.add(fatherHandle);
@@ -98,9 +102,31 @@ const collectDescendantData = async (
     if (currentHandles.length === 0) break;
   }
 
+  const familyHandles = [
+    ...familyMap.keys(),
+  ];
+
+  const familyChildRelationships =
+    familyHandles.length > 0
+      ? await FamilyChildRelationshipModel.find({
+          familyHandle: {
+            $in: familyHandles,
+          },
+        }).lean<
+          FamilyChildRelationshipRecord[]
+        >()
+      : [];
+
   return {
-    people: await loadPeopleByHandles([...personHandles]),
-    families: [...familyMap.values()],
+    people:
+      await loadPeopleByHandles(
+        [...personHandles]
+      ),
+
+    families:
+      [...familyMap.values()],
+
+    familyChildRelationships,
   };
 };
 
@@ -108,53 +134,172 @@ const collectAncestorData = async (
   startHandle: string,
   maxDepth = MAX_DEPTH
 ) => {
-  const personHandles = new Set<string>([startHandle]);
-  const familyMap = new Map<string, FamilyGroup>();
+  const personHandles =
+    new Set<string>([startHandle]);
 
-  let currentHandles = [startHandle];
+  const familyMap =
+    new Map<string, FamilyGroup>();
 
-  for (let depth = 0; depth < maxDepth; depth++) {
-    const families = await FamilyModel.find({
-      childHandles: { $in: currentHandles },
-    }).lean<FamilyRecord[]>();
+  const relationshipMap =
+    new Map<
+      string,
+      FamilyChildRelationshipRecord
+    >();
 
-    const nextHandles: string[] = [];
+  let currentHandles = [
+    startHandle,
+  ];
 
-    families.forEach((family) => {
-      const fatherHandle = family.fatherHandle ?? undefined;
-      const motherHandle = family.motherHandle ?? undefined;
-      const childHandles = family.childHandles ?? [];
+  for (
+    let depth = 0;
+    depth < maxDepth;
+    depth++
+  ) {
+    /*
+     * Find biological family-child links
+     * for the people at this generation.
+     *
+     * Adopted links are deliberately excluded
+     * from the ancestor walk.
+     */
+    const parentLinks =
+      await FamilyChildRelationshipModel.find({
+        childHandle: {
+          $in: currentHandles,
+        },
 
-      familyMap.set(family.handle, {
-        id: family.handle,
-        fatherHandle,
-        motherHandle,
-        childHandles,
-      });
+        relationshipType: {
+          $ne: "adopted",
+        },
+      }).lean<
+        FamilyChildRelationshipRecord[]
+      >();
 
-      if (fatherHandle) {
-        personHandles.add(fatherHandle);
-        nextHandles.push(fatherHandle);
+    if (
+      parentLinks.length === 0
+    ) {
+      break;
+    }
+
+    parentLinks.forEach(
+      (relationship) => {
+        relationshipMap.set(
+          relationship.handle,
+          relationship
+        );
       }
+    );
 
-      if (motherHandle) {
-        personHandles.add(motherHandle);
-        nextHandles.push(motherHandle);
+    const familyHandles = [
+      ...new Set(
+        parentLinks.map(
+          (relationship) =>
+            relationship.familyHandle
+        )
+      ),
+    ];
+
+    const families =
+      await FamilyModel.find({
+        handle: {
+          $in: familyHandles,
+        },
+      }).lean<FamilyRecord[]>();
+
+    const nextHandles:
+      string[] = [];
+
+    families.forEach(
+      (family) => {
+        const fatherHandle =
+          family.fatherHandle ??
+          undefined;
+
+        const motherHandle =
+          family.motherHandle ??
+          undefined;
+
+        const childHandles =
+          family.childHandles ??
+          [];
+
+        familyMap.set(
+          family.handle,
+          {
+            id:
+              family.handle,
+
+            fatherHandle,
+            motherHandle,
+            childHandles,
+
+            relationshipType:
+              family.relationshipType,
+
+            relationshipDate:
+              family.relationshipDate,
+          }
+        );
+
+        if (fatherHandle) {
+          personHandles.add(
+            fatherHandle
+          );
+
+          nextHandles.push(
+            fatherHandle
+          );
+        }
+
+        if (motherHandle) {
+          personHandles.add(
+            motherHandle
+          );
+
+          nextHandles.push(
+            motherHandle
+          );
+        }
+
+        /*
+         * Include siblings in the loaded people
+         * so the existing tree/family processing
+         * retains its current behaviour.
+         */
+        childHandles.forEach(
+          (childHandle) => {
+            personHandles.add(
+              childHandle
+            );
+          }
+        );
       }
+    );
 
-      childHandles.forEach((childHandle: string) => {
-        personHandles.add(childHandle);
-      });
-    });
+    currentHandles = [
+      ...new Set(
+        nextHandles
+      ),
+    ];
 
-    currentHandles = nextHandles;
-
-    if (currentHandles.length === 0) break;
+    if (
+      currentHandles.length === 0
+    ) {
+      break;
+    }
   }
 
   return {
-    people: await loadPeopleByHandles([...personHandles]),
-    families: [...familyMap.values()],
+    people:
+      await loadPeopleByHandles(
+        [...personHandles]
+      ),
+
+    families:
+      [...familyMap.values()],
+
+    familyChildRelationships:
+      [...relationshipMap.values()],
   };
 };
 
@@ -240,6 +385,8 @@ export const buildFamilyTreeFromDb = async (
     people: data.people,
     relationships: buildRelationshipsFromFamilies(data.families),
     families: data.families,
+    familyChildRelationships:
+      data.familyChildRelationships,
   };
 
   const tree =

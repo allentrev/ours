@@ -12,6 +12,27 @@ import type {
  
 import { isADescendantOf } from "./ancestorHelpers";
 
+const compareFamiliesByRelationshipDate = (
+  familyA: TreeResponseFamily,
+  familyB: TreeResponseFamily
+): number => {
+  const valueA =
+    familyA.relationshipDate?.value ??
+    Number.MAX_SAFE_INTEGER;
+
+  const valueB =
+    familyB.relationshipDate?.value ??
+    Number.MAX_SAFE_INTEGER;
+
+  if (valueA !== valueB) {
+    return valueA - valueB;
+  }
+
+  return familyA.id.localeCompare(
+    familyB.id
+  );
+};
+
 export const getSpouseNodesForPerson = (
   personHandle: string,
   data: TreeResponse,
@@ -82,6 +103,9 @@ export function getMultiPartnerSpouseMap(
               family.fatherHandle === partnerHandle ||
               family.motherHandle === partnerHandle
           )
+          .sort(
+            compareFamiliesByRelationshipDate
+          )
           .map((family) =>
             family.fatherHandle === partnerHandle
               ? family.motherHandle
@@ -102,8 +126,9 @@ export function getMultiPartnerSpouseMap(
           }) ?? [];
 
       return {
-        [partnerHandle]: [...new Set(otherSpouseIds)],
+              [partnerHandle]: [...new Set(otherSpouseIds)],
       };
+    
     });
 }
 
@@ -138,11 +163,15 @@ export const manageTwoPartnerPersons = (
   twoPartnerArray.forEach((personNode) => {
     const personHandle = personNode.id;
 
-    const personFamilies = visibleFamilies?.filter(     // get their families
-      (family) =>
-        family.fatherHandle === personHandle ||
-        family.motherHandle === personHandle
-    );
+    const personFamilies = visibleFamilies
+      ?.filter(     // get their families
+        (family) =>
+          family.fatherHandle === personHandle ||
+          family.motherHandle === personHandle
+        )
+      .sort(
+        compareFamiliesByRelationshipDate
+      );
 
     if (personFamilies && personFamilies.length !== 2) return;
     //console.log("PersonFamilies2:", personFamilies);

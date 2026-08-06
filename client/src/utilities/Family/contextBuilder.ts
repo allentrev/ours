@@ -2,6 +2,7 @@ import type {
     TreeMode,
     TreeResponse,
     TreeResponseFamily,
+    TreeResponseNode,
 } from "../../types/familyTypes";
 
 import type {
@@ -10,6 +11,27 @@ import type {
 } from "./layoutTypes";
 
 import { getMultiPartnerSpouseMap } from "./spouseHelpers";
+
+const compareFamiliesByRelationshipDate = (
+  familyA: TreeResponseFamily,
+  familyB: TreeResponseFamily
+): number => {
+  const dateA =
+    familyA.relationshipDate?.value ??
+    Number.MAX_SAFE_INTEGER;
+
+  const dateB =
+    familyB.relationshipDate?.value ??
+    Number.MAX_SAFE_INTEGER;
+
+  if (dateA !== dateB) {
+    return dateA - dateB;
+  }
+
+  return familyA.id.localeCompare(
+    familyB.id
+  );
+};
 
 export const buildLayoutContext = (
     data: TreeResponse,
@@ -64,12 +86,16 @@ export const buildLayoutContext = (
         }) ?? [];
 
     const selectedFamilies =
-        visibleFamilies.filter(
-            (family) =>
-                family.fatherHandle ===
-                    selectedPersonHandle ||
-                family.motherHandle ===
-                    selectedPersonHandle
+      visibleFamilies
+        .filter(
+          (family) =>
+            family.fatherHandle ===
+              selectedPersonHandle ||
+            family.motherHandle ===
+              selectedPersonHandle
+        )
+        .sort(
+          compareFamiliesByRelationshipDate
         );
 
     // --------------------------------------------------
@@ -80,7 +106,8 @@ export const buildLayoutContext = (
             data,
             mode
         );
-
+    //console.log("HiddenSpouseHandles:", hiddenSpouseHandles);
+    
     const matchedEntry =
         hiddenSpouseHandles.find(
             (entry) =>
@@ -93,10 +120,18 @@ export const buildLayoutContext = (
         : [];
 
     const hiddenSpouseNodes =
-        initialNodes.filter((node) =>
-            selectedPersonHiddenSpouseIds.includes(
-                node.id
-            )
+      selectedPersonHiddenSpouseIds
+        .map((spouseId) =>
+          initialNodes.find(
+            (node) =>
+              node.id === spouseId
+          )
+        )
+        .filter(
+          (
+            node
+          ): node is TreeResponseNode =>
+            node !== undefined
         );
 
     const hiddenIds: string[] =
@@ -104,6 +139,9 @@ export const buildLayoutContext = (
             Object.values(entry).flat()
         );
 
+    //console.log("HiddenSpouseHandles:", hiddenSpouseHandles);
+    //console.log("HiddenSpouseNodes:", hiddenSpouseNodes);
+    //console.log("HiddenIds:", hiddenIds);
     return {
         data,
         mode,

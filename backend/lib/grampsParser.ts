@@ -8,7 +8,9 @@ import {
   RawGrampsPerson,
   RawGrampsPlace,
   RawGrampsNote,
+  RawGrampsFamilyChildRelationship,
 } from "../types/family.types.js";
+
 import { isArrayBuffer } from "util/types";
 
 type GrampsRecordType = "Person" | "Family";
@@ -199,12 +201,42 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
   });
   // ----------------------------- Family --------------------------------------
   //
+  const familyChildRelationships:
+    RawGrampsFamilyChildRelationship[] = [];
+
   const families: RawGrampsFamily[] = rawFamilies.map((family: any) => {
     const children = toArray(family.childref);
     const noterefs = toArray(family.noteref?._hlink);
+
     //console.log("family",family._handle );
     //console.log("Notes", noterefs);
     const [eventDate, eventPlaceHandle] = extractEventData(family, "Family", eventMap, "Marriage");
+    children.forEach((childRef) => {
+      const childHandle =
+        childRef?._hlink;
+
+      if (!childHandle) {
+        return;
+      }
+
+      const isAdopted =
+        childRef?._frel ===
+          "Adopted" ||
+        childRef?._mrel ===
+          "Adopted";
+
+      familyChildRelationships.push({
+        familyHandle:
+          family._handle,
+
+        childHandle,
+
+        relationshipType:
+          isAdopted
+            ? "adopted"
+            : "biological",
+      });
+    });
 
     return {
       handle: family._handle,
@@ -219,6 +251,7 @@ const parseGrampsXml = (xml: string): ParsedGrampsData => {
         .filter(Boolean),
       noteHandles: noterefs,
       mediaHandles: [],
+      familyChildRelationships,
     }
   });
 
@@ -451,6 +484,7 @@ const places: RawGrampsPlace[] = rawPlaces.map((rawPlace: any) => {
     places,
     notes,
     media: [],
+    familyChildRelationships,
   };
 
 };
