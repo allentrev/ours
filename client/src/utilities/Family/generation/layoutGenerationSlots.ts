@@ -131,10 +131,9 @@ const getExpandedRootSpouseOrder = (
               DisplaySlot["person"]
             >;
           } =>
-            slot.type === "person" &&
-            Boolean(slot.person) &&
-            slot.person.id !==
-              selectedPersonHandle
+          slot.type === "person" &&
+          slot.person?.id !==
+            selectedPersonHandle
         )
         .map(
           (slot) => [

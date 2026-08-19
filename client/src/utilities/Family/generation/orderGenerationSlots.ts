@@ -48,45 +48,6 @@ const getMultiplePartnerSlot = (
   );
 
 /*
- * Return the spouse of personHandle
- * from a family.
- */
-const getSpouseHandle = (
-  generation: Generation,
-  familyId: string,
-  personHandle: string
-): string | undefined => {
-  const generationFamily =
-    generation.families.find(
-      (item) =>
-        item.family.id === familyId
-    );
-
-  if (!generationFamily) {
-    return undefined;
-  }
-
-  const family =
-    generationFamily.family;
-
-  if (
-    family.fatherHandle ===
-    personHandle
-  ) {
-    return family.motherHandle;
-  }
-
-  if (
-    family.motherHandle ===
-    personHandle
-  ) {
-    return family.fatherHandle;
-  }
-
-  return undefined;
-};
-
-/*
  * Build the display unit for one person.
  *
  * Normally:
@@ -129,33 +90,6 @@ const buildPersonUnit = (
   }
 
   return unit;
-};
-
-/*
- * Sort families chronologically where
- * relationship dates are available.
- */
-const compareFamiliesByRelationshipDate = (
-  familyA: Generation["families"][number],
-  familyB: Generation["families"][number]
-): number => {
-  const dateA =
-    familyA.family.relationshipDate
-      ?.value ??
-    Number.MAX_SAFE_INTEGER;
-
-  const dateB =
-    familyB.family.relationshipDate
-      ?.value ??
-    Number.MAX_SAFE_INTEGER;
-
-  if (dateA !== dateB) {
-    return dateA - dateB;
-  }
-
-  return familyA.family.id.localeCompare(
-    familyB.family.id
-  );
 };
 
 /*
@@ -900,9 +834,16 @@ export const orderGenerationSlots = (
     displayModel.generations.map(
       (generation) => {
         /*
-         * Generation 0 retains its own ordering
-         * rules for now.
+         * Expanded-root has its own ordering
+         * and geometry rules.
          */
+        if (
+          generation.layoutType ===
+          "expanded-root"
+        ) {
+          return generation;
+        }
+
         const previousGeneration =
           displayModel.generations.find(
             (item) =>
@@ -910,16 +851,20 @@ export const orderGenerationSlots = (
               generation.depth - 1
           );
 
-        if (!previousGeneration) {
-          return generation;
-        }
-
         const familyChildGroups =
-          previousGeneration.families.map(
-            (family) =>
-              family.childHandles
-          );
+          previousGeneration
+            ? previousGeneration.families.map(
+                (family) =>
+                  family.childHandles
+              )
+            : [];
 
+        /*
+         * Generation 0 is also ordered.
+         *
+         * It simply has no sibling groups
+         * inherited from a previous generation.
+         */
         return {
           ...generation,
 

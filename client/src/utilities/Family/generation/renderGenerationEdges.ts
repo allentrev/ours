@@ -265,6 +265,75 @@ const renderExpandedRootRelationshipEdges = (
   return edges;
 };
 
+const renderMultiplePartnerEdges = (
+  generation: Generation
+): FamilyTreeEdge[] => {
+  const edges:
+    FamilyTreeEdge[] = [];
+
+  generation.slots
+    .filter(
+      (slot) =>
+        slot.type ===
+        "multiple-partner"
+    )
+    .forEach(
+      (multiplePartnerSlot) => {
+        const personHandle =
+          multiplePartnerSlot.personHandle;
+
+        if (!personHandle) {
+          return;
+        }
+
+        const personSlot =
+          getPersonSlot(
+            generation,
+            personHandle
+          );
+
+        if (!personSlot) {
+          return;
+        }
+
+        const multiplePartnerIsLeft =
+          multiplePartnerSlot.x <
+          personSlot.x;
+
+        edges.push({
+          id:
+            `multiple-partner-${personHandle}`,
+
+          source:
+            personSlot.id,
+
+          target:
+            multiplePartnerSlot.id,
+
+          sourceHandle:
+            multiplePartnerIsLeft
+              ? "spouse-left-source"
+              : "spouse-right-source",
+
+          targetHandle:
+            multiplePartnerIsLeft
+              ? "spouse-right-target"
+              : "spouse-left-target",
+
+          type:
+            "straight",
+
+          familyId:
+            multiplePartnerSlot
+              .visibleFamilyId ??
+            `multiple-partner-${personHandle}`,
+        });
+      }
+    );
+
+  return edges;
+};
+
 /*
  * Render React Flow family-child edges from
  * the completed generation display model.
@@ -307,6 +376,14 @@ export const renderGenerationEdges = (
         ...renderExpandedRootRelationshipEdges(
           generation,
           generationContext
+        )
+      );
+      /*
+      * Person to Multiple Partner 
+      */
+      edges.push(
+        ...renderMultiplePartnerEdges(
+          generation
         )
       );
       /*
