@@ -3,6 +3,10 @@ import {
   type EdgeProps,
 } from "@xyflow/react";
 
+import type {
+  FamilyTreeEdgeRouteMode,
+} from "../../types/familyTypes";
+
 type FamilyChildEdgeData = {
   /*
    * vertical-channel:
@@ -23,10 +27,15 @@ type FamilyChildEdgeData = {
    * child channel.
    */
   targetOffset?: number;
-
+  /*
+   * Absolute Y coordinate calculated by the
+   * generation layout engine.
+   */
+  channelY?: number;
+  channelIndex?: number;
+  
   routeMode?:
-    | "vertical-channel"
-    | "horizontal-first";
+    FamilyTreeEdgeRouteMode;
 };
 
 const DEFAULT_CHANNEL_OFFSET = 80;
@@ -61,7 +70,73 @@ const FamilyChildEdge = ({
 
   let edgePath: string;
 
-  if (routeMode === "horizontal-first") {
+  if (
+    routeMode ===
+    "generation-horizontal-first"
+  ) {
+    const SOURCE_CLEARANCE = 40;
+    const LANE_SPACING = 25;
+
+    const channelY =
+      typeof edgeData?.channelY ===
+      "number"
+        ? edgeData.channelY
+        : sourceY +
+          (targetY - sourceY) / 2;
+
+    const channelIndex =
+      typeof edgeData?.channelIndex ===
+      "number"
+        ? edgeData.channelIndex
+        : 0;
+
+    /*
+    * Start from React Flow's actual right-hand
+    * source handle position.
+    *
+    * Each family receives its own vertical lane
+    * progressively farther to the right.
+    */
+    const sourceTurnX =
+      sourceX +
+      SOURCE_CLEARANCE +
+      channelIndex *
+        LANE_SPACING;
+
+
+    edgePath = `
+      M ${sourceX},${sourceY}
+      L ${sourceTurnX},${sourceY}
+      L ${sourceTurnX},${channelY}
+      L ${targetX},${channelY}
+      L ${targetX},${targetY}
+    `;
+  } else if (
+      routeMode === "generation-channel"
+    ) {
+    /*
+    * The generation engine has already decided
+    * exactly where this family's shared channel
+    * belongs.
+    */
+    const channelY =
+      typeof edgeData?.channelY ===
+      "number"
+        ? edgeData.channelY
+        : sourceY +
+          (targetY - sourceY) / 2;
+
+    edgePath = `
+      M ${sourceX},${sourceY}
+      L ${sourceX},${channelY}
+      L ${targetX},${channelY}
+      L ${targetX},${targetY}
+    `;
+  } else if (
+    routeMode ===
+    "horizontal-first"
+  ) {
+
     const SOURCE_CLEARANCE = 30;
     const TARGET_CLEARANCE = 40;
 

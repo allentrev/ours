@@ -134,11 +134,37 @@ const collectAncestorData = async (
   startHandle: string,
   maxDepth = MAX_DEPTH
 ) => {
+  /*
+   * All people required in the returned dataset.
+   *
+   * This includes:
+   * - people on the ancestor walk
+   * - siblings retained by the existing behaviour
+   * - spouses needed for display
+   */
   const personHandles =
-    new Set<string>([startHandle]);
+    new Set<string>([
+      startHandle,
+    ]);
+
+  /*
+   * Only people actually encountered on the
+   * ancestor traversal.
+   *
+   * We use this later to load ALL of their
+   * spouse families without accidentally loading
+   * spouse families belonging to siblings.
+   */
+  const ancestorPersonHandles =
+    new Set<string>([
+      startHandle,
+    ]);
 
   const familyMap =
-    new Map<string, FamilyGroup>();
+    new Map<
+      string,
+      FamilyGroup
+    >();
 
   const relationshipMap =
     new Map<
@@ -150,6 +176,13 @@ const collectAncestorData = async (
     startHandle,
   ];
 
+  /*
+   * --------------------------------------------------
+   * Phase 1
+   *
+   * Walk the biological ancestor path.
+   * --------------------------------------------------
+   */
   for (
     let depth = 0;
     depth < maxDepth;
@@ -204,7 +237,9 @@ const collectAncestorData = async (
         handle: {
           $in: familyHandles,
         },
-      }).lean<FamilyRecord[]>();
+      }).lean<
+        FamilyRecord[]
+      >();
 
     const nextHandles:
       string[] = [];
@@ -246,6 +281,10 @@ const collectAncestorData = async (
             fatherHandle
           );
 
+          ancestorPersonHandles.add(
+            fatherHandle
+          );
+
           nextHandles.push(
             fatherHandle
           );
@@ -253,6 +292,10 @@ const collectAncestorData = async (
 
         if (motherHandle) {
           personHandles.add(
+            motherHandle
+          );
+
+          ancestorPersonHandles.add(
             motherHandle
           );
 
@@ -265,6 +308,9 @@ const collectAncestorData = async (
          * Include siblings in the loaded people
          * so the existing tree/family processing
          * retains its current behaviour.
+         *
+         * Note that siblings are deliberately NOT
+         * added to ancestorPersonHandles.
          */
         childHandles.forEach(
           (childHandle) => {
@@ -288,6 +334,108 @@ const collectAncestorData = async (
       break;
     }
   }
+
+  /*
+   * --------------------------------------------------
+   * Phase 2
+   *
+   * Enrich the display data with every spouse
+   * family belonging to people actually encountered
+   * during the ancestor traversal.
+   *
+   * IMPORTANT:
+   *
+   * These families do NOT participate in the
+   * ancestor walk above. They are loaded only so
+   * spouse counts and multiple-partner display
+   * information are complete.
+   * --------------------------------------------------
+   */
+  const displayedAncestorHandles = [
+    ...ancestorPersonHandles,
+  ];
+
+  const spouseFamilies =
+    await FamilyModel.find({
+      $or: [
+        {
+          fatherHandle: {
+            $in:
+              displayedAncestorHandles,
+          },
+        },
+        {
+          motherHandle: {
+            $in:
+              displayedAncestorHandles,
+          },
+        },
+      ],
+    }).lean<
+      FamilyRecord[]
+    >();
+
+  spouseFamilies.forEach(
+    (family) => {
+      const fatherHandle =
+        family.fatherHandle ??
+        undefined;
+
+      const motherHandle =
+        family.motherHandle ??
+        undefined;
+
+      const childHandles =
+        family.childHandles ??
+        [];
+
+      /*
+       * familyMap removes duplicates automatically.
+       *
+       * Families already loaded during the biological
+       * traversal simply get replaced with equivalent
+       * data here.
+       */
+      familyMap.set(
+        family.handle,
+        {
+          id:
+            family.handle,
+
+          fatherHandle,
+          motherHandle,
+          childHandles,
+
+          relationshipType:
+            family.relationshipType,
+
+          relationshipDate:
+            family.relationshipDate,
+        }
+      );
+
+      /*
+       * Load the spouse people themselves so
+       * createNode() can construct their nodes.
+       *
+       * Do NOT add their children here. Those
+       * children are not part of this ancestor
+       * traversal merely because the ancestor had
+       * another marriage.
+       */
+      if (fatherHandle) {
+        personHandles.add(
+          fatherHandle
+        );
+      }
+
+      if (motherHandle) {
+        personHandles.add(
+          motherHandle
+        );
+      }
+    }
+  );
 
   return {
     people:

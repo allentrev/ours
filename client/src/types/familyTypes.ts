@@ -387,7 +387,9 @@ export interface FamilyDetailsData {
 /* -------------------------------------------------------------------------- */
 export type FamilyTreeEdgeRouteMode =
   | "vertical-channel"
-  | "horizontal-first";
+  | "horizontal-first"
+  | "generation-channel"
+  | "generation-horizontal-first";
 
 export interface FamilyTreeEdgeData
   extends Record<string, unknown> {

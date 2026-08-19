@@ -26,8 +26,13 @@ import EmptyState from "./EmptyState";
 import { fetchTree } from "../../utilities/Family/utils";
 
 import {
-  buildTree,
-} from "../../utilities/Family/treeEngine";
+  renderGenerationNodes,
+} from "../../utilities/Family/generation/renderGenerationNodes";
+
+import {
+  buildGenerationDisplayModel,
+  renderGenerationEdges,
+} from "../../utilities/Family/generation";
 
 import type {
   TreePerson,
@@ -91,8 +96,10 @@ const TreeViewer = ({
   useEffect(() => {
     const loadTree = async () => {
       try {
+
         setLoading(true);
         setError(null);
+
         const data: TreeResponse =
           await fetchTree(
             selectedPersonHandle,
@@ -103,10 +110,59 @@ const TreeViewer = ({
           data.selectedPerson
         );
 
-        const graph = buildTree(data, mode)
-        
-        setNodes(graph.nodes);
-        setEdges(graph.edges);
+        const generationDisplayModel =
+          buildGenerationDisplayModel(
+            data,
+            mode
+          );
+
+        console.log(
+          "Generation display model",
+          generationDisplayModel
+        );
+
+        const generationNodes =
+          renderGenerationNodes(
+            generationDisplayModel,
+            data.selectedPerson.handle
+          );
+
+        console.log(
+          "Generation React Flow nodes",
+          generationNodes
+        );
+
+        const generationEdges =
+          renderGenerationEdges(
+            generationDisplayModel,
+            {
+              dataNodes:
+                data.nodes,
+
+              dataFamilies:
+                data.families ?? [],
+
+              mode,
+
+              selectedPersonHandle:
+                data.selectedPerson.handle,
+
+              useExpandedLayout:
+                generationDisplayModel.generations.some(
+                  (generation) =>
+                    generation.layoutType ===
+                    "expanded-root"
+                ),
+            }
+          );
+
+        console.log(
+          "Generation React Flow edges",
+          generationEdges
+        );
+
+        setNodes(generationNodes);
+        setEdges(generationEdges);
 
       } catch (error) {
           console.error("Failed to load family tree", error);
@@ -230,8 +286,8 @@ const TreeViewer = ({
     );
   };
 
-  console.log("TreeViewer Rendered with nodes:", nodes);
-  console.log("TreeViewer Rendered with edges:", edges);
+  //console.log("TreeViewer Rendered with nodes:", nodes);
+  //console.log("TreeViewer Rendered with edges:", edges);
 
   return (
     <div className="w-full h-full">
