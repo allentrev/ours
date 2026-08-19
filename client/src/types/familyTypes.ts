@@ -1,408 +1,680 @@
+import {
+  describe,
+  expect,
+  it,
+} from "vitest";
+
+import {
+  buildGenerationDisplayModel,
+} from "../buildGenerationDisplayModel";
+
 import type {
-  Edge,
-  Node,
-} from "@xyflow/react";
-
-/* -------------------------------------------------------------------------- */
-/* Genealogical dates                                                         */
-/* -------------------------------------------------------------------------- */
-
-export type GenealogicalDateType =
-  | "exact"
-  | "about"
-  | "before"
-  | "after";
-
-export interface GenealogicalDate {
-  text: string;
-  value?: number;
-  type: GenealogicalDateType;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Family tree                                                                */
-/* -------------------------------------------------------------------------- */
-
-export type TreeMode =
-  | "ancestors"
-  | "descendants";
-
-export interface TreeNodeData {
-  label?: string;
-  gender?: string;
-
-  birthDate?: GenealogicalDate;
-  deathDate?: GenealogicalDate;
-
-  isSelected?: boolean;
-}
-
-export interface TreeNode {
-  id: string;
-
-  type?:
-    | "person"
-    | "relationship";
-
-  position: {
-    x: number;
-    y: number;
-  };
-
-  data: TreeNodeData;
-}
-
-export interface TreeEdge {
-  id: string;
-  source: string;
-  target: string;
-}
-
-
-
-export interface TreePerson {
-  handle: string;
-  grampsId?: string;
-
-  gender?: string;
-  firstName?: string;
-  surname?: string;
-  displayName: string;
-
-  birthDate?: GenealogicalDate;
-  deathDate?: GenealogicalDate;
-
-  birthPlaceHandle?: string;
-  deathPlaceHandle?: string;
-
-  primaryPhotoUrl?: string;
-  noteHandles?: string[];
-}
-
-export interface TreeResponseNode {
-  id: string;
-  label: string;
-  gender?: string;
-
-  birthDate?: GenealogicalDate;
-  deathDate?: GenealogicalDate;
-
-  depth: number;
-  noPartners: number;
-}
-
-export interface TreeResponseEdge {
-  source: string;
-  target: string;
-  relationshipType: string;
-}
-
-export interface TreeResponseFamily {
-  id: string;
-  fatherHandle?: string;
-  motherHandle?: string;
-  childHandles: string[];
-
-  relationshipDate?: GenealogicalDate;
-}
-
-export interface TreeResponse {
-  selectedPerson: TreePerson;
-  nodes: TreeResponseNode[];
-  edges: TreeResponseEdge[];
-  families?: TreeResponseFamily[];
-}
-
-/* -------------------------------------------------------------------------- */
-/* Person                                                                     */
-/* -------------------------------------------------------------------------- */
-
-export interface PersonRecord {
-  handle: string;
-  grampsId: string;
-
-  gender: string;
-  firstName?: string;
-  surname?: string;
-  displayName: string;
-
-  birthDate?: GenealogicalDate;
-  deathDate?: GenealogicalDate;
-
-  birthPlaceHandle?: string;
-  deathPlaceHandle?: string;
-
-  primaryPhotoUrl?: string;
-  noteHandles?: string[];
-}
-
-/* -------------------------------------------------------------------------- */
-/* Place                                                                      */
-/* -------------------------------------------------------------------------- */
-
-export interface PlaceRecord {
-  handle: string;
-  grampsId: string;
-  type: string;
-
-  line1?: string;
-  line2?: string;
-  urbanArea?: string;
-  county?: string;
-  country?: string[];
-
-  code?: string;
-
-  displayPlace: string;
-  name: string;
-  shortName: string;
-
-  geocodeName?: string;
-
-  latitude?: number;
-  longitude?: number;
-
-  noteHandles?: string[];
-}
-
-export interface NewPlaceKindMap {
-  country: "country";
-  county: "county";
-  urbanArea: "urbanArea";
-}
-
-export type NewPlaceKind =
-  keyof NewPlaceKindMap;
-
-export type UrbanPlaceType =
-  | "Village"
-  | "Town"
-  | "City";
-
-export interface CreateSimplePlaceRequest {
-  kind: NewPlaceKind;
-  name: string;
-  placeType?: UrbanPlaceType;
-  county?: string;
-  country?: string;
-}
-
-export interface CreateSimplePlaceResponse {
-  place: PlaceRecord;
-  options: PlaceOptions;
-}
-
-export interface PlaceOption {
-  handle: string;
-  name: string;
-}
-
-export interface PlaceOptions {
-  places: PlaceRecord[];
-  urbanAreas: PlaceOption[];
-  counties: PlaceOption[];
-  countries: PlaceOption[];
-}
-
-/* -------------------------------------------------------------------------- */
-/* Notes                                                                      */
-/* -------------------------------------------------------------------------- */
-
-export interface NoteRecord {
-  handle: string;
-  grampsId: string;
-  type?: string;
-  text: string;
-}
-
-export interface NewNoteInput {
-  text: string;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Family                                                                     */
-/* -------------------------------------------------------------------------- */
-
-export interface FamilyRecord {
-  handle: string;
-  grampsId: string;
-
-  fatherHandle?: string;
-  motherHandle?: string;
-  childHandles?: string[];
-
-  relationshipType: string;
-  relationshipDate?: GenealogicalDate;
-
-  relationshipPlaceHandle?: string;
-  noteHandles?: string[];
-}
-
-/* -------------------------------------------------------------------------- */
-/* Relationship diagram                                                       */
-/* -------------------------------------------------------------------------- */
-
-export type PersonAddType =
-  | "addChild"
-  | "addPartner"
-  | "addSibling";
-
-export type ActorEventType =
-  | "addChild"
-  | "addPartner"
-  | "addSibling"
-  | "addFamily";
-
-export type ActorNodeKind =
-  | "selected"
-  | "person"
-  | "family"
-  | "add";
-
-export interface ActorPerson {
-  handle: string;
-  displayName: string;
-
-  birthDate?: GenealogicalDate;
-  deathDate?: GenealogicalDate;
-}
-
-export interface ActorFamily {
-  handle: string;
-  displayName: string;
-
-  relationshipDate?: GenealogicalDate;
-}
-
-export interface ActorChildFamily {
-  handle: string;
-  displayName: string;
-
-  fatherHandle?: string;
-  motherHandle?: string;
-
-  relationshipDate?: GenealogicalDate;
-}
-
-export interface PersonActorData {
-  selectedPerson: ActorPerson;
-
-  children: ActorPerson[];
-  siblings: ActorPerson[];
-  partners: ActorPerson[];
-
-  /*
-   * Families in which the selected person
-   * is a child.
-   */
-  families: ActorFamily[];
-
-  /*
-   * Families in which the selected person
-   * is a parent.
-   */
-  childFamilies: ActorChildFamily[];
-}
-
-export interface ActorNodeData
-  extends Record<string, unknown> {
-  label: string;
-  kind: ActorNodeKind;
-
-  personHandle?: string;
-  familyHandle?: string;
-  eventType?: ActorEventType;
-
-  onOpenPersonDetails: (
-    personHandle: string
-  ) => void;
-
-  onSelectPerson: (
-    personHandle: string
-  ) => void;
-
-  onAddActor: (
-    eventType: ActorEventType,
-    personHandle: string
-  ) => void;
-
-  onOpenFamilyDetails: (
-    familyHandle: string
-  ) => void;
-
-  selectedPersonHandle: string;
-}
-
-export type ActorFlowNode = Node<
-  ActorNodeData,
-  "actor"
->;
-
-/* -------------------------------------------------------------------------- */
-/* Related-person creation                                                    */
-/* -------------------------------------------------------------------------- */
-
-export interface CreateRelatedPersonRequest {
-  sourcePersonHandle: string;
-  relationshipType: PersonAddType;
-  familyHandle?: string;
-  person: Partial<PersonRecord>;
-}
-
-export interface CreateRelatedPersonResponse {
-  person: PersonRecord;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Family details                                                             */
-/* -------------------------------------------------------------------------- */
-
-export interface PersonActor {
-  handle: string;
-  displayName: string;
-
-  birthDate?: GenealogicalDate;
-  deathDate?: GenealogicalDate;
-}
-
-export interface FamilyDetailsData {
-  handle: string;
-  grampsId?: string;
-
-  father?: PersonActor;
-  mother?: PersonActor;
-  children: PersonActor[];
-
-  relationshipType?: string;
-  relationshipDate?: GenealogicalDate;
-
-  relationshipPlaceHandle?: string;
-  relationshipPlaceName?: string;
-
-  notes: NoteRecord[];
-}
-
-/* -------------------------------------------------------------------------- */
-/* Edges                                                             */
-/* -------------------------------------------------------------------------- */
-export type FamilyTreeEdgeRouteMode =
-  | "vertical-channel"
-  | "horizontal-first"
-  | "generation-channel"
-  | "generation-horizontal-first";
-
-export interface FamilyTreeEdgeData
-  extends Record<string, unknown> {
-  channelOffset?: number;
-  targetOffset?: number;
-  routeMode?: FamilyTreeEdgeRouteMode;
-}
-
-export type FamilyTreeEdge =
-  Edge<FamilyTreeEdgeData> & {
+  TreeResponse,
+} from "../../../../types/familyTypes";
+
+describe(
+  "buildGenerationDisplayModel",
+  () => {
     /*
-     * The underlying genealogy family
-     * represented by this edge.
+     * Ancestor root with more than two partners.
+     *
+     * The selected person remains visible and
+     * all partners are represented by one
+     * MultiplePartner slot.
      */
-    familyId: string;
-  };
+    it(
+      "shows selected person plus one MultiplePartner slot in ancestor mode when the person has more than two partners",
+      () => {
+        const data: TreeResponse = {
+          selectedPerson: {
+            handle: "person",
+            displayName: "Person",
+          },
+
+          nodes: [
+            {
+              id: "person",
+              label: "Person",
+              depth: 0,
+              noPartners: 5,
+            },
+
+            {
+              id: "spouse-1",
+              label: "Spouse 1",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-2",
+              label: "Spouse 2",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-3",
+              label: "Spouse 3",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-4",
+              label: "Spouse 4",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-5",
+              label: "Spouse 5",
+              depth: 0,
+              noPartners: 1,
+            },
+          ],
+
+          edges: [],
+
+          families: [
+            {
+              id: "family-1",
+              fatherHandle: "person",
+              motherHandle: "spouse-1",
+              childHandles: [],
+            },
+
+            {
+              id: "family-2",
+              fatherHandle: "person",
+              motherHandle: "spouse-2",
+              childHandles: [],
+            },
+
+            {
+              id: "family-3",
+              fatherHandle: "person",
+              motherHandle: "spouse-3",
+              childHandles: [],
+            },
+
+            {
+              id: "family-4",
+              fatherHandle: "person",
+              motherHandle: "spouse-4",
+              childHandles: [],
+            },
+
+            {
+              id: "family-5",
+              fatherHandle: "person",
+              motherHandle: "spouse-5",
+              childHandles: [],
+            },
+          ],
+        };
+
+        const result =
+          buildGenerationDisplayModel(
+            data,
+            "ancestors"
+          );
+
+        const rootGeneration =
+          result.generations.find(
+            (generation) =>
+              generation.depth === 0
+          );
+
+        expect(
+          rootGeneration
+        ).toBeDefined();
+
+        /*
+         * Ancestor root should contain only:
+         *
+         * Person | MultiplePartner
+         */
+        const slotTypes =
+          rootGeneration!.slots.map(
+            (slot) =>
+              slot.type
+          );
+
+        expect(
+          slotTypes
+        ).toEqual([
+          "person",
+          "multiple-partner",
+        ]);
+
+        const multiplePartnerSlot =
+          rootGeneration!.slots.find(
+            (slot) =>
+              slot.type ===
+              "multiple-partner"
+          );
+
+        expect(
+          multiplePartnerSlot
+        ).toBeDefined();
+
+        expect(
+          multiplePartnerSlot
+            ?.personHandle
+        ).toBe(
+          "person"
+        );
+
+        /*
+         * All five spouses should be represented
+         * by the MultiplePartner node.
+         */
+        expect(
+          multiplePartnerSlot
+            ?.spouseHandles
+        ).toEqual([
+          "spouse-1",
+          "spouse-2",
+          "spouse-3",
+          "spouse-4",
+          "spouse-5",
+        ]);
+      }
+    );
+
+    /*
+     * Descendant root with more than two
+     * partners.
+     *
+     * This uses the expanded-root layout:
+     *
+     * Person       Spouse 1
+     *              Spouse 2
+     *              Spouse 3
+     */
+    it(
+      "keeps all spouses as vertically ordered person slots in expanded descendant root",
+      () => {
+        const data: TreeResponse = {
+          selectedPerson: {
+            handle: "person",
+            displayName: "Person",
+          },
+
+          nodes: [
+            {
+              id: "person",
+              label: "Person",
+              depth: 0,
+              noPartners: 3,
+            },
+
+            {
+              id: "spouse-1",
+              label: "Spouse 1",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-2",
+              label: "Spouse 2",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-3",
+              label: "Spouse 3",
+              depth: 0,
+              noPartners: 1,
+            },
+          ],
+
+          edges: [],
+
+          families: [
+            {
+              id: "family-1",
+              fatherHandle: "person",
+              motherHandle: "spouse-1",
+              childHandles: [],
+
+              relationshipDate: {
+                value: 2000,
+                text: "2000",
+                type: "exact",
+              },
+            },
+
+            {
+              id: "family-2",
+              fatherHandle: "person",
+              motherHandle: "spouse-2",
+              childHandles: [],
+
+              relationshipDate: {
+                value: 2010,
+                text: "2010",
+                type: "exact",
+              },
+            },
+
+            {
+              id: "family-3",
+              fatherHandle: "person",
+              motherHandle: "spouse-3",
+              childHandles: [],
+
+              relationshipDate: {
+                value: 2020,
+                text: "2020",
+                type: "exact",
+              },
+            },
+          ],
+        };
+
+        const result =
+          buildGenerationDisplayModel(
+            data,
+            "descendants"
+          );
+
+        const rootGeneration =
+          result.generations.find(
+            (generation) =>
+              generation.depth === 0
+          );
+
+        expect(
+          rootGeneration
+        ).toBeDefined();
+
+        /*
+         * More than two partners at the
+         * descendant root must trigger the
+         * expanded layout.
+         */
+        expect(
+          rootGeneration?.layoutType
+        ).toBe(
+          "expanded-root"
+        );
+
+        /*
+         * All spouses remain ordinary person
+         * slots in the expanded layout.
+         */
+        const rootPersonIds =
+          rootGeneration!.slots
+            .filter(
+              (slot) =>
+                slot.type ===
+                "person"
+            )
+            .map(
+              (slot) =>
+                slot.person?.id
+            );
+
+        expect(
+          rootPersonIds
+        ).toEqual([
+          "person",
+          "spouse-1",
+          "spouse-2",
+          "spouse-3",
+        ]);
+
+        /*
+         * Expanded descendant layout must not
+         * create a MultiplePartner node.
+         */
+        const multiplePartnerSlots =
+          rootGeneration!.slots.filter(
+            (slot) =>
+              slot.type ===
+              "multiple-partner"
+          );
+
+        expect(
+          multiplePartnerSlots
+        ).toHaveLength(
+          0
+        );
+
+        /*
+         * Check the calculated geometry.
+         */
+        const personSlot =
+          rootGeneration!.slots.find(
+            (slot) =>
+              slot.type ===
+                "person" &&
+              slot.person?.id ===
+                "person"
+          );
+
+        const spouse1Slot =
+          rootGeneration!.slots.find(
+            (slot) =>
+              slot.type ===
+                "person" &&
+              slot.person?.id ===
+                "spouse-1"
+          );
+
+        const spouse2Slot =
+          rootGeneration!.slots.find(
+            (slot) =>
+              slot.type ===
+                "person" &&
+              slot.person?.id ===
+                "spouse-2"
+          );
+
+        const spouse3Slot =
+          rootGeneration!.slots.find(
+            (slot) =>
+              slot.type ===
+                "person" &&
+              slot.person?.id ===
+                "spouse-3"
+          );
+
+        expect(
+          personSlot
+        ).toBeDefined();
+
+        expect(
+          spouse1Slot
+        ).toBeDefined();
+
+        expect(
+          spouse2Slot
+        ).toBeDefined();
+
+        expect(
+          spouse3Slot
+        ).toBeDefined();
+
+        /*
+         * Spouses occupy one vertical column.
+         */
+        expect(
+          spouse1Slot!.x
+        ).toBe(
+          spouse2Slot!.x
+        );
+
+        expect(
+          spouse2Slot!.x
+        ).toBe(
+          spouse3Slot!.x
+        );
+
+        /*
+         * Relationship-date order should
+         * determine their vertical order.
+         */
+        expect(
+          spouse1Slot!.yOffset
+        ).toBeLessThan(
+          spouse2Slot!.yOffset ??
+            0
+        );
+
+        expect(
+          spouse2Slot!.yOffset
+        ).toBeLessThan(
+          spouse3Slot!.yOffset ??
+            0
+        );
+
+        /*
+         * The selected person sits to the
+         * left of the spouse column.
+         */
+        expect(
+          personSlot!.x
+        ).toBeLessThan(
+          spouse1Slot!.x
+        );
+      }
+    );
+    
+    it(
+      "assigns each expanded descendant family channel to the correct spouse",
+      () => {
+        const data: TreeResponse = {
+          selectedPerson: {
+            handle: "person",
+            displayName: "Person",
+          },
+
+          nodes: [
+            {
+              id: "person",
+              label: "Person",
+              depth: 0,
+              noPartners: 3,
+            },
+
+            {
+              id: "spouse-1",
+              label: "Spouse 1",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-2",
+              label: "Spouse 2",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "spouse-3",
+              label: "Spouse 3",
+              depth: 0,
+              noPartners: 1,
+            },
+
+            {
+              id: "child-1",
+              label: "Child 1",
+              depth: 1,
+              noPartners: 0,
+            },
+
+            {
+              id: "child-2",
+              label: "Child 2",
+              depth: 1,
+              noPartners: 0,
+            },
+
+            {
+              id: "child-3",
+              label: "Child 3",
+              depth: 1,
+              noPartners: 0,
+            },
+          ],
+
+          edges: [
+            {
+              source: "person",
+              target: "child-1",
+              relationshipType: "parent",
+            },
+
+            {
+              source: "person",
+              target: "child-2",
+              relationshipType: "parent",
+            },
+
+            {
+              source: "person",
+              target: "child-3",
+              relationshipType: "parent",
+            },
+          ],
+
+          families: [
+            {
+              id: "family-1",
+              fatherHandle: "person",
+              motherHandle: "spouse-1",
+              childHandles: [
+                "child-1",
+              ],
+
+              relationshipDate: {
+                value: 2000,
+                text: "2000",
+                type: "exact",
+              },
+            },
+
+            {
+              id: "family-2",
+              fatherHandle: "person",
+              motherHandle: "spouse-2",
+              childHandles: [
+                "child-2",
+              ],
+
+              relationshipDate: {
+                value: 2010,
+                text: "2010",
+                type: "exact",
+              },
+            },
+
+            {
+              id: "family-3",
+              fatherHandle: "person",
+              motherHandle: "spouse-3",
+              childHandles: [
+                "child-3",
+              ],
+
+              relationshipDate: {
+                value: 2020,
+                text: "2020",
+                type: "exact",
+              },
+            },
+          ],
+        };
+
+        const result =
+          buildGenerationDisplayModel(
+            data,
+            "descendants"
+          );
+
+        const rootGeneration =
+          result.generations.find(
+            (generation) =>
+              generation.depth === 0
+          );
+
+        expect(
+          rootGeneration
+        ).toBeDefined();
+
+        expect(
+          rootGeneration?.layoutType
+        ).toBe(
+          "expanded-root"
+        );
+
+        /*
+        * Find the channel belonging to
+        * each spouse family.
+        */
+        const family1Channel =
+          rootGeneration!.channels.find(
+            (channel) =>
+              channel.familyId ===
+              "family-1"
+          );
+
+        const family2Channel =
+          rootGeneration!.channels.find(
+            (channel) =>
+              channel.familyId ===
+              "family-2"
+          );
+
+        const family3Channel =
+          rootGeneration!.channels.find(
+            (channel) =>
+              channel.familyId ===
+              "family-3"
+          );
+
+        expect(
+          family1Channel
+        ).toBeDefined();
+
+        expect(
+          family2Channel
+        ).toBeDefined();
+
+        expect(
+          family3Channel
+        ).toBeDefined();
+
+        /*
+        * In expanded-root descendant layout,
+        * each family connection is owned by
+        * that family's spouse node.
+        */
+        expect(
+          family1Channel?.sourceNodeId
+        ).toBe(
+          "spouse-1"
+        );
+
+        expect(
+          family2Channel?.sourceNodeId
+        ).toBe(
+          "spouse-2"
+        );
+
+        expect(
+          family3Channel?.sourceNodeId
+        ).toBe(
+          "spouse-3"
+        );
+
+        /*
+        * Each spouse family should have its
+        * own channel index.
+        */
+        const channelIndexes = [
+          family1Channel!.channelIndex,
+          family2Channel!.channelIndex,
+          family3Channel!.channelIndex,
+        ];
+
+        expect(
+          new Set(
+            channelIndexes
+          ).size
+        ).toBe(
+          3
+        );
+      }
+    );
+
+  }
+);
