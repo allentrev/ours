@@ -65,12 +65,6 @@ export interface GenerationFamily {
 
   parentHandles: string[];
   childHandles: string[];
-  /*
-   * For a person with multiple spouses,
-   * this marks the one family shown as the
-   * normal person-spouse relationship.
-   */
-  isVisibleFamily?: boolean;
 }
 
 export interface GenerationChannel {

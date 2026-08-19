@@ -26,12 +26,9 @@ import EmptyState from "./EmptyState";
 import { fetchTree } from "../../utilities/Family/utils";
 
 import {
-  renderGenerationNodes,
-} from "../../utilities/Family/generation/renderGenerationNodes";
-
-import {
   buildGenerationDisplayModel,
   renderGenerationEdges,
+  renderGenerationNodes,
 } from "../../utilities/Family/generation";
 
 import type {
@@ -105,7 +102,7 @@ const TreeViewer = ({
             selectedPersonHandle,
             mode
           );
-        console.log("components/TreeViewer/ useEffect Fetched Data",data);
+        // console.log("components/TreeViewer/ useEffect Fetched Data",data);
         onSelectedPersonChange(
           data.selectedPerson
         );
@@ -116,21 +113,11 @@ const TreeViewer = ({
             mode
           );
 
-        console.log(
-          "Generation display model",
-          generationDisplayModel
-        );
-
         const generationNodes =
           renderGenerationNodes(
             generationDisplayModel,
             data.selectedPerson.handle
           );
-
-        console.log(
-          "Generation React Flow nodes",
-          generationNodes
-        );
 
         const generationEdges =
           renderGenerationEdges(
@@ -155,11 +142,6 @@ const TreeViewer = ({
                 ),
             }
           );
-
-        console.log(
-          "Generation React Flow edges",
-          generationEdges
-        );
 
         setNodes(generationNodes);
         setEdges(generationEdges);

@@ -8,12 +8,10 @@ import type {
   Generation,
   GenerationContext,
   GenerationDisplayModel,
-  GenerationFamily,
 } from "../../../types/upgradeTypes";
 
 interface MultiplePartnerResult {
   slots: DisplaySlot[];
-  families: GenerationFamily[];
 }
 
 /*
@@ -326,14 +324,6 @@ const addMultiplePartnerSlots = (
     ...generation.slots,
   ];
 
-  let families =
-    generation.families.map(
-      (generationFamily) => ({
-        ...generationFamily,
-        isVisibleFamily: false,
-      })
-    );
-
   const generationPeople =
     slots.filter(
       (
@@ -385,33 +375,6 @@ const addMultiplePartnerSlots = (
           personFamilies,
           traversalGenerationPersonIds
         );
-
-      if (visibleFamily) {
-        families =
-          families.map(
-            (generationFamily) => {
-              const belongsToPerson =
-                generationFamily.family
-                  .fatherHandle ===
-                  person.id ||
-                generationFamily.family
-                  .motherHandle ===
-                  person.id;
-
-              if (!belongsToPerson) {
-                return generationFamily;
-              }
-
-              return {
-                ...generationFamily,
-
-                isVisibleFamily:
-                  generationFamily.family.id ===
-                  visibleFamily.id,
-              };
-            }
-          );
-      }
 
       const primarySpouseHandle =
         visibleFamily
@@ -493,7 +456,6 @@ const addMultiplePartnerSlots = (
 
   return {
     slots,
-    families,
   };
 };
 
@@ -633,9 +595,6 @@ export const populateGenerationSlots = (
         let slots =
           multiplePartnerResult.slots;
 
-        const families =
-          multiplePartnerResult.families;
-
         /*
          * Relationship slots are based purely
          * on which two parents are visibly
@@ -655,7 +614,6 @@ export const populateGenerationSlots = (
 
           slots,
 
-          families,
         };
       }
     );
