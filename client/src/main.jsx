@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client';
 
 import {
   createBrowserRouter,
+  Outlet,
   RouterProvider,
 } from 'react-router-dom';
 import { HelmetProvider } from "react-helmet-async";
@@ -63,7 +64,14 @@ if (!PUBLISHABLE_KEY) {
 
 const router = createBrowserRouter([
   { 
+    element: (
+      <AppLoader>
+        <Outlet />
+      </AppLoader>
+    ),
+
     errorElement: <RouteError />,
+    
     children: [
       { path: "/", element: <HomePage /> },
       { path: "/about", element: <AboutPage/> },
@@ -117,14 +125,12 @@ createRoot(rootElement).render(
       signUpFallbackRedirectUrl={import.meta.env.VITE_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL}
     >
       <QueryClientProvider client={queryClient}>
-        <AppLoader>
-          <HelmetProvider>
-            <ErrorBoundary>
-              <RouterProvider router={router}/>
-              <ToastContainer position='bottom-right' autoClose={3000} />
-            </ErrorBoundary>
-          </HelmetProvider>
-        </AppLoader>
+        <HelmetProvider>
+          <ErrorBoundary>
+            <RouterProvider router={router}/>
+            <ToastContainer position='bottom-right' autoClose={3000} />
+          </ErrorBoundary>
+        </HelmetProvider>
       </QueryClientProvider>
     </ClerkProvider>
   </StrictMode>
