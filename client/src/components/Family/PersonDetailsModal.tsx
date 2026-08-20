@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 import type {
@@ -21,7 +21,10 @@ import {
   updatePerson,
 } from "../../utilities/Family/utils";
 
-import { formatPersonDate } from "../../utilities/Family/formatters";
+import { 
+  formatPersonDate, 
+  formatPersonBirthDate 
+} from "../../utilities/Family/formatters";
 
 import PersonEditModal from "./PersonEditModal";
 
@@ -40,6 +43,8 @@ const PersonDetailsModal = ({
   onClose,
   onPersonUpdated,
 }: PersonDetailsModalProps) => {
+  const { user } = useUser();
+  const isSignedIn = Boolean(user); 
   const { getToken } = useAuth();
 
   const [loadingEdit, setLoadingEdit] = useState(false);
@@ -202,9 +207,10 @@ const PersonDetailsModal = ({
                       <div className="font-medium">Birth</div>
                       <div>
                         {person.birthDate
-                          ? formatPersonDate(
+                          ? formatPersonBirthDate(
                               person.birthDate,
-                              isLiving
+                              isLiving,
+                              isSignedIn
                             )
                           : "-"}
                       </div>

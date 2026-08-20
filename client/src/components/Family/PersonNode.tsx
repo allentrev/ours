@@ -5,6 +5,7 @@ import { isAdminUser } from "@/utilities/authRoles";
 
 import {
   formatPersonDate,
+  formatPersonBirthDate,
   calculateAge,
   isPersonProbablyLiving,
 } from "../../utilities/Family/formatters";
@@ -32,6 +33,7 @@ const PersonNode = ({ data }: Props) => {
   
   const { user } = useUser(); 
   const isAdmin = isAdminUser(user);
+  const isSignedIn = Boolean(user);
   
   const isLiving = isPersonProbablyLiving(
     data.birthDate,
@@ -109,9 +111,10 @@ const PersonNode = ({ data }: Props) => {
             <span className="font-medium">
               Born:
             </span>{" "}
-            {formatPersonDate(
+            {formatPersonBirthDate(
               data.birthDate,
-              isLiving
+              isLiving,
+              isSignedIn
             )}
           </div>
 

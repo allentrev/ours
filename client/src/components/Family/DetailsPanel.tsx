@@ -1,7 +1,7 @@
 // components/Family/DetailsPanel.tsx
 
 import { useState, useEffect, useMemo } from "react";
-import { useAuth } from "@clerk/clerk-react";
+import { useUser, useAuth } from "@clerk/clerk-react";
 
 import type {
   ActorEventType,
@@ -14,6 +14,7 @@ import type {
 
 import {
   formatPersonDate,
+  formatPersonBirthDate,
 } from "../../utilities/Family/formatters";
 
 import {
@@ -45,7 +46,9 @@ const DetailsPanel = ({
   person,
   onSelectPerson,
 }: Props) => {
-  //const { user } = useUser();
+  const { user } = useUser();
+  const isSignedIn = Boolean(user);
+
   //const isAdmin = isAdminUser(user);
   const { getToken } = useAuth();
   const [detailsModalOpen, setDetailsModalOpen,] = useState(false);
@@ -271,9 +274,10 @@ const DetailsPanel = ({
               <span className="font-medium">
                 Born:
               </span>{" "}
-              {formatPersonDate(
+              {formatPersonBirthDate(
                 person.birthDate,
-                isLiving
+                isLiving,
+                isSignedIn
               )}
             </div>
 

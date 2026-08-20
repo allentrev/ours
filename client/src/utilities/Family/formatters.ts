@@ -35,6 +35,36 @@ export const formatPersonDate = (
     : "";
 };
 
+export const formatPersonBirthDate = (
+  date: GenealogicalDate | undefined,
+  isLiving: boolean,
+  isSignedIn: boolean
+): string => {
+  if (!date) {
+    return "";
+  }
+
+  if (
+    isLiving &&
+    !isSignedIn
+  ) {
+    const yearMatch =
+      date.text.match(
+        /\b\d{4}\b/
+      );
+
+    return (
+      yearMatch?.[0] ??
+      ""
+    );
+  }
+
+  return formatPersonDate(
+    date,
+    isLiving
+  );
+};
+
 export const calculateAge = (
   isLiving: boolean,
   birthDate?: string,
