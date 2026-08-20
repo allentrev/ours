@@ -234,63 +234,6 @@ const buildTwoSpouseBlocks = (
   return blocks;
 };
 
-/*
- * Return true when this family is already
- * represented by a two-spouse ordering block.
- */
-const familyIsInTwoSpouseBlock = (
-  generationFamily:
-    Generation["families"][number],
-  twoSpouseBlocks: SlotBlock[]
-): boolean => {
-  const fatherHandle =
-    generationFamily.family
-      .fatherHandle;
-
-  const motherHandle =
-    generationFamily.family
-      .motherHandle;
-
-  if (
-    !fatherHandle ||
-    !motherHandle
-  ) {
-    return false;
-  }
-
-  return twoSpouseBlocks.some(
-    (block) => {
-      const personHandles =
-        new Set(
-          block.slots
-            .filter(
-              (slot) =>
-                slot.type === "person"
-            )
-            .map(
-              (slot) =>
-                slot.person?.id
-            )
-            .filter(
-              (
-                id
-              ): id is string =>
-                Boolean(id)
-            )
-        );
-
-      return (
-        personHandles.has(
-          fatherHandle
-        ) &&
-        personHandles.has(
-          motherHandle
-        )
-      );
-    }
-  );
-};
-
 const buildMultiplePartnerBlocks = (
   generation: Generation
 ): SlotBlock[] => {
@@ -372,116 +315,89 @@ const buildMultiplePartnerBlocks = (
  */
 const buildFamilyBlocks = (
   generation: Generation,
-  twoSpouseBlocks: SlotBlock[]
+  twoSpouseBlocks: SlotBlock[],
+  multiplePartnerBlocks: SlotBlock[]
 ): SlotBlock[] => {
   const blocks: SlotBlock[] = [];
 
-  generation.families.forEach(
-    (generationFamily) => {
-      const {
-        family,
-      } =
-        generationFamily;
+  generation.slots
+    .filter(
+      (slot) =>
+        slot.type === "relationship" &&
+        Boolean(slot.family)
+    )
+    .forEach(
+      (relationshipSlot) => {
+        const family =
+          relationshipSlot.family;
 
-      /*
-       * Families already represented by an
-       * exactly-two-spouse block must not
-       * create another independent block.
-       */
-      if (
-        familyIsInTwoSpouseBlock(
-          generationFamily,
-          twoSpouseBlocks
-        )
-      ) {
-        return;
-      }
+        if (!family) {
+          return;
+        }
 
-      const fatherHandle =
-        family.fatherHandle;
+        const fatherHandle =
+          family.fatherHandle;
 
-      const motherHandle =
-        family.motherHandle;
-
-      if (
-        !fatherHandle ||
-        !motherHandle
-      ) {
-        return;
-      }
-
-      /*
-       * Determine whether either parent owns
-       * a MultiplePartner display slot.
-       */
-      const multiplePartnerSlot =
-        generation.slots.find(
-          (slot) =>
-            slot.type ===
-              "multiple-partner" &&
-            (
-              slot.personHandle ===
-                fatherHandle ||
-              slot.personHandle ===
-                motherHandle
-            )
-        );
-
-      /*
-       * If this family belongs to a
-       * multiple-partner person, only the
-       * family identified by visibleFamilyId
-       * is displayed as the normal visible
-       * spouse relationship.
-       */
-      if (
-        multiplePartnerSlot &&
-        multiplePartnerSlot.visibleFamilyId !==
-          family.id
-      ) {
-        return;
-      }
-
-      /*
-       * Special multiple-partner block:
-       *
-       *   MultiplePartner | Person | Visible spouse
-       */
-      if (
-        multiplePartnerSlot &&
-        multiplePartnerSlot.visibleFamilyId ===
-          family.id
-      ) {
-        const multiplePartnerPersonHandle =
-          multiplePartnerSlot.personHandle;
+        const motherHandle =
+          family.motherHandle;
 
         if (
-          !multiplePartnerPersonHandle
+          !fatherHandle ||
+          !motherHandle
         ) {
           return;
         }
 
-        const personSlot =
+        /*
+         * Do not construct another normal family
+         * block when this family is already covered
+         * by one of the special ordering blocks.
+         */
+        const alreadyInSpecialBlock = [
+          ...twoSpouseBlocks,
+          ...multiplePartnerBlocks,
+        ].some(
+          (block) =>
+            block.slots.some(
+              (slot) =>
+                slot.id ===
+                relationshipSlot.id
+            ) ||
+            (
+              block.slots.some(
+                (slot) =>
+                  slot.type === "person" &&
+                  slot.person?.id ===
+                    fatherHandle
+              ) &&
+              block.slots.some(
+                (slot) =>
+                  slot.type === "person" &&
+                  slot.person?.id ===
+                    motherHandle
+              )
+            )
+        );
+
+        if (alreadyInSpecialBlock) {
+          return;
+        }
+
+        const fatherSlot =
           getPersonSlot(
             generation.slots,
-            multiplePartnerPersonHandle
+            fatherHandle
           );
 
-        const visibleSpouseHandle =
-          multiplePartnerPersonHandle ===
-          fatherHandle
-            ? motherHandle
-            : fatherHandle;
-
-        const visibleSpouseSlot =
+        const motherSlot =
           getPersonSlot(
             generation.slots,
-            visibleSpouseHandle
+            motherHandle
           );
 
         if (
-          !personSlot ||
-          !visibleSpouseSlot
+          !fatherSlot ||
+          !motherSlot
         ) {
           return;
         }
@@ -491,51 +407,12 @@ const buildFamilyBlocks = (
             `family-block-${family.id}`,
 
           slots: [
-            multiplePartnerSlot,
-            personSlot,
-            visibleSpouseSlot,
+            fatherSlot,
+            motherSlot,
           ],
         });
-
-        return;
       }
-
-      /*
-       * Ordinary two-person family.
-       *
-       * Relationship slots remain separate
-       * and are positioned geometrically later.
-       */
-      const fatherUnit =
-        buildPersonUnit(
-          generation.slots,
-          fatherHandle
-        );
-
-      const motherUnit =
-        buildPersonUnit(
-          generation.slots,
-          motherHandle
-        );
-
-      if (
-        fatherUnit.length === 0 ||
-        motherUnit.length === 0
-      ) {
-        return;
-      }
-
-      blocks.push({
-        id:
-          `family-block-${family.id}`,
-
-        slots: [
-          ...fatherUnit,
-          ...motherUnit,
-        ],
-      });
-    }
-  );
+    );
 
   return blocks;
 };
@@ -656,9 +533,11 @@ const orderGeneration = (
   const familyBlocks =
     buildFamilyBlocks(
       generation,
-      twoSpouseBlocks
+      twoSpouseBlocks,
+      multiplePartnerBlocks
     );
 
+    
   /*
    * First process people in sibling order.
    */

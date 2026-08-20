@@ -217,6 +217,7 @@ describe(
           relationshipDate: {
             value: 2000,
             text: "2000",
+            type: "exact",
           },
         },
 
@@ -228,6 +229,7 @@ describe(
           relationshipDate: {
             value: 2010,
             text: "2010",
+            type: "exact",
           },
         },
 
@@ -239,6 +241,7 @@ describe(
           relationshipDate: {
             value: 2020,
             text: "2020",
+            type: "exact",
           },
         },
       ],

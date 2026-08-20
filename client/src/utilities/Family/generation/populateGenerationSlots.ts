@@ -91,8 +91,37 @@ const getSpouseHandles = (
  */
 const getVisibleFamily = (
   families: TreeResponseFamily[],
-  traversalGenerationPersonIds: Set<string>
+  traversalGenerationPersonIds: Set<string>,
+  traversalFamilyIds: Set<string>,
+  mode: GenerationContext["mode"]
 ): TreeResponseFamily | undefined => {
+  /*
+   * Ancestor mode:
+   *
+   * The generation below owns the family
+   * connecting this person to the branch child.
+   *
+   * This is more precise than merely looking
+   * for any family with a child in that
+   * generation.
+   */
+  if (mode === "ancestors") {
+    const branchFamily =
+      families.find(
+        (family) =>
+          traversalFamilyIds.has(
+            family.id
+          )
+      );
+
+    if (branchFamily) {
+      return branchFamily;
+    }
+  }
+
+  /*
+   * Descendant mode / fallback.
+   */
   const traversalFamily =
     families.find(
       (family) =>
@@ -318,7 +347,8 @@ const populateExpandedRoot = (
 const addMultiplePartnerSlots = (
   generation: Generation,
   generationContext: GenerationContext,
-  traversalGenerationPersonIds: Set<string>
+  traversalGenerationPersonIds: Set<string>,
+  traversalFamilyIds: Set<string>,
 ): MultiplePartnerResult => {
   let slots = [
     ...generation.slots,
@@ -373,7 +403,9 @@ const addMultiplePartnerSlots = (
       const visibleFamily =
         getVisibleFamily(
           personFamilies,
-          traversalGenerationPersonIds
+          traversalGenerationPersonIds,
+          traversalFamilyIds,
+          generationContext.mode
         );
 
       const primarySpouseHandle =
@@ -559,6 +591,15 @@ export const populateGenerationSlots = (
               traversalGenerationDepth
           );
 
+        const traversalFamilyIds =
+          new Set(
+            traversalGeneration?.families.map(
+              (generationFamily) =>
+                generationFamily.family.id
+            ) ??
+              []
+          );
+
         const traversalGenerationPersonIds =
           new Set(
             traversalGeneration?.slots
@@ -589,7 +630,8 @@ export const populateGenerationSlots = (
           addMultiplePartnerSlots(
             generation,
             generationContext,
-            traversalGenerationPersonIds
+            traversalGenerationPersonIds,
+            traversalFamilyIds
           );
 
         let slots =
