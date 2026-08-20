@@ -18,6 +18,7 @@ import type {
   CreateRelatedPersonResponse,
   NewNoteInput,
   FamilyDetailsData,
+  PersonConnectionResponse,
 } from "../../types/familyTypes";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;
@@ -802,5 +803,48 @@ export const deleteNote = async (
     }
   } catch (err) {
     throw new Error(`deleteNote error: ${err}`);
+  }
+};
+
+//  ----------------------------- Person Connection -----------------------------------
+//
+export const readPersonConnection = async (
+  fromId: string,
+  toId: string
+): Promise<PersonConnectionResponse> => {
+  const funcName = "readPersonConnection";
+
+  const params =
+    new URLSearchParams({
+      fromId,
+      toId,
+    });
+
+  const url =
+    `${import.meta.env.VITE_BACKEND_URL}/family/connection?${params.toString()}`;
+
+  try {
+    const res =
+      await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+      });
+
+    if (!res.ok) {
+      throw new Error(
+        `Request failed: ${res.status}`
+      );
+    }
+
+    return (
+      await res.json()
+    ) as PersonConnectionResponse;
+  } catch (err) {
+    throw new Error(
+      `${funcName} catch error: ${err}`
+    );
   }
 };

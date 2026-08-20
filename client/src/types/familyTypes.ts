@@ -406,3 +406,37 @@ export type FamilyTreeEdge =
      */
     familyId: string;
   };
+
+
+/* -------------------------------------------------------------------------- */
+/* Connection Diagram                                                         */
+/* -------------------------------------------------------------------------- */
+export type ConnectionStepType =
+  | "parent"
+  | "child"
+  | "partner";
+
+export interface ConnectionPathStep {
+  fromHandle: string;
+  toHandle: string;
+  type: ConnectionStepType;
+  familyHandle?: string;
+}
+
+export interface ConnectionPersonSummary {
+  handle: string;
+  displayName: string;
+}
+
+export interface PersonConnectionResponse {
+  found: boolean;
+
+  fromPerson: ConnectionPersonSummary;
+  toPerson: ConnectionPersonSummary;
+
+  steps: ConnectionPathStep[];
+
+  people: ConnectionPersonSummary[];
+
+  familyHandles: string[];
+}

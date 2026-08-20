@@ -9,6 +9,11 @@ import * as PersonController from
 
 import * as FamilyController from
     "../controllers/Family/family.controller.js";
+    
+import {
+  getPersonConnection,
+} from "../controllers/Family/personConnection.controller.js";
+
 
 import * as PlaceController from
     "../controllers/Family/place.controller.js";
@@ -53,6 +58,8 @@ router.post("/family", requireAuth, FamilyController.createFamily);
 router.get("/family/:familyId", FamilyController.readFamily);
 router.post("/family/:familyId", requireAuth, FamilyController.updateFamily);
 router.delete("/family/:familyId", requireAuth, FamilyController.deleteFamily);
+
+router.get("/connection", getPersonConnection);
 
 router.get("/note", NoteController.getAllNotes);
 router.post("/note", requireAuth, NoteController.createNote);

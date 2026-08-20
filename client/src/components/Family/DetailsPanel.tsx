@@ -28,6 +28,7 @@ import PersonDetailsModal from "./PersonDetailsModal";
 import NewPersonModal from "./NewPersonModal";
 import FamilyDetailsModal from "./FamilyDetailsModal";
 import FamilyEditModal from "./FamilyEditModal";
+import PersonConnectionModal from "./PersonConnectionModal";
 
 import PersonRelationshipsModal from "./PersonRelationshipsModal";
 import PersonAddModal from "./PersonAddModal";
@@ -104,6 +105,10 @@ const DetailsPanel = ({
     null
   );
 
+  const [
+    connectionModalOpen,
+    setConnectionModalOpen,
+  ] = useState(false);
   
   const isLiving = !person?.deathDate;
 
@@ -314,6 +319,15 @@ const DetailsPanel = ({
               >
                 Relationships
               </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setConnectionModalOpen(true)
+                }
+                className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+              >
+                Connection
+              </button>
             </div>
           </div>
         </div>
@@ -360,6 +374,15 @@ const DetailsPanel = ({
           setFamilyDetailsHandle(familyHandle);
         }}
       />
+
+      <PersonConnectionModal
+        open={connectionModalOpen}
+        person={person}
+        onClose={() =>
+          setConnectionModalOpen(false)
+        }
+      />
+
       <FamilyDetailsModal
         open={
           familyDetailsHandle !== null
