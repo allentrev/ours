@@ -378,6 +378,9 @@ const DetailsPanel = ({
       <PersonConnectionModal
         open={connectionModalOpen}
         person={person}
+        onPersonSelect={
+          onSelectPerson
+        }
         onClose={() =>
           setConnectionModalOpen(false)
         }

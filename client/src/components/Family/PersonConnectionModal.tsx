@@ -41,6 +41,10 @@ interface PersonConnectionModalProps {
   person:
     TreePerson | null;
 
+  onPersonSelect: (
+    personHandle: string
+  ) => void;
+
   onClose: () => void;
 }
 
@@ -52,6 +56,7 @@ const nodeTypes = {
 const PersonConnectionModal = ({
   open,
   person,
+  onPersonSelect,
   onClose,
 }: PersonConnectionModalProps) => {
   const [
@@ -479,16 +484,30 @@ const PersonConnectionModal = ({
               nodes.length >
                 0 && (
                 <ReactFlow
-                  nodes={
-                    nodes
-                  }
-                  edges={
-                    edges
-                  }
-                  nodeTypes={
-                    memoizedNodeTypes
-                  }
+                  nodes={ nodes }
+                  edges={ edges }
+                  nodeTypes={memoizedNodeTypes }
                   fitView
+                  onNodeClick={(
+                    _event,
+                    node
+                  ) => {
+                    const personHandle =
+                      node.data
+                        ?.personHandle as
+                          | string
+                          | undefined;
+
+                    if (!personHandle) {
+                      return;
+                    }
+
+                    onPersonSelect(
+                      personHandle
+                    );
+
+                    onClose();
+                  }}
                 >
                   <Background />
                   <Controls />
