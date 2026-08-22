@@ -401,3 +401,12 @@ export interface PersonConnectionResponse {
 
   familyHandles: string[];
 }
+export interface ConnectionPartnerSummary {
+  handle: string;
+  displayName: string;
+  familyHandle: string;
+}
+export interface ConnectionPersonContext {
+  person: ConnectionPersonSummary;
+  partners: ConnectionPartnerSummary[];
+}

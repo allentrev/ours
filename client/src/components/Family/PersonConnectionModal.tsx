@@ -33,6 +33,7 @@ import {
 
 import PersonNode from "./PersonNode";
 import PersonSelectorModal from "./PersonSelectorModal";
+import MultiplePartnerNode from "./MultiplePartnerNode";
 
 interface PersonConnectionModalProps {
   open: boolean;
@@ -44,8 +45,8 @@ interface PersonConnectionModalProps {
 }
 
 const nodeTypes = {
-  person:
-    PersonNode,
+  person: PersonNode,
+  multiplePartner: MultiplePartnerNode,
 };
 
 const PersonConnectionModal = ({

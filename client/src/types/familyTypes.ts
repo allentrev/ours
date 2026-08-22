@@ -439,4 +439,16 @@ export interface PersonConnectionResponse {
   people: ConnectionPersonSummary[];
 
   familyHandles: string[];
+
+  personContexts: ConnectionPersonContext[];
+}
+export interface ConnectionPartnerSummary {
+  handle: string;
+  displayName: string;
+  familyHandle: string;
+}
+
+export interface ConnectionPersonContext {
+  person: ConnectionPersonSummary;
+  partners: ConnectionPartnerSummary[];
 }

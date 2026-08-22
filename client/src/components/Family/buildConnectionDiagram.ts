@@ -10,6 +10,7 @@ import type {
 
 const HORIZONTAL_GAP = 320;
 const VERTICAL_GAP = 220;
+const PARTNER_GAP = 260;
 
 interface ConnectionDiagramPerson {
   handle: string;
@@ -31,6 +32,347 @@ export interface ConnectionDiagram {
   nodes: Node[];
   edges: Edge[];
 }
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                               */
+/* -------------------------------------------------------------------------- */
+const buildPartnerContextNodes = (
+  data: PersonConnectionResponse,
+  pathNodes: Node[]
+): Node[] => {
+  const pathNodeByHandle =
+    new Map(
+      pathNodes.map(
+        (node) => [
+          node.id,
+          node,
+        ]
+      )
+    );
+
+  const partnerNodes: Node[] = [];
+
+  data.personContexts.forEach(
+    (context) => {
+      if (
+        context.partners.length !==
+        1
+      ) {
+        return;
+      }
+
+      const pathNode =
+        pathNodeByHandle.get(
+          context.person.handle
+        );
+
+      if (!pathNode) {
+        return;
+      }
+
+      const partner =
+        context.partners[0];
+
+      /*
+       * Avoid adding a duplicate if the
+       * partner is already on the actual
+       * connection path.
+       */
+      if (
+        pathNodeByHandle.has(
+          partner.handle
+        )
+      ) {
+        return;
+      }
+
+      partnerNodes.push({
+        id:
+          `partner-${partner.handle}`,
+
+        type:
+          "person",
+
+        position: {
+          x:
+            pathNode.position.x +
+            PARTNER_GAP,
+
+          y:
+            pathNode.position.y,
+        },
+
+        data: {
+          label:
+            partner.displayName,
+
+          shortId:
+            partner.handle.slice(
+              -4
+            ),
+
+          personHandle:
+            partner.handle,
+
+          isSelected:
+            false,
+
+          isConnectionPartner:
+            true,
+        },
+      });
+    }
+  );
+
+  return partnerNodes;
+};
+
+const buildPartnerContextEdges = (
+  data: PersonConnectionResponse,
+  pathNodes: Node[],
+  partnerNodes: Node[]
+): Edge[] => {
+  const pathNodeByHandle =
+    new Map(
+      pathNodes.map(
+        (node) => [
+          node.id,
+          node,
+        ]
+      )
+    );
+
+  const partnerNodeByHandle =
+    new Map(
+      partnerNodes.map(
+        (node) => [
+          node.data
+            .personHandle as string,
+          node,
+        ]
+      )
+    );
+
+  const partnerEdges: Edge[] = [];
+
+  data.personContexts.forEach(
+    (context) => {
+      if (
+        context.partners.length !==
+        1
+      ) {
+        return;
+      }
+
+      const partner =
+        context.partners[0];
+
+      const pathNode =
+        pathNodeByHandle.get(
+          context.person.handle
+        );
+
+      const partnerNode =
+        partnerNodeByHandle.get(
+          partner.handle
+        );
+
+      if (
+        !pathNode ||
+        !partnerNode
+      ) {
+        return;
+      }
+
+      partnerEdges.push({
+        id:
+          `connection-partner-${context.person.handle}-${partner.handle}`,
+
+        source:
+          pathNode.id,
+
+        target:
+          partnerNode.id,
+
+        sourceHandle:
+          "spouse-right-source",
+
+        targetHandle:
+          "spouse-left-target",
+
+        type:
+          "straight",
+
+        data: {
+          connectionType:
+            "partner-context",
+
+          familyHandle:
+            partner.familyHandle,
+        },
+      });
+    }
+  );
+
+  return partnerEdges;
+};
+
+const buildMultiplePartnerContextNodes = (
+  data: PersonConnectionResponse,
+  pathNodes: Node[]
+): Node[] => {
+  const pathNodeByHandle =
+    new Map(
+      pathNodes.map(
+        (node) => [
+          node.id,
+          node,
+        ]
+      )
+    );
+
+  const multiplePartnerNodes:
+    Node[] = [];
+
+  data.personContexts.forEach(
+    (context) => {
+      if (
+        context.partners.length <=
+        1
+      ) {
+        return;
+      }
+
+      const pathNode =
+        pathNodeByHandle.get(
+          context.person.handle
+        );
+
+      if (!pathNode) {
+        return;
+      }
+
+      multiplePartnerNodes.push({
+        id:
+          `multiple-partner-${context.person.handle}`,
+
+        type:
+          "multiplePartner",
+
+        position: {
+          x:
+            pathNode.position.x +
+            PARTNER_GAP,
+
+          y:
+            pathNode.position.y,
+        },
+
+        data: {
+          personHandle:
+            context.person.handle,
+
+          shortId:
+            context.person.handle.slice(
+              -4
+            ),
+
+          noPartners:
+            context.partners.length,
+
+          label:
+            context.person.displayName,
+        },
+      });
+    }
+  );
+
+  return multiplePartnerNodes;
+};
+
+const buildMultiplePartnerContextEdges = (
+  data: PersonConnectionResponse,
+  pathNodes: Node[],
+  multiplePartnerNodes: Node[]
+): Edge[] => {
+  const pathNodeByHandle =
+    new Map(
+      pathNodes.map(
+        (node) => [
+          node.id,
+          node,
+        ]
+      )
+    );
+
+  const multiplePartnerNodeByPerson =
+    new Map(
+      multiplePartnerNodes.map(
+        (node) => [
+          node.data
+            .personHandle as string,
+          node,
+        ]
+      )
+    );
+
+  const edges:
+    Edge[] = [];
+
+  data.personContexts.forEach(
+    (context) => {
+      if (
+        context.partners.length <=
+        1
+      ) {
+        return;
+      }
+
+      const pathNode =
+        pathNodeByHandle.get(
+          context.person.handle
+        );
+
+      const multiplePartnerNode =
+        multiplePartnerNodeByPerson.get(
+          context.person.handle
+        );
+
+      if (
+        !pathNode ||
+        !multiplePartnerNode
+      ) {
+        return;
+      }
+
+      edges.push({
+        id:
+          `connection-multiple-partner-${context.person.handle}`,
+
+        source:
+          pathNode.id,
+
+        target:
+          multiplePartnerNode.id,
+
+        sourceHandle:
+          "spouse-right-source",
+
+        targetHandle:
+          "spouse-left-target",
+
+        type:
+          "straight",
+
+        data: {
+          connectionType:
+            "partner-context",
+        },
+      });
+    }
+  );
+
+  return edges;
+};
 
 /* -------------------------------------------------------------------------- */
 /* Path geometry                                                               */
@@ -451,7 +793,7 @@ export const buildConnectionDiagram = (
       data
     );
 
-  const nodes =
+  const pathNodes =
     buildNodes(
       people,
       data.fromPerson.handle,
@@ -460,7 +802,7 @@ export const buildConnectionDiagram = (
 
   const nodeXByHandle =
     new Map(
-      nodes.map(
+      pathNodes.map(
         (node) => [
           node.id,
           node.position.x,
@@ -468,7 +810,7 @@ export const buildConnectionDiagram = (
       )
     );
 
-  const edges =
+  const pathEdges =
     data.steps.map(
       (step, index) =>
         buildEdge(
@@ -478,8 +820,43 @@ export const buildConnectionDiagram = (
         )
     );
 
+  const partnerNodes =
+    buildPartnerContextNodes(
+      data,
+      pathNodes
+    );
+
+  const partnerEdges =
+    buildPartnerContextEdges(
+      data,
+      pathNodes,
+      partnerNodes
+    );
+
+  const multiplePartnerNodes =
+    buildMultiplePartnerContextNodes(
+      data,
+      pathNodes
+    );
+
+  const multiplePartnerEdges =
+    buildMultiplePartnerContextEdges(
+      data,
+      pathNodes,
+      multiplePartnerNodes
+    );
+
   return {
-    nodes,
-    edges,
+    nodes: [
+      ...pathNodes,
+      ...partnerNodes,
+      ...multiplePartnerNodes,
+    ],
+
+    edges: [
+      ...pathEdges,
+      ...partnerEdges,
+      ...multiplePartnerEdges,
+    ],
   };
 };

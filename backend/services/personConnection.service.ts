@@ -13,13 +13,15 @@ import {
 import type {
   ConnectionPathStep,
   ConnectionPersonSummary,
+  ConnectionPartnerSummary,
+  ConnectionPersonContext,
   PersonConnectionResponse,
   FamilyRecord,
   FamilyChildRelationshipRecord,
 } from "../types/family.types.js";
 
 /* -------------------------------------------------------------------------- */
-/* Internal types                                                              */
+/* Internal types                                                             */
 /* -------------------------------------------------------------------------- */
 
 interface GraphConnection {
@@ -38,8 +40,13 @@ interface QueueItem {
   steps: ConnectionPathStep[];
 }
 
+interface PartnerFamilyReference {
+  partnerHandle: string;
+  familyHandle: string;
+}
+
 /* -------------------------------------------------------------------------- */
-/* Helpers                                                                     */
+/* Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
 
 const addGraphConnection = (
@@ -252,8 +259,231 @@ const buildConnectionGraph = (
   return graph;
 };
 
+/*
+ * Build partner context for people appearing
+ * directly on the discovered connection path.
+ *
+ * These partners are contextual information.
+ * They do not alter the connection path itself.
+ */
+const buildPersonContexts = async (
+  people: ConnectionPersonSummary[],
+  families: FamilyRecord[]
+): Promise<ConnectionPersonContext[]> => {
+  const pathHandleSet =
+    new Set(
+      people.map(
+        (person) =>
+          person.handle
+      )
+    );
+
+  /*
+   * For each path person, retain every family
+   * in which they have a partner.
+   */
+  const partnerFamilyMap =
+    new Map<
+      string,
+      PartnerFamilyReference[]
+    >();
+
+  families.forEach(
+    (family) => {
+      const fatherHandle =
+        family.fatherHandle;
+
+      const motherHandle =
+        family.motherHandle;
+
+      /*
+       * A partner relationship requires
+       * both people to be present.
+       */
+      if (
+        !fatherHandle ||
+        !motherHandle
+      ) {
+        return;
+      }
+
+      if (
+        pathHandleSet.has(
+          fatherHandle
+        )
+      ) {
+        const existing =
+          partnerFamilyMap.get(
+            fatherHandle
+          ) ?? [];
+
+        existing.push({
+          partnerHandle:
+            motherHandle,
+
+          familyHandle:
+            family.handle,
+        });
+
+        partnerFamilyMap.set(
+          fatherHandle,
+          existing
+        );
+      }
+
+      if (
+        pathHandleSet.has(
+          motherHandle
+        )
+      ) {
+        const existing =
+          partnerFamilyMap.get(
+            motherHandle
+          ) ?? [];
+
+        existing.push({
+          partnerHandle:
+            fatherHandle,
+
+          familyHandle:
+            family.handle,
+        });
+
+        partnerFamilyMap.set(
+          motherHandle,
+          existing
+        );
+      }
+    }
+  );
+
+  /*
+   * Collect the unique partner people that
+   * need to be loaded.
+   */
+  const partnerHandles = [
+    ...new Set(
+      [
+        ...partnerFamilyMap.values(),
+      ]
+        .flat()
+        .map(
+          (item) =>
+            item.partnerHandle
+        )
+    ),
+  ];
+
+  /*
+   * It is quite valid for none of the path
+   * people to have a recorded partner.
+   */
+  if (
+    partnerHandles.length ===
+    0
+  ) {
+    return people.map(
+      (person) => ({
+        person,
+        partners: [],
+      })
+    );
+  }
+
+  const partnerPeople =
+    await PersonModel.find({
+      handle: {
+        $in:
+          partnerHandles,
+      },
+    })
+      .select(
+        "handle displayName"
+      )
+      .lean();
+
+  const partnerPeopleByHandle =
+    new Map<
+      string,
+      ConnectionPersonSummary
+    >(
+      partnerPeople.map(
+        (person) => [
+          person.handle,
+          {
+            handle:
+              person.handle,
+
+            displayName:
+              person.displayName,
+          },
+        ]
+      )
+    );
+
+  /*
+   * Preserve the order of the people on
+   * the actual connection path.
+   */
+  return people.map(
+    (person) => {
+      const partnerReferences =
+        partnerFamilyMap.get(
+          person.handle
+        ) ?? [];
+
+      const partners:
+        ConnectionPartnerSummary[] =
+        partnerReferences
+          .map(
+            (
+              partnerReference
+            ):
+              | ConnectionPartnerSummary
+              | undefined => {
+              const partner =
+                partnerPeopleByHandle.get(
+                  partnerReference
+                    .partnerHandle
+                );
+
+              if (!partner) {
+                return undefined;
+              }
+
+              return {
+                handle:
+                  partner.handle,
+
+                displayName:
+                  partner.displayName,
+
+                familyHandle:
+                  partnerReference
+                    .familyHandle,
+              };
+            }
+          )
+          .filter(
+            (
+              partner
+            ): partner is
+              ConnectionPartnerSummary =>
+              Boolean(
+                partner
+              )
+          );
+
+      return {
+        person,
+        partners,
+      };
+    }
+  );
+};
+
 /* -------------------------------------------------------------------------- */
-/* Service                                                                     */
+/* Service                                                                    */
 /* -------------------------------------------------------------------------- */
 
 export const findPersonConnection = async (
@@ -320,6 +550,9 @@ export const findPersonConnection = async (
   /*
    * Same person is a valid zero-step
    * connection.
+   *
+   * No partner context is required for this
+   * special case at present.
    */
   if (
     fromId ===
@@ -340,6 +573,9 @@ export const findPersonConnection = async (
       ],
 
       familyHandles:
+        [],
+
+      personContexts:
         [],
     };
   }
@@ -498,6 +734,9 @@ export const findPersonConnection = async (
 
       familyHandles:
         [],
+
+      personContexts:
+        [],
     };
   }
 
@@ -532,7 +771,10 @@ export const findPersonConnection = async (
       .lean();
 
   const peopleByHandle =
-    new Map(
+    new Map<
+      string,
+      ConnectionPersonSummary
+    >(
       pathPeople.map(
         (person) => [
           person.handle,
@@ -569,6 +811,28 @@ export const findPersonConnection = async (
           )
       );
 
+  /*
+   * Add partner context for the people that
+   * actually appear on the connection path.
+   *
+   * This does not affect BFS or alter the
+   * discovered connection.
+   */
+  const personContexts =
+    await buildPersonContexts(
+      people,
+      families
+    );
+
+  /*
+   * Families directly used by the connection
+   * path itself.
+   *
+   * Partner-context families are deliberately
+   * not added here because familyHandles
+   * describes the connection path, not the
+   * decorative context.
+   */
   const familyHandles = [
     ...new Set(
       foundSteps
@@ -600,5 +864,7 @@ export const findPersonConnection = async (
     people,
 
     familyHandles,
+
+    personContexts,
   };
 };
